@@ -458,7 +458,8 @@
     * using a definition from a random, different word.
     */
     function getOrGenerateDefinition(word) {
-        const trueDefinition = DEFINITIONS[word];
+        const wordKey = word.toLowerCase();
+        const trueDefinition = DEFINITIONS[wordKey];
         
         if (!trueDefinition) {
              // Fallback if the definition is missing
@@ -468,38 +469,42 @@
              };
         }
         
-        // 1. Get a list of all defined words (keys)
-        const allWords = Object.keys(DEFINITIONS);
-        
-        // 2. Filter out the current word 
-        const distractorCandidates = allWords.filter(w => w !== word && DEFINITIONS[w]);
-        
-        // 3. Select a random distractor word
-        let distractorWord = word;
-        if (distractorCandidates.length > 0) {
-            const randomIndex = Math.floor(Math.random() * distractorCandidates.length);
-            distractorWord = distractorCandidates[randomIndex];
-        }
-        
-        // 4. Create the False statement using the definition of the distractor word
-        const distractorDefinition = DEFINITIONS[distractorWord];
-        
-        let falseStatement;
-        if (distractorWord === word) {
-            falseStatement = `A afirmação para ${word} é falsa, mas a definição de distração não foi encontrada.`; 
+        // Decide if this will be a TRUE or FALSE challenge type (Type 1 or Type 2)
+        const isTrueType = Math.random() < 0.5;
+
+        if (isTrueType) {
+            // --- Type 1: Verdadeiro (True Definition is the question) ---
+            return {
+                type: 'Verdadeiro',
+                affirmation: trueDefinition,
+                correctAnswer: 'Verdadeiro'
+            };
         } else {
+            // --- Type 2: Falso (Distractor Definition is the question) ---
+            const allWords = Object.keys(DEFINITIONS);
+            const distractorCandidates = allWords.filter(w => w !== wordKey && DEFINITIONS[w]);
+            
+            let distractorDefinition = `Um(a) ${word} é um tipo de coisa que voa no céu.`; // Failsafe
+
+            if (distractorCandidates.length > 0) {
+                const randomIndex = Math.floor(Math.random() * distractorCandidates.length);
+                const distractorWordKey = distractorCandidates[randomIndex];
+                distractorDefinition = DEFINITIONS[distractorWordKey];
+            }
+            
             // Construct the False statement: "A [current word] is in fact [distractor definition]"
             let formattedDistractor = distractorDefinition.toLowerCase();
             if (formattedDistractor.startsWith('um ') || formattedDistractor.startsWith('uma ') || formattedDistractor.startsWith('é ')) {
                 formattedDistractor = formattedDistractor.substring(formattedDistractor.indexOf(' ') + 1);
             }
-            falseStatement = `Um(a) ${word} é na verdade ${formattedDistractor}.`;
-        }
+            const falseStatement = `Um(a) ${word} é na verdade ${formattedDistractor}.`;
 
-        return {
-            verdadeiro: trueDefinition,
-            falso: falseStatement
-        };
+            return {
+                type: 'Falso',
+                affirmation: falseStatement,
+                correctAnswer: 'Falso'
+            };
+        }
     }
 
 
@@ -540,14 +545,11 @@
     function calcularTotalMaximo() {
         const totalSilabas = PALAVRAS.flatMap(p => getSilabas(p)).length;
         const totalFrases = PALAVRAS.length;
-        return 4 + totalSilabas + PALAVRAS.length + totalFrases;
+        return 4 + totalSilabas + (PALAVRAS.length * 2);
     }
 
-    /**
-     * NEW FUNCTION: Fetches and parses definitions from Perguntas.txt.
-     */
     async function fetchDefinitions() {
-        const URL = 'Perguntas.txt'; // Assuming local path based on user request
+        const URL = 'Perguntas.txt'; 
         try {
             const response = await fetch(URL);
             if (!response.ok) {
@@ -556,12 +558,11 @@
             }
             const text = await response.text();
             
-            // Parse text content: Expected format "word: definition" per line
             text.split('\n').forEach(line => {
                 const parts = line.split(':');
                 if (parts.length >= 2) {
-                    const word = parts[0].trim().toLowerCase();
-                    // Join the rest of the parts to handle colons in the definition itself
+                    // Store keys in lowercase for internal processing consistency
+                    const word = parts[0].trim().toLowerCase(); 
                     const definition = parts.slice(1).join(':').trim(); 
                     if (word && definition) {
                         DEFINITIONS[word] = definition;
@@ -574,15 +575,12 @@
     }
 
 
-    // Function to load the word list (Palavras.txt) AND definitions (Perguntas.txt)
     async function fetchWords() {
-        const URL_WORDS = 'https://regine-lambrecht.github.io/leitura/Palavras.txt'; // Using the original remote path for words
+        const URL_WORDS = 'https://regine-lambrecht.github.io/leitura/Palavras.txt';
 
-        // 1. Load Palavras.txt
         try {
             const response = await fetch(URL_WORDS);
             if (!response.ok) {
-                // Try local fallback for Palavras.txt
                 const responseLocal = await fetch('Palavras.txt');
                 if (!responseLocal.ok) {
                     throw new Error(`Word files not found.`);
@@ -597,7 +595,6 @@
             console.error("Critical error loading Palavras.txt:", error);
         }
 
-        // 2. Load Definitions from Perguntas.txt
         await fetchDefinitions();
     }
 
@@ -612,8 +609,10 @@
         syllabesUniquesCompletes: {},
         palavrasAtivasN3: {},
         palavrasCompletasN3: {},
+        
         frasesAtivasN4: {},
-        frasesCompletasN4: {}
+        frasesCompletasN4: {}, 
+        frasesCompletasN4Tipo: {} // Tracks success count per type {word: {true_count: 0, false_count: 0}}
     };
 
     let estadoJogo = {...INITIAL_GAME_STATE};
@@ -630,7 +629,14 @@
     function carregarEstado() {
         const estadoSalvo = localStorage.getItem('aprendendoComPedro');
         if (estadoSalvo) {
-            estadoJogo = JSON.parse(estadoSalvo);
+            const savedState = JSON.parse(estadoSalvo);
+            
+            // Migrate old state structure safely for N4 type tracking
+            if (!savedState.frasesCompletasN4Tipo) {
+                savedState.frasesCompletasN4Tipo = {};
+            }
+            
+            estadoJogo = savedState;
         } else {
             estadoJogo = {...INITIAL_GAME_STATE};
         }
@@ -694,7 +700,7 @@
         // VÉRIFIE SI LES MOTS ONT ÉTÉ CHARGÉS AVANT DE CALCULER LES COMPTEURS
         if (PALAVRAS.length === 0) {
              document.querySelector('.container').innerHTML =
-                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou ele está vazio). O jogo não pode iniciar.</p>";
+                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou il est vide). O jogo não pode iniciar.</p>";
              return;
         }
 
@@ -747,12 +753,22 @@
         btnN3.querySelector('.contador-progresso').textContent = `(${motsCompletsN3x2}/${displayDenominateurN3})`;
 
         // --- NIVEAU 4 (Frases) ---
-        const phrasesCompletsN4x2 = Object.keys(estadoJogo.frasesAtivasN4).filter(p => (estadoJogo.frasesCompletasN4[p] || 0) >= 2).length;
+        
+        // Calculate N4 progress based on new type-specific counter
+        let phrasesCompletesN4x2 = 0;
+        Object.keys(estadoJogo.frasesCompletasN4Tipo).forEach(word => {
+            const counts = estadoJogo.frasesCompletasN4Tipo[word];
+            // Word is complete only if True is done (>=1) AND False is done (>=1)
+            if (counts && counts.true_count >= 1 && counts.false_count >= 1) {
+                phrasesCompletesN4x2++;
+            }
+        });
+        
         const denominateurN4 = phrasesActivesN4;
         const displayDenominateurN4 = denominateurN4 === 0 ? 0 : denominateurN4;
-
-        btnN4.disabled = (phrasesActivesN4 === 0) || (phrasesActivesN4 > 0 && phrasesCompletsN4x2 === phrasesActivesN4);
-        btnN4.querySelector('.contador-progresso').textContent = `(${phrasesCompletsN4x2}/${displayDenominateurN4})`;
+        
+        btnN4.disabled = (phrasesActivesN4 === 0) || (phrasesActivesN4 > 0 && phrasesCompletesN4x2 === phrasesActivesN4);
+        btnN4.querySelector('.contador-progresso').textContent = `(${phrasesCompletesN4x2}/${displayDenominateurN4})`;
     }
 
 
@@ -1194,38 +1210,55 @@
     let phraseActuelleData = null;
 
     function iniciarNivel4() {
-        // Filter active words not completed 2x
-        const motsDisponiblesN4 = PALAVRAS.filter(p =>
-            estadoJogo.frasesAtivasN4[p] &&
-            (estadoJogo.frasesCompletasN4[p] || 0) < 2
-        );
+        // 1. Get pool of available words (active, not completed 1 true AND 1 false)
+        const motsDisponiblesN4 = PALAVRAS.filter(p => {
+             // Initialize counter if needed
+            const counts = estadoJogo.frasesCompletasN4Tipo[p] || { true_count: 0, false_count: 0 };
+            return estadoJogo.frasesAtivasN4[p] && (counts.true_count < 1 || counts.false_count < 1);
+        });
 
         if (motsDisponiveisN4.length === 0) {
             mostrarTela('home');
             return;
         }
 
+        // 2. Select a word and retrieve definitions
         const motChoisi = motsDisponiveisN4[Math.floor(Math.random() * motsDisponiveisN4.length)];
         const defs = getOrGenerateDefinition(motChoisi);
 
-        const estVrai = Math.random() < 0.5;
-        const affirmation = estVrai ? defs.verdadeiro : defs.falso;
-        const reponseAttendue = estVrai ? 'Verdadeiro' : 'Falso';
+        // Determine which type of question (True or False statement) is still needed for this word
+        const counts = estadoJogo.frasesCompletasN4Tipo[motChoisi] || { true_count: 0, false_count: 0 };
+        
+        let isTrueType;
+        if (counts.true_count < 1 && counts.false_count < 1) {
+            // If neither done, pick randomly
+            isTrueType = Math.random() < 0.5;
+        } else if (counts.true_count < 1) {
+            // Only True type needed
+            isTrueType = true;
+        } else {
+            // Only False type needed
+            isTrueType = false;
+        }
+
+        const affirmation = isTrueType ? defs.verdadeiro : defs.falso;
+        const reponseAttendue = isTrueType ? 'Verdadeiro' : 'Falso';
 
         phraseActuelleData = {
             mot: motChoisi,
             affirmation: affirmation,
-            reponse_attendue: reponseAttendue
+            reponse_attendue: reponseAttendue,
+            question_type: isTrueType ? 'True' : 'False' // Store the type for tracking success
         };
 
-        // FIX: To ensure only the first letter is capitalized (Sentence Case) and robustly displays the question.
+        // 3. FIX: To ensure only the first letter is capitalized (Sentence Case) and robustly displays the question.
         const lowerAffirmation = affirmation.toLowerCase();
-        // Guaranteed display: if affirmation is null/empty, this will at least result in a space or "U"
-        const questionText = lowerAffirmation ? (lowerAffirmation.charAt(0).toUpperCase() + lowerAffirmation.slice(1)) : "Pergunta não carregada."; 
+        const questionText = lowerAffirmation.charAt(0).toUpperCase() + lowerAffirmation.slice(1);
         
+        // Guaranteed Text Assignment: This must succeed if questionText is valid.
         document.getElementById('frase-pergunta').textContent = questionText; 
 
-        // Réinitialiser les couleurs et l'état des boutons avant chaque nouvelle question
+        // 4. Reset button states
         document.querySelectorAll('#tela-nivel-4 .btn-verdadeiro-falso').forEach(btn => {
             btn.classList.remove('feedback-correto', 'feedback-incorreto');
             btn.disabled = false;
@@ -1236,6 +1269,9 @@
         if (!phraseActuelleData) return;
 
         const isCorrect = (resposta === phraseActuelleData.reponse_attendue);
+        const mot = phraseActuelleData.mot;
+        const typeKey = phraseActuelleData.question_type === 'True' ? 'true_count' : 'false_count';
+
 
         // 1. Afficher le feedback visuel immédiatement
         elementClicked.classList.add(isCorrect ? 'feedback-correto' : 'feedback-incorreto');
@@ -1246,18 +1282,26 @@
         setTimeout(() => {
 
             if (isCorrect) {
-                const currentCount = estadoJogo.frasesCompletasN4[phraseActuelleData.mot] || 0;
-                estadoJogo.frasesCompletasN4[phraseActuelleData.mot] = currentCount + 1;
+                // Initialize counter if necessary
+                if (!estadoJogo.frasesCompletasN4Tipo[mot]) {
+                    estadoJogo.frasesCompletasN4Tipo[mot] = { true_count: 0, false_count: 0 };
+                }
+                
+                // Increment specific type counter
+                estadoJogo.frasesCompletasN4Tipo[mot][typeKey]++;
 
-                const didJustCompleteTwice = estadoJogo.frasesCompletasN4[phraseActuelleData.mot] === 2;
+                // Check for full completion (1 True AND 1 False)
+                const counts = estadoJogo.frasesCompletasN4Tipo[mot];
+                const isWordComplete = (counts.true_count >= 1 && counts.false_count >= 1);
 
-                if (didJustCompleteTwice) {
+                if (isWordComplete) {
                     adicionarPonto('frase');
                     exibirMensagemBravo(() => iniciarNivel4());
                 } else {
                     iniciarNivel4();
                 }
             } else {
+                // Incorrect answer: retry immediately with a new question
                 iniciarNivel4();
             }
             salvarEstado();
