@@ -271,8 +271,6 @@
             border-radius: 20px;
             border: 5px solid white;
             font-size: 2em;
-            font-weight: bold;
-            z-index: 1000;
             display: none;
             animation: fadeIn 0.3s;
         }
@@ -541,47 +539,30 @@
             case 'tomate': return ['to', 'ma', 'te'];
         }
         
-        // This is a simplified rule-based syllabification for European/Brazilian Portuguese.
-        // 1. Split double consonants (RR, SS) and complex groups (CS, CT, GN, etc.)
-        // 2. Consonants usually stick with the following vowel (CV-CV rule)
-        // 3. Digraphs (CH, LH, NH, QU, GU) stick together (treated as single C)
-        
+        // --- NEW RULE-BASED SYLLABIFICATION ---
         let processedPalavra = palavra;
         
-        // Split double letters that must be separated (RR, SS)
-        processedPalavra = processedPalavra.replace(/([r|s])\1/g, '$1-$1'); // RR/SS split: car-ro, pas-sar
+        // 1. Split double consonants that must be separated (RR, SS, etc.)
+        processedPalavra = processedPalavra.replace(/([r|s|c|p|t])\1/g, '$1-$1');
         
-        // Split complex consonant groups that must be separated: (VC-CV)
-        // Examples: At-le-ta, Ri-tmo, Ad-mi-rar
+        // 2. Separate consonants that must break between vowels (V-CV rule)
+        // This regex ensures single consonants join the *following* vowel, splitting V-CV.
+        processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1-$2$3'); 
+        
+        // 3. Split complex consonant groups that must be separated: (VC-CV)
         processedPalavra = processedPalavra.replace(/([bcdfghjklmnpqrstvwxyzç])([c|t|p|g|f|v])([l|r])/g, '$1-$2$3'); 
         
-        // Separate consonants that must break between vowels (intervocalic single C)
-        // Find Vowel + Consonant + Vowel, and place the break BEFORE the consonant (V-CV)
-        // This handles "ba-ra-ta" where Vowel (a) + Consonant (r) + Vowel (a) -> a-ra.
-        // It's not perfect for all edge cases (diphthongs, trigraphs, complex clusters), 
-        // but it fixes the most common issues like "barata" -> "ba-ra-ta".
-        processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bcdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1-$2$3'); 
-        
-        // Basic split by the introduced hyphen
+        // 4. Clean and split by the introduced hyphen
         let silabas = processedPalavra.split('-');
         
-        // Final cleaning: remove empty strings and merge remaining groups if needed
-        silabas = silabas.filter(s => s.length > 0);
+        silabas = silabas.map(s => s.trim()).filter(s => s.length > 0);
         
-        // Re-merge simple two-letter words/syllables that might have been incorrectly split if needed
-        // (This step is sometimes necessary depending on the regex complexity, but for simplicity, 
-        // we trust the current hyphenation process is better than the original one).
-
         if (silabas.length === 0) return [palavra]; // Failsafe
         
         return silabas;
     }
 
 
-    /**
-    * RECODED: Retrieves the true definition and generates a false statement 
-    * using a definition from a random, different word.
-    */
     function getOrGenerateDefinition(word) {
         const trueDefinition = DEFINITIONS[word];
         
@@ -611,15 +592,12 @@
         
         let falseStatement;
         if (distractorWord === word) {
-            // Failsafe: if no distractor was found (only happens if the list is too short/empty)
             falseStatement = `A afirmação para ${word} é falsa, mas a definição de distração não foi encontrada.`; 
         } else {
-            // Construct the False statement: "A [current word] is in fact [distractor definition]"
             let formattedDistractor = distractorDefinition.toLowerCase();
             if (formattedDistractor.startsWith('um ') || formattedDistractor.startsWith('uma ') || formattedDistractor.startsWith('é ')) {
                 formattedDistractor = formattedDistractor.substring(formattedDistractor.indexOf(' ') + 1);
             }
-            // Use 'é na verdade' for smooth transition
             falseStatement = `Um(a) ${word} é na verdade ${formattedDistractor}.`;
         }
 
@@ -636,7 +614,7 @@
         return 4 + totalSilabas + PALAVRAS.length + totalFrases;
     }
 
-    // Fonction pour charger les mots depuis Palavras.txt (via URL GitHub)
+    // Função para carregar les mots depuis Palavras.txt (via URL GitHub)
     async function fetchWords() {
         const URL = 'https://regine-lambrecht.github.io/leitura/Palavras.txt';
         try {
@@ -679,7 +657,7 @@
     let fraseAtual = null;
     let paresCorretosN1 = 0;
     let motActuelN2 = '';
-    let palavraAnteriorN3 = null; // <-- NEW: Stores the last word played in N3
+    let palavraAnteriorN3 = null; 
 
     // --- FUNÇÕES DE UTILIDADE ET PERSISTENCE ---
 
@@ -1160,14 +1138,12 @@
 
         let palavrasCandidatas = [...palavrasDisponiveisN3];
 
-        // NEW LOGIC: Prevent consecutive repetition unless only one word is available
+        // LOGIC: Prevent consecutive repetition unless only one word is available
         if (palavrasCandidatas.length > 1 && palavraAnteriorN3) {
             // Filter out the previously played word
             palavrasCandidatas = palavrasCandidatas.filter(p => p !== palavraAnteriorN3);
             
-            // Failsafe: if filtering left us with an empty array (meaning the only other 
-            // word was the one we just played, which shouldn't happen if length > 1, 
-            // but we use the original list if we somehow filtered everything)
+            // Failsafe: if filtering left us with an empty array
             if (palavrasCandidatas.length === 0) {
                  palavrasCandidatas = [...palavrasDisponiveisN3];
             }
@@ -1177,7 +1153,7 @@
         
         // Update the anterior word
         palavraAnteriorN3 = palavraAtual;
-        // END NEW LOGIC
+        // END LOGIC
 
         const distractors = generateSimilarWords(palavraAtual, PALAVRAS);
         let options = [palavraAtual, ...distractors];
@@ -1265,7 +1241,8 @@
         const lowerAffirmation = affirmation.toLowerCase();
         const questionText = lowerAffirmation.charAt(0).toUpperCase() + lowerAffirmation.slice(1);
         
-        document.getElementById('frase-pergunta').textContent = questionText;
+        // Ensure the text is written to the correct element
+        document.getElementById('frase-pergunta').textContent = questionText; 
 
         // Réinitialiser les couleurs et l'état des boutons avant chaque nouvelle question
         document.querySelectorAll('#tela-nivel-4 .btn-verdadeiro-falso').forEach(btn => {
