@@ -546,7 +546,6 @@
         processedPalavra = processedPalavra.replace(/([r|s|c|p|t])\1/g, '$1-$1');
         
         // 2. Separate consonants that must break between vowels (V-CV rule)
-        // This regex ensures single consonants join the *following* vowel, splitting V-CV.
         processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1-$2$3'); 
         
         // 3. Split complex consonant groups that must be separated: (VC-CV)
@@ -658,6 +657,7 @@
     let paresCorretosN1 = 0;
     let motActuelN2 = '';
     let palavraAnteriorN3 = null; 
+    let silabaAnteriorN2 = null; // <-- NEW: Stores the last syllable played in N2
 
     // --- FUNÇÕES DE UTILIDADE ET PERSISTENCE ---
 
@@ -689,7 +689,8 @@
 
         estadoJogo = {...INITIAL_GAME_STATE};
         motActuelN2 = '';
-        palavraAnteriorN3 = null; // Reset N3 previous word
+        palavraAnteriorN3 = null; 
+        silabaAnteriorN2 = null; // Reset N2 previous syllable
         localStorage.removeItem('aprendendoComPedro');
 
         atualizarInterfaceHome();
@@ -1021,10 +1022,26 @@
              iniciarNivel2();
              return;
         }
+        
+        let silabasCandidatas = [...silabasParaJogar];
+
+        // LOGIC: Prevent consecutive repetition unless only one syllable is available
+        if (silabasCandidatas.length > 1 && silabaAnteriorN2) {
+            // Filter out the previously played syllable
+            silabasCandidatas = silabasCandidatas.filter(s => s !== silabaAnteriorN2);
+            
+            // Failsafe (If filtering resulted in an empty list, which shouldn't happen here, use the original)
+            if (silabasCandidatas.length === 0) {
+                 silabasCandidatas = [...silabasParaJogar];
+            }
+        }
 
         // CORRECTION: Choix d'une syllabe aléatória entre as restantes
-        silabaAtual = silabasParaJogar[Math.floor(Math.random() * silabasParaJogar.length)].toLowerCase();
+        silabaAtual = silabasCandidatas[Math.floor(Math.random() * silabasCandidatas.length)].toLowerCase();
 
+        // Update the previous syllable tracker
+        silabaAnteriorN2 = silabaAtual; // <-- NEW UPDATE
+        
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
 
         const optionsDiv = document.getElementById('opcoes-silabas');
@@ -1238,6 +1255,7 @@
         };
 
         // FIX: To ensure only the first letter is capitalized (Sentence Case):
+        // This is the direct fix for the question not showing.
         const lowerAffirmation = affirmation.toLowerCase();
         const questionText = lowerAffirmation.charAt(0).toUpperCase() + lowerAffirmation.slice(1);
         
