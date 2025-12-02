@@ -60,7 +60,7 @@
         .nivel-btn {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between; /* ALIGNEMENT SPÉCIFIQUE POUR POUSSER L'ICÔNE À DROITE */
             width: 100%;
             padding: 15px;
             margin: 10px 0;
@@ -73,10 +73,16 @@
             transition: background-color 0.3s;
             font-family: 'Times New Roman', Times, serif; 
         }
+        
+        .nivel-btn span {
+            display: flex; /* Conteneur pour le texte et les icônes */
+            align-items: center;
+        }
 
         /* Voltar est BLEU */
         .nivel-btn.voltar-btn {
             background-color: var(--cor-voltar); 
+            justify-content: center; /* Centrer le contenu du bouton Voltar */
         }
         
         .nivel-btn.voltar-btn:hover {
@@ -94,12 +100,12 @@
         }
         
         .nivel-btn i {
-            margin: 0 5px;
+            margin: 0 2px; /* Espacement minimal entre icônes */
             font-size: 1.5em;
         }
         
         .contador-progresso {
-            margin-left: auto;
+            margin-left: 10px; /* Espace entre le texte du niveau et le compteur */
             font-size: 0.8em;
             background: rgba(255, 255, 255, 0.2);
             padding: 2px 8px;
@@ -114,6 +120,7 @@
             padding: 10px;
             font-size: 1em;
             font-family: 'Times New Roman', Times, serif; 
+            justify-content: center;
         }
 
         #btn-reset:hover {
@@ -278,6 +285,7 @@
             z-index: 1001; 
             width: 80%;
             max-width: 350px;
+            display: none; /* CORRECTION: Masquer par défaut */
         }
 
         #modal-confirmacao p {
@@ -340,16 +348,20 @@
         </div>
 
         <button class="nivel-btn" id="btn-nivel-1" onclick="iniciarNivel(1)">
-            <i class="fa-solid fa-trophy"></i> Letras <span class="contador-progresso" id="count-n1"></span>
+            <span>Letras <span class="contador-progresso" id="count-n1"></span></span>
+            <i class="fa-solid fa-trophy"></i>
         </button>
         <button class="nivel-btn" id="btn-nivel-2" onclick="iniciarNivel(2)" disabled>
-            <i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i> Sílabas <span class="contador-progresso" id="count-n2"></span>
+            <span>Sílabas <span class="contador-progresso" id="count-n2"></span></span>
+            <span><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-3" onclick="iniciarNivel(3)" disabled>
-            <i class="fa-solid fa-medal"></i> Palavras <span class="contador-progresso" id="count-n3"></span>
+            <span>Palavras <span class="contador-progresso" id="count-n3"></span></span>
+            <i class="fa-solid fa-medal"></i>
         </button>
         <button class="nivel-btn" id="btn-nivel-4" onclick="iniciarNivel(4)" disabled>
-            <i class="fa-solid fa-user-graduate"></i> Frases <span class="contador-progresso" id="count-n4"></span>
+            <span>Frases <span class="contador-progresso" id="count-n4"></span></span>
+            <i class="fa-solid fa-user-graduate"></i>
         </button>
 
         <button class="nivel-btn" id="btn-reset" onclick="recomecarDeZero()">
@@ -473,9 +485,9 @@
         damierAtual: 0,
         selecaoN1: [], 
         palavrasCompletasN2: {},
-        palavrasAtivasN3: [],
+        palavrasAtivasN3: {}, // Changé en objet pour stocker l'état d'activation
         palavrasCompletasN3: {},
-        frasesAtivasN4: [], 
+        frasesAtivasN4: {}, 
         frasesCompletasN4: {} 
     };
 
@@ -564,28 +576,41 @@
     
     function atualizarBotoesNivel() {
         const damierComplet = estadoJogo.progressoNivel1.filter(c => c >= 2).length;
-        const totalPalavrasN3 = PALAVRAS.length;
-        const motsActifsN3 = estadoJogo.palavrasAtivasN3.length;
-        const phrasesActivesN4 = estadoJogo.frasesAtivasN4.length;
+        const totalPalavras = PALAVRAS.length;
+        const motsActifsN3 = Object.keys(estadoJogo.palavrasAtivasN3).length;
+        const phrasesActivesN4 = Object.keys(estadoJogo.frasesAtivasN4).length;
+
+        const btnN2 = document.getElementById('btn-nivel-2');
+        const btnN3 = document.getElementById('btn-nivel-3');
+        const btnN4 = document.getElementById('btn-nivel-4');
 
         // N1
         document.getElementById('count-n1').textContent = `(${damierComplet}/${DADOS_LETRAS.length})`;
 
         // N2 : Reste-t-il des mots N2 non complétés 2x ET non activés N3 ?
-        const motsRestantsN2 = PALAVRAS.filter(p => !estadoJogo.palavrasAtivasN3.includes(p)).length;
+        const motsNonActives = PALAVRAS.filter(p => !estadoJogo.palavrasAtivasN3[p]);
+        const motsRestantsN2 = motsNonActives.filter(p => {
+             const silabas = getSilabas(p);
+             return silabas.some(silaba => {
+                 const key = `${p}-${silaba.toLowerCase()}`;
+                 return (estadoJogo.palavrasCompletasN2[key] || 0) < 2;
+             });
+        }).length;
+
         btnN2.disabled = (damierComplet === 0) || (motsRestantsN2 === 0);
-        btnN2.querySelector('.contador-progresso').textContent = `(${motsActifsN3}/${totalPalavrasN3})`;
+        btnN2.querySelector('.contador-progresso').textContent = `(${motsActifsN3}/${totalPalavras})`;
         
         // N3 : Reste-t-il des mots N3 activés mais non complétés 2x ?
-        const motsRestantsN3 = motsActifsN3 - estadoJogo.palavrasAtivasN3.filter(p => (estadoJogo.palavrasCompletasN3[p] || 0) >= 2).length;
+        const motsCompletsN3x2 = Object.keys(estadoJogo.palavrasAtivasN3).filter(p => (estadoJogo.palavrasCompletasN3[p] || 0) >= 2).length;
+        const motsRestantsN3 = motsActifsN3 - motsCompletsN3x2;
         btnN3.disabled = (motsActifsN3 === 0) || (motsRestantsN3 === 0);
-        btnN3.querySelector('.contador-progresso').textContent = `(${phrasesActivesN4}/${totalPalavrasN3})`;
+        btnN3.querySelector('.contador-progresso').textContent = `(${phrasesActivesN4}/${totalPalavras})`;
 
         // N4 : Reste-t-il des phrases N4 activées mais non complétées 2x ?
-        const phrasesRestantesN4 = phrasesActivesN4 - estadoJogo.frasesAtivasN4.filter(p => (estadoJogo.frasesCompletasN4[p] || 0) >= 2).length;
-        const phrasesCompletsN4x2 = phrasesActivesN4 - phrasesRestantesN4;
+        const phrasesCompletsN4x2 = Object.keys(estadoJogo.frasesAtivasN4).filter(p => (estadoJogo.frasesCompletasN4[p] || 0) >= 2).length;
+        const phrasesRestantesN4 = phrasesActivesN4 - phrasesCompletsN4x2;
         btnN4.disabled = (phrasesActivesN4 === 0) || (phrasesRestantesN4 === 0);
-        btnN4.querySelector('.contador-progresso').textContent = `(${phrasesCompletsN4x2}/${totalPalavrasN3})`;
+        btnN4.querySelector('.contador-progresso').textContent = `(${phrasesCompletsN4x2}/${totalPalavras})`;
     }
 
 
@@ -621,7 +646,6 @@
     }
 
     function iniciarNivel1() {
-        // CORRECTION: Assurer la réinitialisation de paresCorretosN1 avant de dessiner la grille
         paresCorretosN1 = 0; 
         estadoJogo.selecaoN1 = [];
         const damier = DADOS_LETRAS[estadoJogo.damierAtual];
@@ -676,9 +700,7 @@
             elem1.classList.remove('selecionada');
             elem2.classList.remove('selecionada');
 
-            // CORRECTION: S'assurer que le succès est traité immédiatement après les 6 paires
             if (paresCorretosN1 === 6) {
-                // Appel de la fonction de succès qui gère le passage au damier suivant
                 sucessoNivel1();
             }
         } else {
@@ -761,7 +783,8 @@
 
         if (!motActuelN2) {
             const motsNonActives = PALAVRAS.filter(p => {
-                if (estadoJogo.palavrasAtivasN3.includes(p)) return false; 
+                // Si le mot est déjà dans palavrasAtivasN3 (activé N3), on ne le choisit pas pour le N2
+                if (estadoJogo.palavrasAtivasN3[p]) return false; 
                 
                 const silabas = getSilabas(p);
                 return silabas.some(silaba => {
@@ -818,8 +841,8 @@
                 return (estadoJogo.palavrasCompletasN2[sKey] || 0) >= 2;
             });
             
-            if (motAtiveN3 && !estadoJogo.palavrasAtivasN3.includes(palavraAtual)) {
-                estadoJogo.palavrasAtivasN3.push(palavraAtual);
+            if (motAtiveN3 && !estadoJogo.palavrasAtivasN3[palavraAtual]) {
+                estadoJogo.palavrasAtivasN3[palavraAtual] = true; // Active le mot pour le N3
                 motActuelN2 = ''; 
                 exibirMensagemBravo(() => iniciarNivel2()); 
             } else {
@@ -857,8 +880,9 @@
     }
     
     function iniciarNivel3() {
-        const palavrasDisponiveisN3 = estadoJogo.palavrasAtivasN3.filter(p => {
-            return (estadoJogo.palavrasCompletasN3[p] || 0) < 2;
+        // Filtrer les mots actifs mais non complétés 2 fois
+        const palavrasDisponiveisN3 = PALAVRAS.filter(p => {
+            return estadoJogo.palavrasAtivasN3[p] && (estadoJogo.palavrasCompletasN3[p] || 0) < 2;
         });
 
         if (palavrasDisponiveisN3.length === 0) {
@@ -899,8 +923,8 @@
                 adicionarPonto('palavra'); 
                 
                 const motPhrase = PALAVRAS.find(p => p === palavraAtual);
-                if (motPhrase && !estadoJogo.frasesAtivasN4.includes(motPhrase)) {
-                    estadoJogo.frasesAtivasN4.push(motPhrase);
+                if (motPhrase && !estadoJogo.frasesAtivasN4[motPhrase]) {
+                    estadoJogo.frasesAtivasN4[motPhrase] = true; // Active la phrase pour le N4
                     exibirMensagemBravo(() => iniciarNivel3()); 
                 } else {
                     exibirMensagemBravo(() => iniciarNivel3()); 
@@ -920,8 +944,9 @@
     let phraseActuelleData = null;
 
     function iniciarNivel4() {
+        // Filtrer les mots dont la phrase est activée mais non complétée 2x
         const motsDisponiblesN4 = PALAVRAS.filter(p => 
-            estadoJogo.frasesAtivasN4.includes(p) && 
+            estadoJogo.frasesAtivasN4[p] && 
             (estadoJogo.frasesCompletasN4[p] || 0) < 2
         );
 
@@ -965,7 +990,6 @@
         document.querySelectorAll('#tela-nivel-4 .btn-verdadeiro-falso').forEach(btn => btn.disabled = true);
         
         setTimeout(() => {
-            // 3. Procéder
             
             if (isCorrect) {
                 estadoJogo.frasesCompletasN4[phraseActuelleData.mot] = (estadoJogo.frasesCompletasN4[phraseActuelleData.mot] || 0) + 1;
