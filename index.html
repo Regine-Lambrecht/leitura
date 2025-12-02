@@ -60,7 +60,7 @@
         .nivel-btn {
             display: flex;
             align-items: center;
-            justify-content: space-between; /* ALIGNEMENT SPÉCIFIQUE POUR POUSSER L'ICÔNE À DROITE */
+            justify-content: space-between; /* Pour pousser le compteur à droite */
             width: 100%;
             padding: 15px;
             margin: 10px 0;
@@ -74,8 +74,9 @@
             font-family: 'Times New Roman', Times, serif; 
         }
         
-        .nivel-btn span {
-            display: flex; /* Conteneur pour le texte et les icônes */
+        /* Conteneur pour Terme + Icônes (Tout ce qui est à gauche) */
+        .content-left-group {
+            display: flex;
             align-items: center;
         }
 
@@ -99,8 +100,10 @@
             color: #7f8c8d;
         }
         
-        .icon-container-left i {
-            margin-right: 10px; /* Espacement après l'icône */
+        /* Espacement des icônes à côté du terme */
+        .content-left-group i {
+            margin-left: 8px; /* Espace après le nom du niveau */
+            margin-right: 2px; /* Espacement entre icônes multiples */
             font-size: 1.5em;
         }
         
@@ -347,20 +350,20 @@
         </div>
 
         <button class="nivel-btn" id="btn-nivel-1" onclick="iniciarNivel(1)">
-            <span class="icon-container-left"><i class="fa-solid fa-trophy"></i></span>
-            <span class="content-left-group">Letras <span class="contador-progresso" id="count-n1"></span></span>
+            <span class="content-left-group">Letras <span class="icon-container"><i class="fa-solid fa-trophy"></i></span></span>
+            <span class="contador-progresso" id="count-n1"></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-2" onclick="iniciarNivel(2)" disabled>
-            <span class="icon-container-left"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span>
-            <span class="content-left-group">Sílabas <span class="contador-progresso" id="count-n2"></span></span>
+            <span class="content-left-group">Sílabas <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span></span>
+            <span class="contador-progresso" id="count-n2"></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-3" onclick="iniciarNivel(3)" disabled>
-            <span class="icon-container-left"><i class="fa-solid fa-medal"></i></span>
-            <span class="content-left-group">Palavras <span class="contador-progresso" id="count-n3"></span></span>
+            <span class="content-left-group">Palavras <span class="icon-container"><i class="fa-solid fa-medal"></i></span></span>
+            <span class="contador-progresso" id="count-n3"></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-4" onclick="iniciarNivel(4)" disabled>
-            <span class="icon-container-left"><i class="fa-solid fa-user-graduate"></i></span>
-            <span class="content-left-group">Frases <span class="contador-progresso" id="count-n4"></span></span>
+            <span class="content-left-group">Frases <span class="icon-container"><i class="fa-solid fa-user-graduate"></i></span></span>
+            <span class="contador-progresso" id="count-n4"></span>
         </button>
 
         <button class="nivel-btn" id="btn-reset" onclick="recomecarDeZero()">
@@ -462,31 +465,25 @@
 
     /**
      * Génère une définition Vrai/Faux pour tout mot non couvert par DEFINITIONS.
-     * @param {string} word - Le mot à définir.
-     * @returns {object} {verdadeiro: string, falso: string}
      */
     function generateDefinition(word) {
-        const firstLetter = word.charAt(0).toUpperCase();
-        const base = `Um/Uma ${word} é geralmente ${word.length > 5 ? 'muito' : ''} utilizado(a)`;
-        const truth = `É verdade que um(a) ${word} é usado(a) para [ACTION UTILE].`;
-        const falsehood = `É falso que um(a) ${word} é na verdade um [ANIMAL/OBJET ABSURDE].`;
-
-        // Tentative de créer une affirmation générique pour le vrai/faux (niveau A2)
-        const placeholderDefs = {
-            verdadeiro: `Um(a) ${word} é um(a) ${word.length < 5 ? 'objeto' : 'coisa'} que usamos para [ACTION UTILE GÉNÉRIQUE].`,
-            falso: `Um(a) ${word} é um(a) ${word.length > 6 ? 'mamífero' : 'pequeno animal'} que vive no [LIEU ABSURDE].`
-        };
+        const wordUpper = word.charAt(0).toUpperCase() + word.slice(1);
+        
+        const falseObjects = ['peixe', 'planeta', 'caminhão', 'avião', 'gato'];
+        const falseLocations = ['lua', 'fundo do mar', 'céu', 'teatro', 'geladeira'];
+        
+        const absurdObject = falseObjects[Math.floor(Math.random() * falseObjects.length)];
+        const absurdLocation = falseLocations[Math.floor(Math.random() * falseLocations.length)];
 
         return {
-            verdadeiro: `Um(a) ${word} é algo que você pode [VERBO SIMPLES, ex: comer, usar, pilotar].`,
-            falso: `Um(a) ${word} é um tipo de [OBJET/ANIMAL ABSURDE, ex: planeta, peixe, avião].`
+            verdadeiro: `Um(a) ${word} é algo que você pode usar na escola.`,
+            falso: `Um(a) ${word} é um tipo de ${absurdObject} que vive na ${absurdLocation}.`
         };
     }
     
     function getOrGenerateDefinition(word) {
         let defs = DEFINITIONS[word];
         if (!defs) {
-             // Génère une définition si non trouvée
              defs = generateDefinition(word);
         }
         return defs;
@@ -957,7 +954,7 @@
         
         // Prioriser les mots qui ressemblent (même début, même nombre de syllabes)
         candidates.sort((a, b) => 
-            Math.abs(a.syllableCount - correctSyllabeCount) - Math.abs(b.syllableCount - correctSyllabeCount)
+            Math.abs(a.syllableCount - correctSyllableCount) - Math.abs(b.syllableCount - correctSyllableCount)
         );
         
         const distractors = [];
@@ -1123,7 +1120,7 @@
         // CRITICAL CHECK: Si les mots ne sont pas chargés
         if (PALAVRAS.length === 0) {
              document.querySelector('.container').innerHTML = 
-                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou il est vide). Le jeu ne peut pas démarrer. Verifiez a URL ou l'accès au fichier.</p>";
+                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou ele está vazio). Le jeu ne peut pas démarrer. Verifiez a URL ou l'accès au fichier.</p>";
              return;
         }
 
