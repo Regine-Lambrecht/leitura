@@ -8,11 +8,11 @@
     <style>
         /* Estilos CSS (style.css incorporé) */
         :root {
-            --cor-principal: #3498db;
+            --cor-principal: #3498db; /* BLEU */
             --cor-fundo: #ecf0f1;
-            --cor-sucesso: #2ecc71; 
+            --cor-sucesso: #2ecc71; /* VERT (Succès/Bravo) */
             --cor-erreur: #e74c3c;
-            --cor-voltar: #2ecc71; 
+            --cor-voltar: #3498db; /* BLEU pour Voltar */
             --cor-reset: #e74c3c; 
             --tamanho-letra: 24px;
         }
@@ -74,13 +74,13 @@
             font-family: 'Times New Roman', Times, serif; 
         }
 
-        /* Voltar est VERT */
+        /* Voltar est BLEU */
         .nivel-btn.voltar-btn {
             background-color: var(--cor-voltar); 
         }
         
         .nivel-btn.voltar-btn:hover {
-            background-color: #27ae60; 
+            background-color: #2980b9; 
         }
 
         .nivel-btn:hover:not(:disabled) {
@@ -568,8 +568,6 @@
         const motsActifsN3 = estadoJogo.palavrasAtivasN3.length;
         const phrasesActivesN4 = estadoJogo.frasesAtivasN4.length;
 
-        // Vrai check : y a-t-il au moins un mot/une phrase activée qui n'est pas complétée 2x ?
-        
         // N2 : Reste-t-il des mots N2 non complétés 2x ET non activés N3 ?
         const motsRestantsN2 = PALAVRAS.filter(p => !estadoJogo.palavrasAtivasN3.includes(p)).length;
         btnN2.disabled = (damierComplet === 0) || (motsRestantsN2 === 0);
@@ -938,7 +936,7 @@
         const questionText = affirmation.charAt(0).toUpperCase() + affirmation.slice(1).toLowerCase();
         document.getElementById('frase-pergunta').textContent = questionText;
         
-        // Réinitialiser les couleurs des boutons avant chaque nouvelle question
+        // Réinitialiser les couleurs et l'état des boutons avant chaque nouvelle question
         document.querySelectorAll('#tela-nivel-4 .btn-verdadeiro-falso').forEach(btn => {
             btn.classList.remove('feedback-correto', 'feedback-incorreto');
             btn.disabled = false;
@@ -957,7 +955,7 @@
         document.querySelectorAll('#tela-nivel-4 .btn-verdadeiro-falso').forEach(btn => btn.disabled = true);
         
         setTimeout(() => {
-            // 3. Réactiver les boutons (fait dans la fonction suivante pour les cas simples)
+            // 3. Procéder
             
             if (isCorrect) {
                 estadoJogo.frasesCompletasN4[phraseActuelleData.mot] = (estadoJogo.frasesCompletasN4[phraseActuelleData.mot] || 0) + 1;
