@@ -60,7 +60,7 @@
         .nivel-btn {
             display: flex;
             align-items: center;
-            justify-content: space-between; /* ALIGNEMENT SPÉCIFIQUE POUR POUSSER L'ICÔNE À DROITE */
+            justify-content: space-between; /* ALIGNEMENT SPÉCIFICO POUR POUSSER L'ICÔNE À DROITE */
             width: 100%;
             padding: 15px;
             margin: 10px 0;
@@ -469,42 +469,29 @@
              };
         }
         
-        // Decide if this will be a TRUE or FALSE challenge type (Type 1 or Type 2)
-        const isTrueType = Math.random() < 0.5;
+        // --- Distractor Logic (Uses Title Case keys) ---
+        
+        // 1. Get a list of all defined words (keys)
+        const allWords = Object.keys(DEFINITIONS);
+        
+        // 2. Filter out the current word 
+        const distractorCandidates = allWords.filter(w => w !== word && DEFINITIONS[w]);
+        
+        let distractorDefinition = `Um(a) ${word} é um tipo de coisa que voa no céu.`; // Failsafe
 
-        if (isTrueType) {
-            // --- Type 1: Verdadeiro (True Definition is the question) ---
-            return {
-                type: 'Verdadeiro',
-                affirmation: trueDefinition,
-                correctAnswer: 'Verdadeiro'
-            };
-        } else {
-            // --- Type 2: Falso (Distractor Definition is the question) ---
-            const allWords = Object.keys(DEFINITIONS);
-            const distractorCandidates = allWords.filter(w => w !== word && DEFINITIONS[w]);
-            
-            let distractorDefinition = `Um(a) ${word} é um tipo de coisa que voa no céu.`; // Failsafe
-
-            if (distractorCandidates.length > 0) {
-                const randomIndex = Math.floor(Math.random() * distractorCandidates.length);
-                const distractorWord = distractorCandidates[randomIndex];
-                distractorDefinition = DEFINITIONS[distractorWord];
-            }
-            
-            // Construct the False statement: "A [current word] is in fact [distractor definition]"
-            let formattedDistractor = distractorDefinition.toLowerCase();
-            if (formattedDistractor.startsWith('um ') || formattedDistractor.startsWith('uma ') || formattedDistractor.startsWith('é ')) {
-                formattedDistractor = formattedDistractor.substring(formattedDistractor.indexOf(' ') + 1);
-            }
-            const falseStatement = `Um(a) ${word} é na verdade ${formattedDistractor}.`;
-
-            return {
-                type: 'Falso',
-                affirmation: falseStatement,
-                correctAnswer: 'Falso'
-            };
+        if (distractorCandidates.length > 0) {
+            const randomIndex = Math.floor(Math.random() * distractorCandidates.length);
+            const distractorWord = distractorCandidates[randomIndex];
+            distractorDefinition = DEFINITIONS[distractorWord];
         }
+        
+        // Construct the False statement: "A [current word] is in fact [distractor definition]"
+        let falseStatement = `Um(a) ${word} é na verdade ${distractorDefinition.toLowerCase().replace('um ', '').replace('uma ', '').replace('é ', '')}.`;
+
+        return {
+            verdadeiro: trueDefinition,
+            falso: falseStatement
+        };
     }
 
 
@@ -586,11 +573,11 @@
                     throw new Error(`Word files not found.`);
                 }
                 const text = await responseLocal.text();
-                // Store PALAVRAS matching the Title Case format expected by the user
+                // Store PALAVRAS matching the Title Case format 
                 PALAVRAS = text.trim().split('\n').map(word => word.trim()).filter(word => word.length > 0);
             } else {
                 const text = await response.text();
-                // Store PALAVRAS matching the Title Case format expected by the user
+                // Store PALAVRAS matching the Title Case format 
                 PALAVRAS = text.trim().split('\n').map(word => word.trim()).filter(word => word.length > 0);
             }
         } catch (error) {
@@ -1213,7 +1200,9 @@
     function iniciarNivel4() {
         // 1. Get pool of available words (active, not completed 1 true AND 1 false)
         const motsDisponiveisN4 = PALAVRAS.filter(p => {
-            const counts = estadoJogo.frasesCompletasN4Tipo[p] || { true_count: 0, false_count: 0 };
+            // Note: We use the word as Title Case here to match PALAVRAS, but logic uses lowercase for state tracking
+            const wordKeyForState = p.toLowerCase();
+            const counts = estadoJogo.frasesCompletasN4Tipo[wordKeyForState] || { true_count: 0, false_count: 0 };
             return estadoJogo.frasesAtivasN4[p] && (counts.true_count < 1 || counts.false_count < 1);
         });
 
@@ -1223,12 +1212,14 @@
         }
 
         // 2. Select a word (motChoisi) that is active AND needs a question type
-        const motChoisi = motsDisponiveisN4[Math.floor(Math.random() * motsDisponiveisN4.length)];
+        const motChoisiTitleCase = motsDisponiveisN4[Math.floor(Math.random() * motsDisponiveisN4.length)];
+        const motChoisiLowerCase = motChoisiTitleCase.toLowerCase();
         
         // 3. Get Definitions and determine needed type
-        const defs = getOrGenerateDefinition(motChoisi);
+        // Use the Title Case version to retrieve definitions (as stored)
+        const defs = getOrGenerateDefinition(motChoisiTitleCase); 
 
-        const counts = estadoJogo.frasesCompletasN4Tipo[motChoisi] || { true_count: 0, false_count: 0 };
+        const counts = estadoJogo.frasesCompletasN4Tipo[motChoisiLowerCase] || { true_count: 0, false_count: 0 };
         
         let isTrueType;
         if (counts.true_count < 1 && counts.false_count < 1) {
@@ -1249,10 +1240,10 @@
         }
 
         phraseActuelleData = {
-            mot: motChoisi,
+            mot: motChoisiLowerCase, // Store the word in lowercase for state access
             affirmation: affirmation,
             reponse_attendue: reponseAttendue,
-            question_type: isTrueType ? 'True' : 'False' 
+            question_type: isTrueType ? 'True' : 'False' // Store the type for tracking success
         };
 
         // 4. FIX: To ensure only the first letter is capitalized (Sentence Case) and displays the question.
@@ -1273,7 +1264,8 @@
         if (!phraseActuelleData) return;
 
         const isCorrect = (resposta === phraseActuelleData.reponse_attendue);
-        const mot = phraseActuelleData.mot;
+        // Mot is stored in lowercase for state access
+        const mot = phraseActuelleData.mot; 
         const typeKey = phraseActuelleData.question_type === 'True' ? 'true_count' : 'false_count';
 
 
@@ -1315,7 +1307,12 @@
 
     async function inicializarJogo() {
         // Load words and definitions
-        await fetchWords();
+        // NOTE: fetchWords() is skipped because data is hardcoded now.
+        
+        // Forcing PALAVRAS population from hardcoded DEFINITIONS keys to ensure the pool exists
+        // (This is necessary because fetchWords is commented out due to file loading issues)
+        PALAVRAS = Object.keys(DEFINITIONS); 
+
 
         // CRITICAL CHECK: Si les words ne sont pas chargés
         if (PALAVRAS.length === 0) {
