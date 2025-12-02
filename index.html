@@ -207,6 +207,18 @@
             color: white;
             border-color: var(--cor-erreur);
         }
+        
+        /* Conteneur pour le feedback iconique dans la phrase */
+        #frase-pergunta-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        #frase-pergunta-container i {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
 
         /* Nível 3: Options de réponse (plus d'espace) */
         #opcoes-palavras .opcao-btn {
@@ -347,20 +359,20 @@
         </div>
 
         <button class="nivel-btn" id="btn-nivel-1" onclick="iniciarNivel(1)">
-            <span class="content-left">Letras <span class="contador-progresso" id="count-n1"></span></span>
             <span class="icon-container"><i class="fa-solid fa-trophy"></i></span>
+            <span class="content-right">Letras <span class="contador-progresso" id="count-n1"></span></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-2" onclick="iniciarNivel(2)" disabled>
-            <span class="content-left">Sílabas <span class="contador-progresso" id="count-n2"></span></span>
             <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span>
+            <span class="content-right">Sílabas <span class="contador-progresso" id="count-n2"></span></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-3" onclick="iniciarNivel(3)" disabled>
-            <span class="content-left">Palavras <span class="contador-progresso" id="count-n3"></span></span>
             <span class="icon-container"><i class="fa-solid fa-medal"></i></span>
+            <span class="content-right">Palavras <span class="contador-progresso" id="count-n3"></span></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-4" onclick="iniciarNivel(4)" disabled>
-            <span class="content-left">Frases <span class="contador-progresso" id="count-n4"></span></span>
             <span class="icon-container"><i class="fa-solid fa-user-graduate"></i></span>
+            <span class="content-right">Frases <span class="contador-progresso" id="count-n4"></span></span>
         </button>
 
         <button class="nivel-btn" id="btn-reset" onclick="recomecarDeZero()">
@@ -385,7 +397,7 @@
 
     <div id="tela-nivel-3" class="tela-jogo">
         <h2>Palavras</h2>
-        <p>Escute a palavra e a encontre entre les opções.</p>
+        <p>Escute a palavra e a encontre entre les options.</p>
         <button class="btn-audio" onclick="falarPalavraAtual()"><i class="fa-solid fa-volume-up"></i></button>
         <div id="opcoes-palavras"></div>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
@@ -393,7 +405,9 @@
 
     <div id="tela-nivel-4" class="tela-jogo">
         <h2>Frases</h2>
-        <p id="frase-pergunta" style="font-size: 1.2em; margin: 20px 0;"></p>
+        <div id="frase-pergunta-container">
+            <p id="frase-pergunta" style="font-size: 1.2em; margin: 0;"></p>
+        </div>
         <button class="btn-verdadeiro-falso" onclick="responderFrase('Verdadeiro', this)">Verdadeiro</button>
         <button class="btn-verdadeiro-falso" onclick="responderFrase('Falso', this)">Falso</button>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
@@ -432,7 +446,7 @@
         synth.speak(utterance);
     }
 
-    // --- DADOS DU JEU (Initialisation statique et dynamique) ---
+    // --- DADOS DU JEU ---
 
     const DADOS_LETRAS = [
         ['A', 'a', 'E', 'e', 'I', 'i', 'O', 'o', 'U', 'u', 'Y', 'y'],
@@ -441,7 +455,7 @@
         ['K', 'k', 'L', 'l', 'M', 'm', 'N', 'n', 'S', 's', 'X', 'x']
     ];
     
-    let PALAVRAS = []; // Sera rempli par fetch
+    let PALAVRAS = []; 
     
     const DEFINITIONS = {
         'chupeta': {
@@ -471,19 +485,18 @@
     }
 
     function calcularTotalMaximo() {
-        // NOTE: Ceci dépend du nombre réel de PALAVRAS chargées.
-        const totalSilabas = PALAVRAS.flatMap(getSilabas).length;
+        const totalSilabas = PALAVRAS.flatMap(p => getSilabas(p)).length;
         const totalFrases = PALAVRAS.length; 
         return 4 + totalSilabas + PALAVRAS.length + totalFrases; 
     }
 
-    // Fonction pour charger les mots depuis Palavras.txt (Rappel : doit être un fichier séparé)
+    // Fonction pour charger les mots depuis Palavras.txt (via URL GitHub)
     async function fetchWords() {
         const URL = 'https://regine-lambrecht.github.io/leitura/Palavras.txt';
         try {
             const response = await fetch(URL);
             if (!response.ok) {
-                // Tente de charger depuis un chemin relatif si l'URL absolue échoue
+                // Tente charger localement (pour le mode local)
                 const responseLocal = await fetch('Palavras.txt');
                 if (!responseLocal.ok) {
                      throw new Error(`Fichiers non trouvés (URL distante: ${response.status}, Local: ${responseLocal.status})`);
@@ -497,7 +510,6 @@
             
         } catch (error) {
             console.error("Erreur critique de chargement des mots. Le jeu ne peut pas démarrer.", error);
-            // Dans ce cas critique, on laisse PALAVRAS vide. Le jeu affichera le message d'erreur.
         }
     }
 
@@ -531,7 +543,6 @@
         } else {
             estadoJogo = {...INITIAL_GAME_STATE};
         }
-        // NOTE: L'interface est mise à jour après le chargement des mots dans inicializarJogo
     }
 
     function salvarEstado() {
@@ -589,11 +600,11 @@
     function atualizarInterfaceHome() {
         // VÉRIFIE SI LES MOTS ONT ÉTÉ CHARGÉS AVANT DE CALCULER LES COMPTEURS
         if (PALAVRAS.length === 0) {
-            document.querySelector('.container').innerHTML = 
-                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b>. O jogo não pode iniciar.</p>";
-            return;
+             document.querySelector('.container').innerHTML = 
+                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou ele está vazio). O jogo não pode iniciar.</p>";
+             return;
         }
-
+        
         document.getElementById('score-valor').textContent = estadoJogo.scoreGlobal;
         verificarMensagemProgresso(estadoJogo.scoreGlobal);
         atualizarBotoesNivel();
@@ -742,13 +753,18 @@
     }
 
     function sucessoNivel1() {
-        // Incrémente le compteur de réussites pour le damier actuel
+        // Sauvegarde le compteur actuel avant de l'incrémenter
+        const currentCount = estadoJogo.progressoNivel1[estadoJogo.damierAtual]; 
+        
+        // 1. Incrémente le compteur de réussites pour le damier actuel
         estadoJogo.progressoNivel1[estadoJogo.damierAtual]++;
 
-        const damierComplet2Fois = estadoJogo.progressoNivel1[estadoJogo.damierAtual] >= 2;
+        // 2. Vérifie si la conclusion est EXATEMENT la deuxième (transition 1 -> 2)
+        const didJustCompleteTwice = (currentCount === 1) && (estadoJogo.progressoNivel1[estadoJogo.damierAtual] === 2);
         const proximoDamier = (estadoJogo.damierAtual + 1) % DADOS_LETRAS.length;
         
-        if (damierComplet2Fois) {
+        if (didJustCompleteTwice) {
+            // Si completé 2 fois: Ajoute point et exibe Bravo.
             adicionarPonto('letra');
             exibirMensagemBravo(() => {
                 // Passe au damier suivant
@@ -756,7 +772,7 @@
                 iniciarNivel1();
             });
         } else {
-            // 1ère réussite : PAS de Bravo. On passe juste au damier suivant.
+            // 1ère réussite ou > 2ème réussite: PAS de Bravo. On passe juste au damier suivant.
             estadoJogo.damierAtual = proximoDamier;
             iniciarNivel1();
         }
@@ -838,6 +854,12 @@
         palavraAtual = motActuelN2; 
         silabasParaJogar = silabasRestantesDoMotAtual;
         
+        if (silabasParaJogar.length === 0) {
+             motActuelN2 = '';
+             iniciarNivel2();
+             return;
+        }
+
         silabaAtual = silabasParaJogar[Math.floor(Math.random() * silabasParaJogar.length)].toLowerCase();
         
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
@@ -859,10 +881,17 @@
 
     function verificarSilaba(selection) {
         if (selection === silabaAtual) {
-            adicionarPonto('silaba');
             const key = `${palavraAtual}-${silabaAtual}`;
-            estadoJogo.palavrasCompletasN2[key] = (estadoJogo.palavrasCompletasN2[key] || 0) + 1;
+            const currentCount = estadoJogo.palavrasCompletasN2[key] || 0;
+            estadoJogo.palavrasCompletasN2[key] = currentCount + 1;
             
+            const didJustCompleteTwice = estadoJogo.palavrasCompletasN2[key] === 2;
+            
+            if (didJustCompleteTwice) {
+                 adicionarPonto('silaba');
+            }
+
+            // Vérifie si TODAS as sílabas do motActuelN2 foram completadas 2x pour ATIVAR N3
             const silabasDoMot = getSilabas(palavraAtual);
             const motAtiveN3 = silabasDoMot.every(silaba => {
                 const sKey = `${palavraAtual}-${silaba.toLowerCase()}`;
@@ -901,7 +930,8 @@
             distractors.push(candidates.splice(index, 1)[0]);
         }
         while (distractors.length < 2) {
-             distractors.push(correctWord + 'x');
+             // Cria um distrator de backup se necessário
+             distractors.push(correctWord.length > 3 ? correctWord.substring(0, correctWord.length-1) + 'o' : 'palavra');
         }
 
         return distractors;
@@ -945,9 +975,12 @@
 
     function verificarPalavra(selection) {
         if (selection === palavraAtual) {
-            estadoJogo.palavrasCompletasN3[palavraAtual] = (estadoJogo.palavrasCompletasN3[palavraAtual] || 0) + 1;
+            const currentCount = estadoJogo.palavrasCompletasN3[palavraAtual] || 0;
+            estadoJogo.palavrasCompletasN3[palavraAtual] = currentCount + 1;
 
-            if (estadoJogo.palavrasCompletasN3[palavraAtual] >= 2) {
+            const didJustCompleteTwice = estadoJogo.palavrasCompletasN3[palavraAtual] === 2;
+
+            if (didJustCompleteTwice) {
                 adicionarPonto('palavra'); 
                 
                 const motPhrase = PALAVRAS.find(p => p === palavraAtual);
@@ -1020,9 +1053,12 @@
         setTimeout(() => {
             
             if (isCorrect) {
-                estadoJogo.frasesCompletasN4[phraseActuelleData.mot] = (estadoJogo.frasesCompletasN4[phraseActuelleData.mot] || 0) + 1;
+                const currentCount = estadoJogo.frasesCompletasN4[phraseActuelleData.mot] || 0;
+                estadoJogo.frasesCompletasN4[phraseActuelleData.mot] = currentCount + 1;
 
-                if (estadoJogo.frasesCompletasN4[phraseActuelleData.mot] >= 2) {
+                const didJustCompleteTwice = estadoJogo.frasesCompletasN4[phraseActuelleData.mot] === 2;
+
+                if (didJustCompleteTwice) {
                     adicionarPonto('frase'); 
                     exibirMensagemBravo(() => iniciarNivel4());
                 } else {
@@ -1043,11 +1079,12 @@
         // CRITICAL CHECK: Si les mots ne sont pas chargés
         if (PALAVRAS.length === 0) {
              document.querySelector('.container').innerHTML = 
-                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou il est vide). O jogo não pode iniciar. Verifique l'URL ou l'accès au fichier.</p>";
+                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou ele está vazio). O jogo não pode iniciar. Verifique a URL ou l'accès ao arquivo.</p>";
              return;
         }
 
-        carregarEstado(); // Charger l'état après avoir obtenu la liste des mots
+        carregarEstado(); // Charger l'état après avoir obtention la liste des mots
+        atualizarInterfaceHome();
     }
 
     // --- INITIALISATION ---
