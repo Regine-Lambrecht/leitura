@@ -458,8 +458,8 @@
     * using a definition from a random, different word.
     */
     function getOrGenerateDefinition(word) {
-        const wordKey = word.toLowerCase();
-        const trueDefinition = DEFINITIONS[wordKey];
+        // Use word as key, as it's assumed to be Title Case
+        const trueDefinition = DEFINITIONS[word];
         
         if (!trueDefinition) {
              // Fallback if the definition is missing
@@ -482,14 +482,14 @@
         } else {
             // --- Type 2: Falso (Distractor Definition is the question) ---
             const allWords = Object.keys(DEFINITIONS);
-            const distractorCandidates = allWords.filter(w => w !== wordKey && DEFINITIONS[w]);
+            const distractorCandidates = allWords.filter(w => w !== word && DEFINITIONS[w]);
             
             let distractorDefinition = `Um(a) ${word} é um tipo de coisa que voa no céu.`; // Failsafe
 
             if (distractorCandidates.length > 0) {
                 const randomIndex = Math.floor(Math.random() * distractorCandidates.length);
-                const distractorWordKey = distractorCandidates[randomIndex];
-                distractorDefinition = DEFINITIONS[distractorWordKey];
+                const distractorWord = distractorCandidates[randomIndex];
+                distractorDefinition = DEFINITIONS[distractorWord];
             }
             
             // Construct the False statement: "A [current word] is in fact [distractor definition]"
@@ -561,8 +561,8 @@
             text.split('\n').forEach(line => {
                 const parts = line.split(':');
                 if (parts.length >= 2) {
-                    // Store keys in lowercase for internal processing consistency
-                    const word = parts[0].trim().toLowerCase(); 
+                    // Store keys matching the Title Case format expected by the user
+                    const word = parts[0].trim(); 
                     const definition = parts.slice(1).join(':').trim(); 
                     if (word && definition) {
                         DEFINITIONS[word] = definition;
@@ -586,10 +586,12 @@
                     throw new Error(`Word files not found.`);
                 }
                 const text = await responseLocal.text();
-                PALAVRAS = text.trim().split('\n').map(word => word.trim().toLowerCase()).filter(word => word.length > 0);
+                // Store PALAVRAS matching the Title Case format expected by the user
+                PALAVRAS = text.trim().split('\n').map(word => word.trim()).filter(word => word.length > 0);
             } else {
                 const text = await response.text();
-                PALAVRAS = text.trim().split('\n').map(word => word.trim().toLowerCase()).filter(word => word.length > 0);
+                // Store PALAVRAS matching the Title Case format expected by the user
+                PALAVRAS = text.trim().split('\n').map(word => word.trim()).filter(word => word.length > 0);
             }
         } catch (error) {
             console.error("Critical error loading Palavras.txt:", error);
@@ -631,7 +633,6 @@
         if (estadoSalvo) {
             const savedState = JSON.parse(estadoSalvo);
             
-            // Migrate old state structure safely for N4 type tracking
             if (!savedState.frasesCompletasN4Tipo) {
                 savedState.frasesCompletasN4Tipo = {};
             }
@@ -1113,7 +1114,7 @@
             candidates.splice(index, 1); // Retirer le candidat sélectionné pour éviter la répétition
         }
 
-        // Ajout d'une protection si la liste PALAVRAS est trop courte ou mal formée
+        // Ajout d'une protection si la liste PALAVRAS est trop courte ou mal informée
         while (distractors.length < 2) {
              // Cria um distrator de backup se necessário
              distractors.push(correctWord.length > 3 ? correctWord.substring(0, correctWord.length-1) + 'o' : 'palavra');
@@ -1211,8 +1212,7 @@
 
     function iniciarNivel4() {
         // 1. Get pool of available words (active, not completed 1 true AND 1 false)
-        const motsDisponiblesN4 = PALAVRAS.filter(p => {
-             // Initialize counter if needed
+        const motsDisponiveisN4 = PALAVRAS.filter(p => {
             const counts = estadoJogo.frasesCompletasN4Tipo[p] || { true_count: 0, false_count: 0 };
             return estadoJogo.frasesAtivasN4[p] && (counts.true_count < 1 || counts.false_count < 1);
         });
@@ -1222,43 +1222,47 @@
             return;
         }
 
-        // 2. Select a word and retrieve definitions
+        // 2. Select a word (motChoisi) that is active AND needs a question type
         const motChoisi = motsDisponiveisN4[Math.floor(Math.random() * motsDisponiveisN4.length)];
+        
+        // 3. Get Definitions and determine needed type
         const defs = getOrGenerateDefinition(motChoisi);
 
-        // Determine which type of question (True or False statement) is still needed for this word
         const counts = estadoJogo.frasesCompletasN4Tipo[motChoisi] || { true_count: 0, false_count: 0 };
         
         let isTrueType;
         if (counts.true_count < 1 && counts.false_count < 1) {
-            // If neither done, pick randomly
             isTrueType = Math.random() < 0.5;
         } else if (counts.true_count < 1) {
-            // Only True type needed
             isTrueType = true;
         } else {
-            // Only False type needed
             isTrueType = false;
         }
 
         const affirmation = isTrueType ? defs.verdadeiro : defs.falso;
         const reponseAttendue = isTrueType ? 'Verdadeiro' : 'Falso';
+        
+        // --- CRITICAL CHECK: If the definition is missing, skip and retry ---
+        if (!affirmation || affirmation.includes("A definição de")) {
+             iniciarNivel4(); 
+             return;
+        }
 
         phraseActuelleData = {
             mot: motChoisi,
             affirmation: affirmation,
             reponse_attendue: reponseAttendue,
-            question_type: isTrueType ? 'True' : 'False' // Store the type for tracking success
+            question_type: isTrueType ? 'True' : 'False' 
         };
 
-        // 3. FIX: To ensure only the first letter is capitalized (Sentence Case) and robustly displays the question.
+        // 4. FIX: To ensure only the first letter is capitalized (Sentence Case) and displays the question.
         const lowerAffirmation = affirmation.toLowerCase();
         const questionText = lowerAffirmation.charAt(0).toUpperCase() + lowerAffirmation.slice(1);
         
-        // Guaranteed Text Assignment: This must succeed if questionText is valid.
+        // Guaranteed Text Assignment
         document.getElementById('frase-pergunta').textContent = questionText; 
 
-        // 4. Reset button states
+        // 5. Reset button states
         document.querySelectorAll('#tela-nivel-4 .btn-verdadeiro-falso').forEach(btn => {
             btn.classList.remove('feedback-correto', 'feedback-incorreto');
             btn.disabled = false;
