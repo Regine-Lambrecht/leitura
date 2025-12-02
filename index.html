@@ -12,6 +12,8 @@
             --cor-fundo: #ecf0f1;
             --cor-sucesso: #2ecc71;
             --cor-erro: #e74c3c;
+            --cor-voltar: #95a5a6; /* Gris pour le bouton Voltar */
+            --cor-reset: #e74c3c; /* Rouge pour le bouton Recomeçar */
             --tamanho-letra: 24px;
         }
 
@@ -39,7 +41,7 @@
             margin-bottom: 20px;
         }
 
-        /* Seção de Pontuação e Mensagens */
+        /* Seção de Pontuação et Messages */
         #score-container {
             margin-bottom: 20px;
             padding: 10px;
@@ -70,13 +72,16 @@
             transition: background-color 0.3s;
         }
 
-        .nivel-btn:hover:not(:disabled) {
-            background-color: #2980b9;
+        .nivel-btn.voltar-btn {
+            background-color: var(--cor-voltar) !important;
+        }
+        
+        .nivel-btn.voltar-btn:hover {
+            background-color: #7f8c8d !important;
         }
 
-        .nivel-btn i {
-            margin-right: 10px;
-            font-size: 1.5em;
+        .nivel-btn:hover:not(:disabled) {
+            background-color: #2980b9;
         }
 
         .nivel-btn:disabled {
@@ -92,8 +97,21 @@
             padding: 2px 8px;
             border-radius: 5px;
         }
+        
+        /* Bouton Recomeçar de zero */
+        #btn-reset {
+            background-color: var(--cor-reset);
+            color: white;
+            margin-top: 20px;
+            padding: 10px;
+            font-size: 1em;
+        }
 
-        /* Visibilidade des Telas */
+        #btn-reset:hover {
+            background-color: #c0392b;
+        }
+
+        /* Visibilité des Telas */
         .tela-jogo {
             display: none;
             padding-top: 20px;
@@ -205,6 +223,54 @@
             display: none;
             animation: fadeIn 0.3s;
         }
+        
+        /* Modal de Confirmação (Novo) */
+        #modal-confirmacao {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: #333;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1001; /* Doit être au-dessus de l'overlay */
+            width: 80%;
+            max-width: 350px;
+            display: none;
+        }
+
+        #modal-confirmacao p {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .botoes-modal {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .botoes-modal button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 50%;
+        }
+
+        #btn-sim {
+            background-color: var(--cor-reset);
+            color: white;
+        }
+
+        #btn-nao {
+            background-color: var(--cor-voltar);
+            color: white;
+        }
+
 
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -215,6 +281,14 @@
 <body>
 
 <div id="overlay"></div>
+
+<div id="modal-confirmacao">
+    <p>Você vai perder todos os pontos. Quer mesmo recomeçar?</p>
+    <div class="botoes-modal">
+        <button id="btn-sim" onclick="confirmaRecomeco()">Sim</button>
+        <button id="btn-nao" onclick="cancelaRecomeco()">Não</button>
+    </div>
+</div>
 
 <div class="container">
     <div id="tela-home" class="tela-jogo" style="display: block;">
@@ -237,6 +311,10 @@
         <button class="nivel-btn" id="btn-nivel-4" onclick="iniciarNivel(4)" disabled>
             <i class="fa-solid fa-user-graduate"></i> Nível 4: Frases <span class="contador-progresso" id="count-n4"></span>
         </button>
+
+        <button class="nivel-btn" id="btn-reset" onclick="recomecarDeZero()">
+            <i class="fa-solid fa-sync-alt"></i> Recomeçar de zero
+        </button>
     </div>
 
     <div id="tela-nivel-1" class="tela-jogo">
@@ -244,14 +322,14 @@
         <p>Encontre os 6 pares (Maiúscula e minúscula).</p>
         <div id="letras-grid"></div>
         <button class="btn-cancelar" onclick="cancelarSelecaoNivel1()">Cancelar</button>
-        <button class="nivel-btn" style="background-color: #95a5a6;" onclick="mostrarTela('home')">Voltar</button>
+        <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
     </div>
 
     <div id="tela-nivel-2" class="tela-jogo">
         <h2>Nível 2: Sílabas</h2>
         <p>Qual é a sílaba **<span id="silaba-maiuscula" style="color: var(--cor-principal);"></span>** em minúsculas?</p>
         <div id="opcoes-silabas"></div>
-        <button class="nivel-btn" style="background-color: #95a5a6;" onclick="mostrarTela('home')">Voltar</button>
+        <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
     </div>
 
     <div id="tela-nivel-3" class="tela-jogo">
@@ -259,7 +337,7 @@
         <p>Escute a palavra e a encontre entre as opções.</p>
         <button class="btn-audio" onclick="falarPalavraAtual()"><i class="fa-solid fa-volume-up"></i> Escutar</button>
         <div id="opcoes-palavras"></div>
-        <button class="nivel-btn" style="background-color: #95a5a6;" onclick="mostrarTela('home')">Voltar</button>
+        <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
     </div>
 
     <div id="tela-nivel-4" class="tela-jogo">
@@ -267,7 +345,7 @@
         <p id="frase-pergunta" style="font-size: 1.2em; margin: 20px 0;"></p>
         <button class="btn-verdadeiro-falso" onclick="responderFrase('Verdadeiro')">Verdadeiro</button>
         <button class="btn-verdadeiro-falso" onclick="responderFrase('Falso')">Falso</button>
-        <button class="nivel-btn" style="background-color: #95a5a6;" onclick="mostrarTela('home')">Voltar</button>
+        <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
     </div>
 
     <div id="mensagem-bravo">Bravo Pedro!</div>
@@ -312,10 +390,8 @@
         ['K', 'k', 'L', 'l', 'M', 'm', 'N', 'n', 'S', 's', 'X', 'x']
     ];
     
-    // Lista de palavras réduite
     const PALAVRAS = ['chupeta', 'carro', 'tomate'];
     
-    // Frases réduites
     const FRASES = [
         { palavra: 'chupeta', frase: 'Uma chupeta é um objeto que se dá a bebês.', resposta_correta: 'Verdadeiro' },
         { palavra: 'carro', frase: 'Um carro é um animal perigoso.', resposta_correta: 'Falso' },
@@ -323,33 +399,37 @@
     ];
     
     function getSilabas(palavra) {
-        // Syllabification (simplifiée)
-        const regex = /([bcdfghjklmnpqrstvwxyzç]?([aeiouyãõéêáíóú]{1,2}[bcdfghjklmnpqrstvwxyzç]?))/gi;
-        const matches = palavra.match(regex) || [palavra];
-        return matches.filter(s => s.length >= 2 || (matches.length === 1 && palavra.length >= 2));
+        switch(palavra) {
+            case 'chupeta': return ['chu', 'pe', 'ta'];
+            case 'carro': return ['car', 'ro'];
+            case 'tomate': return ['to', 'ma', 'te'];
+            default: 
+                const regex = /([bcdfghjklmnpqrstvwxyzç]?([aeiouyãõéêáíóú]{1,2}[bcdfghjklmnpqrstvwxyzç]?))/gi;
+                const matches = palavra.match(regex) || [palavra];
+                return matches.filter(s => s.length >= 2 || (matches.length === 1 && palavra.length >= 2));
+        }
     }
 
     function calcularTotalMaximo() {
         const totalSilabas = PALAVRAS.flatMap(getSilabas).length;
-        // N1: 4 succès (chaque damier 2x) = 4
-        // N2: totalSilabas succès (chaque syllabe 2x)
-        // N3: PALAVRAS.length succès (chaque mot 2x)
-        // N4: FRASES.length succès (chaque phrase 2x)
-        return 4 + totalSilabas + PALAVRAS.length + FRASES.length;
+        return 4 + totalSilabas + PALAVRAS.length + FRASES.length; // 18 points max
     }
 
     // --- Variáveis de Estado Global ---
-    let estadoJogo = {
+    
+    const INITIAL_GAME_STATE = {
         scoreGlobal: 0,
         progressoNivel1: [0, 0, 0, 0],
         damierAtual: 0,
-        selecaoN1: [],
+        selecaoN1: [], 
         palavrasCompletasN2: {},
         palavrasAtivasN3: [],
         palavrasCompletasN3: {},
         frasesAtivasN4: [],
         frasesCompletasN4: {}
     };
+
+    let estadoJogo = {...INITIAL_GAME_STATE};
     
     let palavraAtual = ''; 
     let fraseAtual = null; 
@@ -361,6 +441,8 @@
         const estadoSalvo = localStorage.getItem('aprendendoComPedro');
         if (estadoSalvo) {
             estadoJogo = JSON.parse(estadoSalvo);
+        } else {
+            estadoJogo = {...INITIAL_GAME_STATE};
         }
         atualizarInterfaceHome();
     }
@@ -368,6 +450,40 @@
     function salvarEstado() {
         localStorage.setItem('aprendendoComPedro', JSON.stringify(estadoJogo));
     }
+    
+    /**
+     * Affiche la modal de confirmation pour la réinitialisation.
+     */
+    function recomecarDeZero() {
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById('modal-confirmacao').style.display = 'block';
+    }
+
+    /**
+     * Annule la réinitialisation (clic sur "Não").
+     */
+    function cancelaRecomeco() {
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('modal-confirmacao').style.display = 'none';
+    }
+
+    /**
+     * Effectue la réinitialisation (clic sur "Sim").
+     */
+    function confirmaRecomeco() {
+        // Cacher la modal et l'overlay
+        cancelaRecomeco(); 
+        
+        // Réinitialiser l'état local
+        estadoJogo = {...INITIAL_GAME_STATE};
+        // Vider le localStorage
+        localStorage.removeItem('aprendendoComPedro');
+        
+        // Recharger l'interface et revenir à l'accueil
+        atualizarInterfaceHome();
+        mostrarTela('home');
+    }
+
 
     function mostrarTela(id) {
         document.querySelectorAll('.tela-jogo').forEach(tela => tela.style.display = 'none');
@@ -415,17 +531,17 @@
         // N1
         document.getElementById('count-n1').textContent = `(${damierComplet}/${DADOS_LETRAS.length})`;
 
-        // N2
+        // N2 
         const btnN2 = document.getElementById('btn-nivel-2');
         btnN2.disabled = (damierComplet === 0);
         btnN2.querySelector('.contador-progresso').textContent = `(${motsActifsN3}/${totalPalavrasN3})`;
         
-        // N3
+        // N3 
         const btnN3 = document.getElementById('btn-nivel-3');
         btnN3.disabled = (motsActifsN3 === 0);
         btnN3.querySelector('.contador-progresso').textContent = `(${phrasesActivesN4}/${FRASES.length})`;
 
-        // N4
+        // N4 
         const btnN4 = document.getElementById('btn-nivel-4');
         btnN4.disabled = (phrasesActivesN4 === 0);
         btnN4.querySelector('.contador-progresso').textContent = `(${phrasesCompletesN4}/${FRASES.length})`;
@@ -484,6 +600,9 @@
 
     function selecionarLetra(element) {
         if (element.classList.contains('correta') || estadoJogo.selecaoN1.length >= 2) return;
+        
+        if (estadoJogo.selecaoN1.includes(element)) return;
+
         element.classList.add('selecionada');
         estadoJogo.selecaoN1.push(element);
 
@@ -493,9 +612,11 @@
     }
 
     function cancelarSelecaoNivel1() {
-        if (estadoJogo.selecaoN1.length === 1) {
-            estadoJogo.selecaoN1[0].classList.remove('selecionada');
-            estadoJogo.selecaoN1 = [];
+        if (estadoJogo.selecaoN1.length >= 1) {
+            const lastElement = estadoJogo.selecaoN1.pop();
+            if (lastElement) {
+                lastElement.classList.remove('selecionada');
+            }
         }
     }
 
@@ -530,14 +651,10 @@
         estadoJogo.progressoNivel1[estadoJogo.damierAtual]++;
 
         const damierComplet2Fois = estadoJogo.progressoNivel1[estadoJogo.damierAtual] >= 2;
-        
-        if (damierComplet2Fois) {
-            adicionarPonto('letra'); 
-        }
-
         const proximoDamier = (estadoJogo.damierAtual + 1) % DADOS_LETRAS.length;
         
         if (damierComplet2Fois) {
+            adicionarPonto('letra');
             exibirMensagemBravo(() => {
                 estadoJogo.damierAtual = proximoDamier;
                 iniciarNivel1();
@@ -662,9 +779,8 @@
             const index = Math.floor(Math.random() * candidates.length);
             distractors.push(candidates.splice(index, 1)[0]);
         }
-        // Fallback pour assurer 3 options (seulement pour la démo)
         while (distractors.length < 2) {
-             distractors.push(correctWord + 'x'); // Ajout d'un mot bidon
+             distractors.push(correctWord + 'x');
         }
 
         return distractors;
@@ -716,7 +832,7 @@
                     estadoJogo.frasesAtivasN4.push(frase.frase);
                     exibirMensagemBravo(() => iniciarNivel3());
                 } else {
-                    exibirMensagemBravo(() => iniciarNivel3());
+                    iniciarNivel3();
                 }
             } else {
                 iniciarNivel3();
