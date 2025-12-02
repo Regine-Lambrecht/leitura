@@ -285,7 +285,6 @@
             z-index: 1001; 
             width: 80%;
             max-width: 350px;
-            display: none; /* CORRECTION: Masquer par défaut */
         }
 
         #modal-confirmacao p {
@@ -330,7 +329,7 @@
 
 <div id="overlay"></div>
 
-<div id="modal-confirmacao">
+<div id="modal-confirmacao" style="display: none;">
     <p>Você vai perder todos os pontos. Quer mesmo recomeçar?</p>
     <div class="botoes-modal">
         <button id="btn-sim" onclick="confirmaRecomeco()">Sim</button>
@@ -348,20 +347,20 @@
         </div>
 
         <button class="nivel-btn" id="btn-nivel-1" onclick="iniciarNivel(1)">
-            <span>Letras <span class="contador-progresso" id="count-n1"></span></span>
-            <i class="fa-solid fa-trophy"></i>
+            <span class="content-left">Letras <span class="contador-progresso" id="count-n1"></span></span>
+            <span class="icon-container"><i class="fa-solid fa-trophy"></i></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-2" onclick="iniciarNivel(2)" disabled>
-            <span>Sílabas <span class="contador-progresso" id="count-n2"></span></span>
-            <span><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span>
+            <span class="content-left">Sílabas <span class="contador-progresso" id="count-n2"></span></span>
+            <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-3" onclick="iniciarNivel(3)" disabled>
-            <span>Palavras <span class="contador-progresso" id="count-n3"></span></span>
-            <i class="fa-solid fa-medal"></i>
+            <span class="content-left">Palavras <span class="contador-progresso" id="count-n3"></span></span>
+            <span class="icon-container"><i class="fa-solid fa-medal"></i></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-4" onclick="iniciarNivel(4)" disabled>
-            <span>Frases <span class="contador-progresso" id="count-n4"></span></span>
-            <i class="fa-solid fa-user-graduate"></i>
+            <span class="content-left">Frases <span class="contador-progresso" id="count-n4"></span></span>
+            <span class="icon-container"><i class="fa-solid fa-user-graduate"></i></span>
         </button>
 
         <button class="nivel-btn" id="btn-reset" onclick="recomecarDeZero()">
@@ -386,7 +385,7 @@
 
     <div id="tela-nivel-3" class="tela-jogo">
         <h2>Palavras</h2>
-        <p>Escute a palavra e a encontre entre as opções.</p>
+        <p>Escute a palavra e a encontre entre les opções.</p>
         <button class="btn-audio" onclick="falarPalavraAtual()"><i class="fa-solid fa-volume-up"></i></button>
         <div id="opcoes-palavras"></div>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
@@ -455,7 +454,7 @@
         },
         'tomate': {
             verdadeiro: 'O tomate é uma fruta ou legume usado para fazer saladas.',
-            falso: 'Um tomate é geralmente de cor azul e tem sabor de chocolate.'
+            falso: 'Um tomate é geralmente de cor azul et a sabor de chocolate.'
         }
     };
 
@@ -477,7 +476,7 @@
         return 4 + totalSilabas + PALAVRAS.length + totalFrases; 
     }
 
-    // --- Variáveis de Estado Global ---
+    // --- Variables d'État Global ---
     
     const INITIAL_GAME_STATE = {
         scoreGlobal: 0,
@@ -485,7 +484,7 @@
         damierAtual: 0,
         selecaoN1: [], 
         palavrasCompletasN2: {},
-        palavrasAtivasN3: {}, // Changé en objet pour stocker l'état d'activation
+        palavrasAtivasN3: {}, 
         palavrasCompletasN3: {},
         frasesAtivasN4: {}, 
         frasesCompletasN4: {} 
@@ -588,27 +587,18 @@
         document.getElementById('count-n1').textContent = `(${damierComplet}/${DADOS_LETRAS.length})`;
 
         // N2 : Reste-t-il des mots N2 non complétés 2x ET non activés N3 ?
-        const motsNonActives = PALAVRAS.filter(p => !estadoJogo.palavrasAtivasN3[p]);
-        const motsRestantsN2 = motsNonActives.filter(p => {
-             const silabas = getSilabas(p);
-             return silabas.some(silaba => {
-                 const key = `${p}-${silaba.toLowerCase()}`;
-                 return (estadoJogo.palavrasCompletasN2[key] || 0) < 2;
-             });
-        }).length;
-
+        const motsRestantsN2 = PALAVRAS.filter(p => !estadoJogo.palavrasAtivasN3[p]).length;
         btnN2.disabled = (damierComplet === 0) || (motsRestantsN2 === 0);
         btnN2.querySelector('.contador-progresso').textContent = `(${motsActifsN3}/${totalPalavras})`;
         
         // N3 : Reste-t-il des mots N3 activés mais non complétés 2x ?
-        const motsCompletsN3x2 = Object.keys(estadoJogo.palavrasAtivasN3).filter(p => (estadoJogo.palavrasCompletasN3[p] || 0) >= 2).length;
-        const motsRestantsN3 = motsActifsN3 - motsCompletsN3x2;
+        const motsRestantsN3 = motsActifsN3 - Object.keys(estadoJogo.palavrasAtivasN3).filter(p => (estadoJogo.palavrasCompletasN3[p] || 0) >= 2).length;
         btnN3.disabled = (motsActifsN3 === 0) || (motsRestantsN3 === 0);
         btnN3.querySelector('.contador-progresso').textContent = `(${phrasesActivesN4}/${totalPalavras})`;
 
         // N4 : Reste-t-il des phrases N4 activées mais non complétées 2x ?
-        const phrasesCompletsN4x2 = Object.keys(estadoJogo.frasesAtivasN4).filter(p => (estadoJogo.frasesCompletasN4[p] || 0) >= 2).length;
-        const phrasesRestantesN4 = phrasesActivesN4 - phrasesCompletsN4x2;
+        const phrasesRestantesN4 = phrasesActivesN4 - Object.keys(estadoJogo.frasesAtivasN4).filter(p => (estadoJogo.frasesCompletasN4[p] || 0) >= 2).length;
+        const phrasesCompletsN4x2 = phrasesActivesN4 - phrasesRestantesN4;
         btnN4.disabled = (phrasesActivesN4 === 0) || (phrasesRestantesN4 === 0);
         btnN4.querySelector('.contador-progresso').textContent = `(${phrasesCompletsN4x2}/${totalPalavras})`;
     }
@@ -729,6 +719,7 @@
             });
         } else {
             // Passe au damier suivant (1ère réussite)
+            // L'appel à exibirMensagemBravo n'est PAS ici.
             estadoJogo.damierAtual = proximoDamier;
             iniciarNivel1();
         }
@@ -844,7 +835,7 @@
             if (motAtiveN3 && !estadoJogo.palavrasAtivasN3[palavraAtual]) {
                 estadoJogo.palavrasAtivasN3[palavraAtual] = true; // Active le mot pour le N3
                 motActuelN2 = ''; 
-                exibirMensagemBravo(() => iniciarNivel2()); 
+                exibirMensagemBravo(() => iniciarNivel2()); // Bravo s'affiche à l'activation N3
             } else {
                 iniciarNivel2(); 
             }
@@ -930,7 +921,7 @@
                     exibirMensagemBravo(() => iniciarNivel3()); 
                 }
             } else {
-                iniciarNivel3(); 
+                iniciarNivel3(); // Première réussite: pas de Bravo
             }
 
         } else {
