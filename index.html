@@ -273,7 +273,7 @@
             font-size: 2em;
             font-weight: bold;
             z-index: 1000;
-            /* REMOVED: display: none here, controlled by JS */
+            display: none;
             animation: fadeIn 0.3s;
         }
 
@@ -356,6 +356,7 @@
             <span class="content-left-group">Letras <span class="icon-container"><i class="fa-solid fa-trophy"></i></span></span>
             <span class="contador-progresso" id="count-n1"></span>
         </button>
+        
         <button class="nivel-btn" id="btn-nivel-2" onclick="iniciarNivel(2)" disabled>
             <span class="content-left-group">Sílabas <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span></span>
             <span class="contador-progresso" id="count-n2"></span>
@@ -381,6 +382,7 @@
         <button class="btn-cancelar" onclick="cancelarSelecaoNivel1()">Cancelar</button>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
     </div>
+
 
     <div id="tela-nivel-2" class="tela-jogo">
         <h2>Sílabas</h2>
@@ -538,9 +540,9 @@
 
     const INITIAL_GAME_STATE = {
         scoreGlobal: 0,
-        progressoNivel1: [0, 0, 0, 0],
-        damierAtual: 0,
-        selecaoN1: [],
+        progressoNivel1: [0, 0, 0, 0], // New N1 state
+        damierAtual: 0,                // New N1 state
+        selecaoN1: [],                 // New N1 state
         syllabesUniquesCompletes: {},
         palavrasAtivasN3: {},
         palavrasCompletasN3: {},
@@ -600,7 +602,7 @@
         }
     }
 
-    // SIMPLIFIED: Removed Bravo Pedro logic here for Nível 1 consistency
+    // SIMPLIFIED: Bravo logic kept general for other levels
     function exibirMensagemBravo(callback) {
         const msgElement = document.getElementById('mensagem-bravo');
         const overlayElement = document.getElementById('overlay');
@@ -644,6 +646,7 @@
         const motsActifsN3 = Object.keys(estadoJogo.palavrasAtivasN3).length;
         const phrasesActivesN4 = Object.keys(estadoJogo.frasesAtivasN4).length;
 
+        const btnN1 = document.getElementById('btn-nivel-1'); // Re-added N1 button ref
         const btnN2 = document.getElementById('btn-nivel-2');
         const btnN3 = document.getElementById('btn-nivel-3');
         const btnN4 = document.getElementById('btn-nivel-4');
@@ -651,32 +654,26 @@
         // --- NIVEAU 1 (Letras) ---
         // Y = Total Damiers (4). FIXÉ À 4.
         document.getElementById('count-n1').textContent = `(${damierComplet}/${DADOS_LETRAS.length})`;
-        btnNivel1 = document.getElementById('btn-nivel-1');
-        btnNivel1.disabled = (damierComplet === DADOS_LETRAS.length);
+        btnN1.disabled = (damierComplet === DADOS_LETRAS.length);
+        
+        // N2 is disabled until N1 is complete (4/4)
+        btnN2.disabled = (damierComplet < DADOS_LETRAS.length); 
+
 
         // --- NIVEAU 2 (Sílabas) ---
-
-        // Y N2: Nombre total de syllabes uniques dans TOUS les mots
         let toutesSilabesUniques = [...new Set(PALAVRAS.flatMap(getSilabas))].length;
-
-        // X N2: Nombre de syllabes UNIQUES complétées 2x
         let syllabesCompletesUniques = 0;
         Object.keys(estadoJogo.syllabesUniquesCompletes).forEach(syllabe => {
             if (estadoJogo.syllabesUniquesCompletes[syllabe] >= 2) {
                 syllabesCompletesUniques++;
             }
         });
-
         const motsRestantsN2 = totalPalavras - motsActifsN3;
-
-        btnN2.disabled = (damierComplet < DADOS_LETRAS.length) || (motsRestantsN2 === 0);
         btnN2.querySelector('.contador-progresso').textContent = `(${syllabesCompletesUniques}/${toutesSilabesUniques})`;
 
 
         // --- NIVEAU 3 (Palavras) ---
         const motsCompletsN3x2 = Object.keys(estadoJogo.palavrasAtivasN3).filter(p => (estadoJogo.palavrasCompletasN3[p] || 0) >= 2).length;
-
-        // Y N3: Total des mots ACTIVÉS (0 si aucun mot n'est actif)
         const denominateurN3 = motsActifsN3;
         const displayDenominateurN3 = denominateurN3 === 0 ? 0 : denominateurN3;
 
@@ -685,8 +682,6 @@
 
         // --- NIVEAU 4 (Frases) ---
         const phrasesCompletsN4x2 = Object.keys(estadoJogo.frasesAtivasN4).filter(p => (estadoJogo.frasesCompletasN4[p] || 0) >= 2).length;
-
-        // Y N4: Total des phrases ACTIVÉES
         const denominateurN4 = phrasesActivesN4;
         const displayDenominateurN4 = denominateurN4 === 0 ? 0 : denominateurN4;
 
@@ -714,7 +709,7 @@
         document.getElementById('progresso-msg').textContent = message;
     }
 
-    // --- NÍVEL 1: LETRAS ---
+    // --- NÍVEL 1: LETRAS (NEW CODE) ---
 
     function iniciarNivel(nivel) {
         if (PALAVRAS.length === 0) {
@@ -732,7 +727,7 @@
         }
     }
 
-    // FINAL RECODED: Lógica de inicialização do Nível 1 - SIMPLE SEQUENTIAL
+    // NEW CODE: Lógica de inicialização do Nível 1 - SIMPLE SEQUENTIAL
     function iniciarNivel1() {
         paresCorretosN1 = 0;
         estadoJogo.selecaoN1 = [];
@@ -743,9 +738,19 @@
             return;
         }
         
-        // Ensure damierAtual points to a valid index (0-3)
-        const damierIndexToLoad = estadoJogo.damierAtual % DADOS_LETRAS.length;
-        estadoJogo.damierAtual = damierIndexToLoad;
+        // Determine the set index to load
+        let indexToLoad = estadoJogo.damierAtual % DADOS_LETRAS.length;
+        
+        // If the current index is somehow already complete (2/2), advance until an incomplete one is found
+        let startCheck = indexToLoad;
+        while (estadoJogo.progressoNivel1[indexToLoad] >= 2) {
+             indexToLoad = (indexToLoad + 1) % DADOS_LETRAS.length;
+             if (indexToLoad === startCheck) { 
+                mostrarTela('home'); return; // Failsafe
+             }
+        }
+        
+        estadoJogo.damierAtual = indexToLoad;
         
         const damier = DADOS_LETRAS[estadoJogo.damierAtual];
         const melange = [...damier].sort(() => Math.random() - 0.5);
@@ -812,7 +817,7 @@
         salvarEstado();
     }
 
-    // FINAL RECODED: Lógica de sucesso do Nível 1 (Immediate Sequential Advance)
+    // NEW CODE: Lógica de sucesso do Nível 1 (Immediate Sequential Advance)
     function sucessoNivel1() {
         const currentCount = estadoJogo.progressoNivel1[estadoJogo.damierAtual];
         const currentDamierIndex = estadoJogo.damierAtual;
@@ -827,23 +832,19 @@
         estadoJogo.damierAtual = (currentDamierIndex + 1) % DADOS_LETRAS.length;
 
         if (didJustCompleteTwice) {
-            // Second solve: Award point and show Bravo (if N3/N4 needed it, but N1 is simple).
+            // Second solve: Award point.
             adicionarPonto('letra');
-            
-            // NOTE: The simple sequential flow dictates immediate jump regardless of Bravo.
-            // If the Bravo message is needed for other levels, we use the callback, otherwise direct call.
             
             // Check if Level 1 is fully complete (all 4 sets solved twice)
             if (estadoJogo.progressoNivel1.filter(c => c >= 2).length === DADOS_LETRAS.length) {
-                mostrarTela('home');
-            } else {
-                iniciarNivel1();
-            }
-
-        } else {
-            // First solve: Immediately load the next set (which was advanced in step 3)
-            iniciarNivel1();
-        }
+                mostrarTela('home'); // Go home and disable N1 button
+                return;
+            } 
+            // If not complete, initiate the next challenge immediately.
+        } 
+        
+        // If first solve OR second solve (and level is not complete), initiate the next challenge immediately.
+        iniciarNivel1();
         salvarEstado();
     }
 
@@ -979,12 +980,12 @@
     // --- NÍVEL 3: PALAVRAS ---
 
     function generateSimilarWords(correctWord, allWords) {
-        const firstLetter = correctWord[0];
+        const correctLower = correctWord.toLowerCase();
         const correctSyllabeCount = getSilabas(correctWord).length;
 
         // Filtrer les words qui sont différents du word correct
         let candidates = allWords.filter(w =>
-            w !== correctWord
+            w !== correctLower
         ).map(w => ({
             word: w,
             syllableCount: getSilabas(w).length
@@ -1012,7 +1013,7 @@
         // Ajout d'une protection si la liste PALAVRAS est trop courte ou mal formée
         while (distractors.length < 2) {
              // Cria um distrator de backup se necessário
-             distractors.push(correctWord.length > 3 ? correctWord.substring(0, correctWord.length-1) + 'o' : 'palavra');
+             distractors.push(correctLower.length > 3 ? correctLower.substring(0, correctLower.length-1) + 'o' : 'palavra');
         }
 
         return distractors.slice(0, 2);
