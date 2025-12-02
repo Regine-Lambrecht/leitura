@@ -731,19 +731,19 @@
         }
     }
 
-    // FINAL RECODED: Lógica de inicialização do Nível 1
+    // DEFINITIVE RECODED: Lógica de inicialização do Nível 1
     function iniciarNivel1() {
         paresCorretosN1 = 0;
         estadoJogo.selecaoN1 = [];
 
-        // Find the next incomplete damier to load.
+        // 1. Determine the index to load. We must look for the first *incomplete* one,
+        // starting from the currently stored index, to handle the "Voltar" case and starting the game.
         let damierIndexToLoad = -1;
         
-        // Loop through all 4 sets starting from the current damier to find the next incomplete one.
+        // Loop through all 4 sets starting from the current index (estadoJogo.damierAtual)
         for (let i = 0; i < DADOS_LETRAS.length; i++) {
-             // Use the modulo operator to cycle through indices: 0, 1, 2, 3, 0, 1, 2, 3...
             let currentIndex = (estadoJogo.damierAtual + i) % DADOS_LETRAS.length;
-
+            
             if (estadoJogo.progressoNivel1[currentIndex] < 2) {
                 // Found the next incomplete set.
                 damierIndexToLoad = currentIndex;
@@ -837,7 +837,6 @@
         const didJustCompleteTwice = (currentCount === 1) && (estadoJogo.progressoNivel1[currentDamierIndex] === 2);
         
         // 3. Define o próximo damier SEQUENCIALMENTE (D1 -> D2 -> D3 -> D4 -> D1)
-        // Isso garante que a próxima chamada a iniciarNivel1 (seja direta ou via callback) carregue o próximo set.
         estadoJogo.damierAtual = (currentDamierIndex + 1) % DADOS_LETRAS.length;
 
         if (didJustCompleteTwice) {
@@ -1094,7 +1093,7 @@
     let phraseActuelleData = null;
 
     function iniciarNivel4() {
-        // Filtrer les mots dont la phrase est activée mais non complétée 2x
+        // Filtrar les mots dont la phrase est activée mais non complétée 2x
         const motsDisponiblesN4 = PALAVRAS.filter(p =>
             estadoJogo.frasesAtivasN4[p] &&
             (estadoJogo.frasesCompletasN4[p] || 0) < 2
