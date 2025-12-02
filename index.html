@@ -454,44 +454,139 @@
     let PALAVRAS = []; // Sera rempli par fetch
 
     const DEFINITIONS = {
-        'chupeta': {
-            verdadeiro: 'Uma chupeta é um objeto que se dá a bebês.',
-            falso: 'Uma chupeta é usada para limpar o chão da casa.'
-        },
-        'carro': {
-            verdadeiro: 'Um carro tem quatro rodas e pode levar pessoas para viajar.',
-            falso: 'Um carro é um animal perigoso que mora nas árvores.'
-        },
-        'tomate': {
-            verdadeiro: 'O tomate é uma fruta ou legume usado para fazer saladas.',
-            falso: 'Um tomate é geralmente de cor azul et a sabor de chocolate.'
-        }
+        // --- START OF DEFINITION LIST (78 PALAVRAS) ---
+        'abelha': "Um inseto que produz mel e vive em grandes colmeias.",
+        'arara': "Um pássaro tropical grande e colorido, conhecido por sua cauda longa.",
+        'baleia': "O maior animal do planeta, um mamífero que vive nos oceanos.",
+        'banana': "Uma fruta amarela e alongada, macia e doce, que cresce em cachos.",
+        'barata': "Um inseto noturno, de cor escura, que vive em lugares úmidos e sujos.",
+        'boca': "A abertura por onde a comida e a fala entram e saem do corpo.",
+        'bola': "Um objeto esférico usado para diversos jogos e esportes.",
+        'bolacha': "Um biscoito, um doce seco e plano, geralmente feito de farinha e açúcar.",
+        'boliche': "Um esporte de arremesso que derruba dez pinos com uma bola pesada.",
+        'bolo': "Uma massa doce, assada no forno, feita com farinha, ovos e açúcar.",
+        'braço': "A parte do corpo humano que se estende do ombro até a mão.",
+        'brasil': "O maior país da América do Sul, famoso pelo samba e floresta amazônica.",
+        'cabide': "Um objeto com gancho, usado para pendurar roupas em armários.",
+        'cabine': "Um compartimento fechado em um avião, navio ou elevador.",
+        'cachorro': "Um mamífero doméstico, conhecido por sua lealdade e latidos.",
+        'cama': "Um móvel com colchão onde as pessoas se deitam para dormir.",
+        'caneta': "Um instrumento usado para escrever ou desenhar, usando tinta.",
+        'casa': "Uma construção onde as pessoas moram e se abrigam.",
+        'casada': "Uma mulher que está unida a outra pessoa por meio de um casamento.",
+        'chapéu': "Uma peça de vestuário usada para cobrir a cabeça.",
+        'chave': "Um pequeno objeto de metal que aciona fechaduras e ignições.",
+        'chiclete': "Uma goma de mascar doce e elástica, feita para ser mastigada.",
+        'chupeta': "Um objeto de borracha que se dá a bebês para chupar.",
+        'chuva': "Água que cai das nuvens em forma de gotas.",
+        'cobra': "Um réptil longo e rastejante, muitas vezes venenoso.",
+        'coelho': "Um mamífero pequeno, com orelhas longas e que adora cenouras.",
+        'cofre': "Uma caixa metálica e forte, usada para guardar dinheiro e objetos de valor.",
+        'diploma': "Um certificado que comprova a conclusão de um curso ou estudo.",
+        'domingão': "O último dia da semana, geralmente dedicado ao descanso e lazer.",
+        'festejar': "Comemorar ou celebrar algo com alegria e animação.",
+        'faca': "Um utensílio com lâmina afiada, usado para cortar alimentos.",
+        'fica': "O ato de permanecer ou continuar em um determinado lugar.",
+        'fita': "Uma tira fina de tecido ou plástico, usada para amarrar ou decorar.",
+        'foca': "Um mamífero marinho com corpo alongado, que vive em regiões frias.",
+        'foguete': "Um veículo espacial que usa propulsão para ir para o espaço sideral.",
+        'galinha': "Uma ave doméstica, criada para fornecer carne e ovos.",
+        'gato': "Um felino doméstico, conhecido por miar e por sua agilidade.",
+        'golfinho': "Um mamífero marinho inteligente, conhecido por saltar na água.",
+        'invejar': "Desejar ter o que pertence ou é de outra pessoa.",
+        'jabuti': "Um réptil terrestre, parecido com a tartaruga, com casco duro.",
+        'lábio': "A parte carnuda e móvel que contorna a boca.",
+        'lápis': "Um instrumento fino de madeira e grafite, usado para escrever ou desenhar.",
+        'leão': "Um grande felino, conhecido como o rei da selva por sua força e juba.",
+        'letra': "Cada sinal gráfico que forma o alfabeto e representa um som.",
+        'lixo': "Restos e materiais descartados que precisam ser jogados fora.",
+        'livro': "Um conjunto de páginas encadernadas, contendo textos ou imagens.",
+        'maçã': "Uma fruta redonda e crocante, geralmente vermelha ou verde.",
+        'macaco': "Um primata com cauda e braços longos, conhecido por subir em árvores.",
+        'neto': "O filho da filha ou do filho de uma pessoa.",
+        'onça': "Um grande felino predador, com pele pintada, típico da América do Sul.",
+        'pato': "Uma ave aquática, com pescoço curto e bico largo, que nada e voa.",
+        'peito': "A parte superior e frontal do tronco do corpo humano.",
+        'peixe': "Um animal aquático com brânquias e barbatanas, que vive em rios ou mares.",
+        'peteca': "Um brinquedo com penas na base, jogado com as mãos por cima de uma rede.",
+        'planejar': "Organizar ou estabelecer um conjunto de ações para atingir um objetivo.",
+        'planilha': "Um documento eletrônico com linhas e colunas, usado para cálculos e dados.",
+        'porco': "Um mamífero criado em fazendas para o consumo de sua carne.",
+        'porta': "Uma barreira móvel que permite a entrada e saída de um cômodo.",
+        'prato': "Um utensílio de mesa, geralmente redondo e raso, usado para servir a comida.",
+        'professor': "Uma pessoa que ensina alunos em escolas ou universidades.",
+        'sacada': "Uma varanda ou terraço que se projeta para fora do prédio.",
+        'salada': "Uma mistura de folhas, legumes e verduras, geralmente servida fria.",
+        'sapato': "Um calçado que cobre o pé, usado para proteger e andar.",
+        'sapo': "Um anfíbio que pula e vive perto de água, conhecido por coaxar.",
+        'sorriso': "Uma expressão facial de felicidade, feita com a boca.",
+        'sorvete': "Uma sobremesa gelada, doce e cremosa, feita de leite e açúcar.",
+        'tapete': "Um tecido grosso, usado no chão para decorar ou aquecer.",
+        'tato': "O sentido que permite sentir a textura e a temperatura das coisas através da pele.",
+        'tatu': "Um mamífero com o corpo coberto por uma carapaça dura e articulada.",
+        'telhado': "A estrutura superior da casa que a protege da chuva e do sol.",
+        'teto': "A parte interna superior de um cômodo ou construção.",
+        'tomada': "Um ponto na parede onde se conecta o plugue de aparelhos elétricos.",
+        'urubu': "Uma ave de rapina grande e preta, conhecida por se alimentar de carcaças.",
+        // Duplicates handled in the list
+        'baleia': "O maior animal do planeta, um mamífero que vive nos oceanos.", 
+        'barata': "Um inseto noturno, de cor escura, que vive em lugares úmidos e sujos.", 
+        'cobra': "Um réptil longo e rastejante, muitas vezes venenoso.", 
+        'porco': "Um mamífero criado em fazendas para o consumo de sua carne.", 
+        'chupeta': "Um objeto de borracha que se dá a bebês para chupar.", 
+        'sorvete': "Uma sobremesa gelada, doce e cremosa, feita de leite e açúcar." 
+        // --- END OF DEFINITION LIST ---
     };
 
     /**
-    * Génère une définition Vrai/Faux pour tout word non couvert par DEFINITIONS.
+    * RECODED: Retrieves the true definition and generates a false statement 
+    * using a definition from a random, different word.
     */
-    function generateDefinition(word) {
-        const wordUpper = word.charAt(0).toUpperCase() + word.slice(1);
-
-        const falseObjects = ['peixe', 'planeta', 'caminhão', 'avião', 'gato'];
-        const falseLocations = ['lua', 'fundo do mar', 'céu', 'teatro', 'geladeira'];
-
-        const absurdObject = falseObjects[Math.floor(Math.random() * falseObjects.length)];
-        const absurdLocation = falseLocations[Math.floor(Math.random() * falseLocations.length)];
+    function getOrGenerateDefinition(word) {
+        const trueDefinition = DEFINITIONS[word];
+        
+        if (!trueDefinition) {
+             // Fallback if the definition is missing
+             return {
+                 verdadeiro: `A definição de ${word} está faltando no banco de dados.`,
+                 falso: `Um(a) ${word} é um tipo de coisa que voa no céu.`
+             };
+        }
+        
+        // 1. Get a list of all defined words (keys)
+        const allWords = Object.keys(DEFINITIONS);
+        
+        // 2. Filter out the current word 
+        const distractorCandidates = allWords.filter(w => w !== word && DEFINITIONS[w]);
+        
+        // 3. Select a random distractor word
+        let distractorWord = word;
+        if (distractorCandidates.length > 0) {
+            const randomIndex = Math.floor(Math.random() * distractorCandidates.length);
+            distractorWord = distractorCandidates[randomIndex];
+        }
+        
+        // 4. Create the False statement using the definition of the distractor word
+        const distractorDefinition = DEFINITIONS[distractorWord];
+        
+        let falseStatement;
+        if (distractorWord === word) {
+            // Failsafe: if no distractor was found (only happens if the list is too short/empty)
+            falseStatement = `A afirmação para ${word} é falsa, mas a definição de distração não foi encontrada.`; 
+        } else {
+            // Construct the False statement: "A [current word] is in fact [distractor definition]"
+            let formattedDistractor = distractorDefinition.toLowerCase();
+            if (formattedDistractor.startsWith('um ') || formattedDistractor.startsWith('uma ') || formattedDistractor.startsWith('é ')) {
+                formattedDistractor = formattedDistractor.substring(formattedDistractor.indexOf(' ') + 1);
+            }
+            // Use 'é na verdade' for smooth transition
+            falseStatement = `Um(a) ${word} é na verdade ${formattedDistractor}.`;
+        }
 
         return {
-            verdadeiro: `Um(a) ${word} é algo que você pode usar na escola.`,
-            falso: `Um(a) ${word} é um tipo de ${absurdObject} que vive na ${absurdLocation}.`
+            verdadeiro: trueDefinition,
+            falso: falseStatement
         };
-    }
-
-    function getOrGenerateDefinition(word) {
-        let defs = DEFINITIONS[word];
-        if (!defs) {
-             defs = generateDefinition(word);
-        }
-        return defs;
     }
 
 
@@ -540,9 +635,9 @@
 
     const INITIAL_GAME_STATE = {
         scoreGlobal: 0,
-        progressoNivel1: [0, 0, 0, 0], // New N1 state
-        damierAtual: 0,                // New N1 state
-        selecaoN1: [],                 // New N1 state
+        progressoNivel1: [0, 0, 0, 0], 
+        damierAtual: 0,                
+        selecaoN1: [],                 
         syllabesUniquesCompletes: {},
         palavrasAtivasN3: {},
         palavrasCompletasN3: {},
@@ -602,7 +697,6 @@
         }
     }
 
-    // SIMPLIFIED: Bravo logic kept general for other levels
     function exibirMensagemBravo(callback) {
         const msgElement = document.getElementById('mensagem-bravo');
         const overlayElement = document.getElementById('overlay');
@@ -646,17 +740,14 @@
         const motsActifsN3 = Object.keys(estadoJogo.palavrasAtivasN3).length;
         const phrasesActivesN4 = Object.keys(estadoJogo.frasesAtivasN4).length;
 
-        const btnN1 = document.getElementById('btn-nivel-1'); // Re-added N1 button ref
+        const btnN1 = document.getElementById('btn-nivel-1');
         const btnN2 = document.getElementById('btn-nivel-2');
         const btnN3 = document.getElementById('btn-nivel-3');
         const btnN4 = document.getElementById('btn-nivel-4');
 
         // --- NIVEAU 1 (Letras) ---
-        // Y = Total Damiers (4). FIXÉ À 4.
         document.getElementById('count-n1').textContent = `(${damierComplet}/${DADOS_LETRAS.length})`;
         btnN1.disabled = (damierComplet === DADOS_LETRAS.length);
-        
-        // N2 is disabled until N1 is complete (4/4)
         btnN2.disabled = (damierComplet < DADOS_LETRAS.length); 
 
 
@@ -709,7 +800,7 @@
         document.getElementById('progresso-msg').textContent = message;
     }
 
-    // --- NÍVEL 1: LETRAS (NEW CODE) ---
+    // --- NÍVEL 1: LETRAS ---
 
     function iniciarNivel(nivel) {
         if (PALAVRAS.length === 0) {
@@ -732,21 +823,21 @@
         paresCorretosN1 = 0;
         estadoJogo.selecaoN1 = [];
 
-        // Check if all sets are completed (4/4) -> Redirect to Home
+        // 1. Check if all sets are completed (4/4) -> Redirect to Home
         if (estadoJogo.progressoNivel1.filter(c => c >= 2).length === DADOS_LETRAS.length) {
             mostrarTela('home');
             return;
         }
         
-        // Determine the set index to load
+        // 2. Determine the set index to load
         let indexToLoad = estadoJogo.damierAtual % DADOS_LETRAS.length;
         
-        // If the current index is somehow already complete (2/2), advance until an incomplete one is found
+        // Failsafe: if the current index is complete, find the next sequential incomplete one.
         let startCheck = indexToLoad;
         while (estadoJogo.progressoNivel1[indexToLoad] >= 2) {
              indexToLoad = (indexToLoad + 1) % DADOS_LETRAS.length;
              if (indexToLoad === startCheck) { 
-                mostrarTela('home'); return; // Failsafe
+                mostrarTela('home'); return; 
              }
         }
         
@@ -834,17 +925,15 @@
         if (didJustCompleteTwice) {
             // Second solve: Award point.
             adicionarPonto('letra');
-            
-            // Check if Level 1 is fully complete (all 4 sets solved twice)
-            if (estadoJogo.progressoNivel1.filter(c => c >= 2).length === DADOS_LETRAS.length) {
-                mostrarTela('home'); // Go home and disable N1 button
-                return;
-            } 
-            // If not complete, initiate the next challenge immediately.
         } 
         
-        // If first solve OR second solve (and level is not complete), initiate the next challenge immediately.
-        iniciarNivel1();
+        // Immediately load the next challenge, or go home if complete.
+        if (estadoJogo.progressoNivel1.filter(c => c >= 2).length === DADOS_LETRAS.length) {
+            mostrarTela('home'); 
+        } else {
+            iniciarNivel1();
+        }
+        
         salvarEstado();
     }
 
@@ -896,7 +985,7 @@
         }
 
         if (!motActuelN2) {
-            // FIX: Filter words for Level 2: only those that have at least one unique syllable
+            // Filter words for Level 2: only those that have at least one unique syllable
             // not yet completed (count < 2)
             const motsNonActives = PALAVRAS.filter(p => {
                 const silabas = getSilabas(p);
@@ -979,6 +1068,15 @@
 
     // --- NÍVEL 3: PALAVRAS ---
 
+    // New, robust shuffling function (Used for Level 3)
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]]; // ES6 swap
+        }
+        return array;
+    }
+
     function generateSimilarWords(correctWord, allWords) {
         const correctLower = correctWord.toLowerCase();
         const correctSyllabeCount = getSilabas(correctWord).length;
@@ -1013,7 +1111,7 @@
         // Ajout d'une protection si la liste PALAVRAS est trop courte ou mal formée
         while (distractors.length < 2) {
              // Cria um distrator de backup se necessário
-             distractors.push(correctLower.length > 3 ? correctLower.substring(0, correctLower.length-1) + 'o' : 'palavra');
+             distractors.push(correctWord.length > 3 ? correctWord.substring(0, correctWord.length-1) + 'o' : 'palavra');
         }
 
         return distractors.slice(0, 2);
@@ -1032,8 +1130,11 @@
 
         palavraAtual = palavrasDisponiveisN3[Math.floor(Math.random() * palavrasDisponiveisN3.length)];
 
-        const options = [palavraAtual, ...generateSimilarWords(palavraAtual, PALAVRAS)];
-        options.sort(() => Math.random() - 0.5);
+        const distractors = generateSimilarWords(palavraAtual, PALAVRAS);
+        let options = [palavraAtual, ...distractors];
+        
+        // SHUFFLE options robustly
+        options = shuffleArray(options); 
 
         const optionsDiv = document.getElementById('opcoes-palavras');
         optionsDiv.innerHTML = '';
@@ -1111,7 +1212,7 @@
             reponse_attendue: reponseAttendue
         };
 
-        const questionText = affirmation.charAt(0).toUpperCase() + affirmation.slice(1).toLowerCase();
+        const questionText = affirmation.charAt(0).toUpperCase() + affirmation.slice(1);
         document.getElementById('frase-pergunta').textContent = questionText;
 
         // Réinitialiser les couleurs et l'état des boutons avant chaque nouvelle question
