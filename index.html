@@ -493,7 +493,6 @@
             if (formattedDistractor.startsWith('um ') || formattedDistractor.startsWith('uma ') || formattedDistractor.startsWith('é ')) {
                 formattedDistractor = formattedDistractor.substring(formattedDistractor.indexOf(' ') + 1);
             }
-            // Use 'é na verdade' for smooth transition
             falseStatement = `Um(a) ${word} é na verdade ${formattedDistractor}.`;
         }
 
@@ -569,8 +568,6 @@
                     }
                 }
             });
-            console.log(`Loaded ${Object.keys(DEFINITIONS).length} definitions from Perguntas.txt.`);
-            
         } catch (error) {
             console.error("Error loading definitions from Perguntas.txt:", error);
         }
@@ -1122,7 +1119,7 @@
 
         let palavrasCandidatas = [...palavrasDisponiveisN3];
 
-        // LOGIC: Prevent consecutive repetition unless only one word is available
+        // LOGIC FIX: Prevent consecutive repetition unless only one word is available
         if (palavrasCandidatas.length > 1 && palavraAnteriorN3) {
             // Filter out the previously played word
             palavrasCandidatas = palavrasCandidatas.filter(p => p !== palavraAnteriorN3);
@@ -1197,7 +1194,7 @@
     let phraseActuelleData = null;
 
     function iniciarNivel4() {
-        // Filtrar les words dont la phrase est activée mais non complétée 2x
+        // Filter active words not completed 2x
         const motsDisponiblesN4 = PALAVRAS.filter(p =>
             estadoJogo.frasesAtivasN4[p] &&
             (estadoJogo.frasesCompletasN4[p] || 0) < 2
@@ -1221,12 +1218,11 @@
             reponse_attendue: reponseAttendue
         };
 
-        // FIX: To ensure only the first letter is capitalized (Sentence Case):
-        // This is the direct fix for the question not showing.
+        // FIX: To ensure only the first letter is capitalized (Sentence Case) and robustly displays the question.
         const lowerAffirmation = affirmation.toLowerCase();
-        const questionText = lowerAffirmation.charAt(0).toUpperCase() + lowerAffirmation.slice(1);
+        // Guaranteed display: if affirmation is null/empty, this will at least result in a space or "U"
+        const questionText = lowerAffirmation ? (lowerAffirmation.charAt(0).toUpperCase() + lowerAffirmation.slice(1)) : "Pergunta não carregada."; 
         
-        // Ensure the text is written to the correct element
         document.getElementById('frase-pergunta').textContent = questionText; 
 
         // Réinitialiser les couleurs et l'état des boutons avant chaque nouvelle question
@@ -1276,7 +1272,7 @@
         // CRITICAL CHECK: Si les words ne sont pas chargés
         if (PALAVRAS.length === 0) {
              document.querySelector('.container').innerHTML =
-                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou ele está vazio). O jogo non pode iniciar.</p>";
+                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou il est vide). O jogo non pode iniciar.</p>";
              return;
         }
 
