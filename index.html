@@ -837,6 +837,7 @@
         const didJustCompleteTwice = (currentCount === 1) && (estadoJogo.progressoNivel1[currentDamierIndex] === 2);
         
         // 3. Define o próximo damier SEQUENCIALMENTE (D1 -> D2 -> D3 -> D4 -> D1)
+        // Isso garante que a próxima chamada a iniciarNivel1 (seja direta ou via callback) carregue o próximo set.
         estadoJogo.damierAtual = (currentDamierIndex + 1) % DADOS_LETRAS.length;
 
         if (didJustCompleteTwice) {
@@ -845,7 +846,7 @@
             
             // Exibir Bravo, e só depois carregar o próximo set.
             exibirMensagemBravo(() => {
-                iniciarNivel1(); // Carrega o próximo set (que foi avançado acima)
+                iniciarNivel1(); // Carrega o próximo set
             });
         } else {
             // 1ª sucesso: Recarrega o damier avançado IMEDIATAMENTE.
