@@ -60,7 +60,7 @@
         .nivel-btn {
             display: flex;
             align-items: center;
-            justify-content: space-between; /* Pour pousser le compteur à droite */
+            justify-content: space-between; /* ALIGNEMENT SPÉCIFIQUE POUR POUSSER L'ICÔNE À DROITE */
             width: 100%;
             padding: 15px;
             margin: 10px 0;
@@ -74,9 +74,8 @@
             font-family: 'Times New Roman', Times, serif; 
         }
         
-        /* Conteneur pour Terme + Icônes (Tout ce qui est à gauche) */
-        .content-left-group {
-            display: flex;
+        .nivel-btn span {
+            display: flex; /* Conteneur pour le texte et les icônes */
             align-items: center;
         }
 
@@ -100,14 +99,8 @@
             color: #7f8c8d;
         }
         
-        /* Conteneur pour les icônes à droite du terme */
-        .icon-container {
-            margin-left: 10px; /* Espace entre le terme et les icônes */
-            display: flex;
-            align-items: center;
-        }
-        .icon-container i {
-            margin-right: 2px; /* Espacement entre icônes multiples */
+        .icon-container-left i {
+            margin-right: 10px; /* Espacement après l'icône */
             font-size: 1.5em;
         }
         
@@ -133,11 +126,6 @@
         #btn-reset:hover {
             background-color: #c0392b;
         }
-        
-        #btn-reset i {
-            margin-right: 10px; /* Marge ajoutée après l'icône de Reset */
-        }
-
 
         /* Visibilité des Telas */
         .tela-jogo {
@@ -934,10 +922,11 @@
 
     function verificarSilaba(selection) {
         if (selection === silabaAtual) {
-            const currentCount = estadoJogo.syllabesUniquesCompletes[silabaAtual] || 0;
-            estadoJogo.syllabesUniquesCompletes[silabaAtual] = currentCount + 1;
+            const key = silabaAtual; // Clé est la syllabe unique
+            const currentCount = estadoJogo.syllabesUniquesCompletes[key] || 0;
+            estadoJogo.syllabesUniquesCompletes[key] = currentCount + 1;
             
-            const didJustCompleteTwice = estadoJogo.syllabesUniquesCompletes[silabaAtual] === 2;
+            const didJustCompleteTwice = estadoJogo.syllabesUniquesCompletes[key] === 2;
             
             if (didJustCompleteTwice) {
                  adicionarPonto('silaba');
@@ -979,7 +968,7 @@
         
         // Prioriser les mots qui ressemblent (même début, même nombre de syllabes)
         candidates.sort((a, b) => 
-            Math.abs(a.syllableCount - correctSyllableCount) - Math.abs(b.syllableCount - correctSyllableCount)
+            Math.abs(a.syllableCount - correctSyllabeCount) - Math.abs(b.syllableCount - correctSyllabeCount)
         );
         
         const distractors = [];
