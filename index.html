@@ -689,7 +689,7 @@
 
 
     function verificarMensagemProgresso(score) {
-        const totalMaximo = calculerTotalMaximo();
+        const totalMaximo = calcularTotalMaximo();
         const ratio = score / totalMaximo;
         let message = "";
 
@@ -1135,7 +1135,7 @@
         // CRITICAL CHECK: Si les mots ne sont pas chargés
         if (PALAVRAS.length === 0) {
              document.querySelector('.container').innerHTML = 
-                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou ele está vazio). O jogo non peut pas démarrer.</p>";
+                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou ele está vazio). O jogo não pode iniciar.</p>";
              return;
         }
 
