@@ -731,9 +731,28 @@
         }
     }
 
+    // NOVO: Lógica de inicialização do Nível 1
     function iniciarNivel1() {
         paresCorretosN1 = 0; 
         estadoJogo.selecaoN1 = [];
+        
+        // 1. Encontrar o primeiro damier incompleto ou usar o atual
+        let damierIndex = estadoJogo.damierAtual;
+        // Se o damier atual já foi completado 2 vezes, procure o próximo incompleto
+        if (estadoJogo.progressoNivel1[damierIndex] >= 2) {
+            let nextIndex = damierIndex;
+            for (let i = 0; i < DADOS_LETRAS.length; i++) {
+                nextIndex = (nextIndex + 1) % DADOS_LETRAS.length;
+                if (estadoJogo.progressoNivel1[nextIndex] < 2) {
+                    damierIndex = nextIndex;
+                    break;
+                }
+            }
+            // Se todos estiverem completos, damierIndex será o mesmo (o jogo está completo)
+        }
+        
+        estadoJogo.damierAtual = damierIndex;
+        
         const damier = DADOS_LETRAS[estadoJogo.damierAtual];
         const melange = [...damier].sort(() => Math.random() - 0.5);
         
@@ -799,32 +818,29 @@
         salvarEstado();
     }
 
+    // RECODED: Lógica de sucesso do Nível 1
     function sucessoNivel1() {
-        // Sauvegarde le compteur actuel avant de l'incrémenter
+        // Pega o contador atual antes de incrementar
         const currentCount = estadoJogo.progressoNivel1[estadoJogo.damierAtual]; 
         
-        // 1. Incrémente le compteur de réussites pour le damier actuel
+        // 1. Incrementa o contador de sucessos para o damier atual
         estadoJogo.progressoNivel1[estadoJogo.damierAtual]++;
 
-        // 2. Vérifie si la conclusion est EXATEMENT la deuxième (transition 1 -> 2)
+        // 2. Verifica se esta foi a conclusão DUAS vezes
         const didJustCompleteTwice = (currentCount === 1) && (estadoJogo.progressoNivel1[estadoJogo.damierAtual] === 2);
         
         if (didJustCompleteTwice) {
-            // Si completé 2 fois: Ajoute point et exibe Bravo, puis avance au prochain.
+            // Se completado 2 vezes: Adiciona ponto e exibe Bravo.
             adicionarPonto('letra');
-            const proximoDamier = (estadoJogo.damierAtual + 1) % DADOS_LETRAS.length;
-            
             exibirMensagemBravo(() => {
-                // Passe au damier suivant
-                estadoJogo.damierAtual = proximoDamier;
+                // Apenas reinicia. A função iniciarNivel1() se encarregará de encontrar o próximo damier incompleto.
                 iniciarNivel1();
             });
         } else {
-            // 1ère réussite: PAS de Bravo. On RECHARGE le même damier (il sera mélangé dans iniciarNivel1).
-            // estadoJogo.damierAtual n'est PAS avancé ici.
+            // 1ª sucesso (ou > 2º sucesso): Recarrega o mesmo damier (ele será embaralhado).
             iniciarNivel1();
         }
-        salvarEstado(); // Sauvegarde l'état après la progression
+        salvarEstado(); 
     }
 
     // --- NÍVEL 2: SÍLABAS ---
@@ -875,7 +891,7 @@
         }
 
         if (!motActuelN2) {
-            // FIX #2: Removed the redundant filter (if (estadoJogo.palavrasAtivasN3[p])) as it conflicts with N2's goal
+            // FIX #2: Removed the redundant filter (if (estadoJogo.palavrasAtivasN3[p]))
             const motsNonActives = PALAVRAS.filter(p => {
                 const silabas = getSilabas(p);
                 return silabas.some(silaba => {
