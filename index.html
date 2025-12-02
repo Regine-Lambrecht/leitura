@@ -568,6 +568,9 @@
         const motsActifsN3 = estadoJogo.palavrasAtivasN3.length;
         const phrasesActivesN4 = estadoJogo.frasesAtivasN4.length;
 
+        // N1
+        document.getElementById('count-n1').textContent = `(${damierComplet}/${DADOS_LETRAS.length})`;
+
         // N2 : Reste-t-il des mots N2 non complétés 2x ET non activés N3 ?
         const motsRestantsN2 = PALAVRAS.filter(p => !estadoJogo.palavrasAtivasN3.includes(p)).length;
         btnN2.disabled = (damierComplet === 0) || (motsRestantsN2 === 0);
@@ -811,7 +814,7 @@
             if (motAtiveN3 && !estadoJogo.palavrasAtivasN3.includes(palavraAtual)) {
                 estadoJogo.palavrasAtivasN3.push(palavraAtual);
                 motActuelN2 = ''; 
-                exibirMensagemBravo(() => iniciarNivel2());
+                exibirMensagemBravo(() => iniciarNivel2()); 
             } else {
                 iniciarNivel2(); 
             }
