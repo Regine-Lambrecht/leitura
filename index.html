@@ -99,17 +99,17 @@
             color: #7f8c8d;
         }
         
-        .nivel-btn i {
-            margin: 0 2px; /* Espacement minimal entre icônes */
+        .icon-container-left i {
+            margin-right: 10px; /* Espacement après l'icône */
             font-size: 1.5em;
         }
         
         .contador-progresso {
-            margin-left: 10px; /* Espace entre le texte du niveau et le compteur */
             font-size: 0.8em;
             background: rgba(255, 255, 255, 0.2);
             padding: 2px 8px;
             border-radius: 5px;
+            /* Le compteur est naturellement à droite grâce à justify-content: space-between sur .nivel-btn */
         }
         
         /* Bouton Recomeçar de zero */
@@ -206,18 +206,6 @@
             background-color: var(--cor-erreur);
             color: white;
             border-color: var(--cor-erreur);
-        }
-        
-        /* Conteneur pour le feedback iconique dans la phrase */
-        #frase-pergunta-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        #frase-pergunta-container i {
-            font-size: 1.5em;
-            margin-right: 10px;
         }
 
         /* Nível 3: Options de réponse (plus d'espace) */
@@ -359,20 +347,20 @@
         </div>
 
         <button class="nivel-btn" id="btn-nivel-1" onclick="iniciarNivel(1)">
-            <span class="icon-container"><i class="fa-solid fa-trophy"></i></span>
-            <span class="content-right">Letras <span class="contador-progresso" id="count-n1"></span></span>
+            <span class="icon-container-left"><i class="fa-solid fa-trophy"></i></span>
+            <span class="content-left-group">Letras <span class="contador-progresso" id="count-n1"></span></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-2" onclick="iniciarNivel(2)" disabled>
-            <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span>
-            <span class="content-right">Sílabas <span class="contador-progresso" id="count-n2"></span></span>
+            <span class="icon-container-left"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span>
+            <span class="content-left-group">Sílabas <span class="contador-progresso" id="count-n2"></span></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-3" onclick="iniciarNivel(3)" disabled>
-            <span class="icon-container"><i class="fa-solid fa-medal"></i></span>
-            <span class="content-right">Palavras <span class="contador-progresso" id="count-n3"></span></span>
+            <span class="icon-container-left"><i class="fa-solid fa-medal"></i></span>
+            <span class="content-left-group">Palavras <span class="contador-progresso" id="count-n3"></span></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-4" onclick="iniciarNivel(4)" disabled>
-            <span class="icon-container"><i class="fa-solid fa-user-graduate"></i></span>
-            <span class="content-right">Frases <span class="contador-progresso" id="count-n4"></span></span>
+            <span class="icon-container-left"><i class="fa-solid fa-user-graduate"></i></span>
+            <span class="content-left-group">Frases <span class="contador-progresso" id="count-n4"></span></span>
         </button>
 
         <button class="nivel-btn" id="btn-reset" onclick="recomecarDeZero()">
@@ -455,7 +443,7 @@
         ['K', 'k', 'L', 'l', 'M', 'm', 'N', 'n', 'S', 's', 'X', 'x']
     ];
     
-    let PALAVRAS = []; 
+    let PALAVRAS = []; // Sera rempli par fetch
     
     const DEFINITIONS = {
         'chupeta': {
@@ -471,6 +459,39 @@
             falso: 'Um tomate é geralmente de cor azul et a sabor de chocolate.'
         }
     };
+
+    /**
+     * Génère une définition Vrai/Faux pour tout mot non couvert par DEFINITIONS.
+     * @param {string} word - Le mot à définir.
+     * @returns {object} {verdadeiro: string, falso: string}
+     */
+    function generateDefinition(word) {
+        const firstLetter = word.charAt(0).toUpperCase();
+        const base = `Um/Uma ${word} é geralmente ${word.length > 5 ? 'muito' : ''} utilizado(a)`;
+        const truth = `É verdade que um(a) ${word} é usado(a) para [ACTION UTILE].`;
+        const falsehood = `É falso que um(a) ${word} é na verdade um [ANIMAL/OBJET ABSURDE].`;
+
+        // Tentative de créer une affirmation générique pour le vrai/faux (niveau A2)
+        const placeholderDefs = {
+            verdadeiro: `Um(a) ${word} é um(a) ${word.length < 5 ? 'objeto' : 'coisa'} que usamos para [ACTION UTILE GÉNÉRIQUE].`,
+            falso: `Um(a) ${word} é um(a) ${word.length > 6 ? 'mamífero' : 'pequeno animal'} que vive no [LIEU ABSURDE].`
+        };
+
+        return {
+            verdadeiro: `Um(a) ${word} é algo que você pode [VERBO SIMPLES, ex: comer, usar, pilotar].`,
+            falso: `Um(a) ${word} é um tipo de [OBJET/ANIMAL ABSURDE, ex: planeta, peixe, avião].`
+        };
+    }
+    
+    function getOrGenerateDefinition(word) {
+        let defs = DEFINITIONS[word];
+        if (!defs) {
+             // Génère une définition si non trouvée
+             defs = generateDefinition(word);
+        }
+        return defs;
+    }
+
 
     function getSilabas(palavra) {
         switch(palavra) {
@@ -628,10 +649,14 @@
 
         // N1
         document.getElementById('count-n1').textContent = `(${damierComplet}/${DADOS_LETRAS.length})`;
-
+        
+        // Desactivation finale N1
+        btnNivel1 = document.getElementById('btn-nivel-1');
+        btnNivel1.disabled = (damierComplet === DADOS_LETRAS.length);
+        
         // N2 : Reste-t-il des mots N2 non complétés 2x ET non activés N3 ?
         const motsRestantsN2 = PALAVRAS.filter(p => !estadoJogo.palavrasAtivasN3[p]).length;
-        btnN2.disabled = (damierComplet === 0) || (motsRestantsN2 === 0);
+        btnN2.disabled = (damierComplet < DADOS_LETRAS.length) || (motsRestantsN2 === 0);
         btnN2.querySelector('.contador-progresso').textContent = `(${motsActifsN3}/${totalPalavras})`;
         
         // N3 : Reste-t-il des mots N3 activés mais non complétés 2x ?
@@ -760,6 +785,7 @@
         estadoJogo.progressoNivel1[estadoJogo.damierAtual]++;
 
         // 2. Vérifie si la conclusion est EXATEMENT la deuxième (transition 1 -> 2)
+        const damierComplet2Fois = estadoJogo.progressoNivel1[estadoJogo.damierAtual] >= 2;
         const didJustCompleteTwice = (currentCount === 1) && (estadoJogo.progressoNivel1[estadoJogo.damierAtual] === 2);
         const proximoDamier = (estadoJogo.damierAtual + 1) % DADOS_LETRAS.length;
         
@@ -860,6 +886,7 @@
              return;
         }
 
+        // CORRECTION: Choix d'une syllabe aléatoire parmi celles qui n'ont pas encore 2 réussites
         silabaAtual = silabasParaJogar[Math.floor(Math.random() * silabasParaJogar.length)].toLowerCase();
         
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
@@ -907,6 +934,8 @@
             }
 
         } else {
+            // En cas d'erreur, on relance le niveau 2 immédiatement,
+            // la logique de iniciarNivel2 reprendra le même mot et une syllabe restante (y compris celle manquée).
             iniciarNivel2();
         }
         salvarEstado();
@@ -918,23 +947,39 @@
         const firstLetter = correctWord[0];
         const correctSyllabeCount = getSilabas(correctWord).length;
         
-        const candidates = allWords.filter(w => 
-            w[0] === firstLetter && 
-            w !== correctWord && 
-            Math.abs(getSilabas(w).length - correctSyllabeCount) <= 1
+        // Filtrer les mots qui sont différents du mot correct
+        let candidates = allWords.filter(w => 
+            w !== correctWord
+        ).map(w => ({
+            word: w,
+            syllableCount: getSilabas(w).length
+        }));
+        
+        // Prioriser les mots qui ressemblent (même début, même nombre de syllabes)
+        candidates.sort((a, b) => 
+            Math.abs(a.syllableCount - correctSyllabeCount) - Math.abs(b.syllableCount - correctSyllabeCount)
         );
         
         const distractors = [];
+        
+        // Choisir deux distracteurs uniques
         while (distractors.length < 2 && candidates.length > 0) {
             const index = Math.floor(Math.random() * candidates.length);
-            distractors.push(candidates.splice(index, 1)[0]);
+            const candidate = candidates[index].word;
+            
+            // Assurer qu'il ne s'agit pas d'un doublon dans la sélection finale
+            if (!distractors.includes(candidate)) {
+                distractors.push(candidate);
+            }
+            candidates.splice(index, 1); // Retirer le candidat sélectionné pour éviter la répétition
         }
+
+        // Ajout d'une protection si la liste PALAVRAS est trop courte ou mal formée
         while (distractors.length < 2) {
-             // Cria um distrator de backup se necessário
              distractors.push(correctWord.length > 3 ? correctWord.substring(0, correctWord.length-1) + 'o' : 'palavra');
         }
 
-        return distractors;
+        return distractors.slice(0, 2);
     }
     
     function iniciarNivel3() {
@@ -1017,7 +1062,7 @@
         }
         
         const motChoisi = motsDisponiblesN4[Math.floor(Math.random() * motsDisponiblesN4.length)];
-        const defs = DEFINITIONS[motChoisi];
+        const defs = getOrGenerateDefinition(motChoisi);
 
         const estVrai = Math.random() < 0.5;
         const affirmation = estVrai ? defs.verdadeiro : defs.falso;
@@ -1073,13 +1118,12 @@
     }
 
     async function inicializarJogo() {
-        // Fetch words, sans fallback durci (se base sur Palavras.txt ou un fichier équivalent)
         await fetchWords(); 
         
         // CRITICAL CHECK: Si les mots ne sont pas chargés
         if (PALAVRAS.length === 0) {
              document.querySelector('.container').innerHTML = 
-                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou ele está vazio). O jogo não pode iniciar. Verifique a URL ou l'accès ao arquivo.</p>";
+                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou il est vide). Le jeu ne peut pas démarrer. Verifiez a URL ou l'accès au fichier.</p>";
              return;
         }
 
