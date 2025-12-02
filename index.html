@@ -451,117 +451,12 @@
 
     let PALAVRAS = []; // Sera rempli par fetch
 
-    const DEFINITIONS = {
-        // --- START OF DEFINITION LIST (78 PALAVRAS) ---
-        'abelha': "Um inseto que produz mel e vive em grandes colmeias.",
-        'arara': "Um pássaro tropical grande e colorido, conhecido por sua cauda longa.",
-        'baleia': "O maior animal do planeta, um mamífero que vive nos oceanos.",
-        'banana': "Uma fruta amarela e alongada, macia e doce, que cresce em cachos.",
-        'barata': "Um inseto noturno, de cor escura, que vive em lugares úmidos e sujos.",
-        'boca': "A abertura por onde a comida e a fala entram e saem do corpo.",
-        'bola': "Um objeto esférico usado para diversos jogos e esportes.",
-        'bolacha': "Um biscoito, um doce seco e plano, geralmente feito de farinha e açúcar.",
-        'boliche': "Um esporte de arremesso que derruba dez pinos com uma bola pesada.",
-        'bolo': "Uma massa doce, assada no forno, feita com farinha, ovos e açúcar.",
-        'braço': "A parte do corpo humano que se estende do ombro até a mão.",
-        'brasil': "O maior país da América do Sul, famoso pelo samba e floresta amazônica.",
-        'cabide': "Um objeto com gancho, usado para pendurar roupas em armários.",
-        'cabine': "Um compartimento fechado em um avião, navio ou elevador.",
-        'cachorro': "Um mamífero doméstico, conhecido por sua lealdade e latidos.",
-        'cama': "Um móvel com colchão onde as pessoas se deitam para dormir.",
-        'caneta': "Um instrumento usado para escrever ou desenhar, usando tinta.",
-        'casa': "Uma construção onde as pessoas moram e se abrigam.",
-        'casada': "Uma mulher que está unida a outra pessoa por meio de um casamento.",
-        'chapéu': "Uma peça de vestuário usada para cobrir a cabeça.",
-        'chave': "Um pequeno objeto de metal que aciona fechaduras e ignições.",
-        'chiclete': "Uma goma de mascar doce e elástica, feita para ser mastigada.",
-        'chupeta': "Um objeto de borracha que se dá a bebês para chupar.",
-        'chuva': "Água que cai das nuvens em forma de gotas.",
-        'cobra': "Um réptil longo e rastejante, muitas vezes venenoso.",
-        'coelho': "Um mamífero pequeno, com orelhas longas e que adora cenouras.",
-        'cofre': "Uma caixa metálica e forte, usada para guardar dinheiro e objetos de valor.",
-        'diploma': "Um certificado que comprova a conclusão de um curso ou estudo.",
-        'domingão': "O último dia da semana, geralmente dedicado ao descanso e lazer.",
-        'festejar': "Comemorar ou celebrar algo com alegria e animação.",
-        'faca': "Um utensílio com lâmina afiada, usado para cortar alimentos.",
-        'fica': "O ato de permanecer ou continuar em um determinado lugar.",
-        'fita': "Uma tira fina de tecido ou plástico, usada para amarrar ou decorar.",
-        'foca': "Um mamífero marinho com corpo alongado, que vive em regiões frias.",
-        'foguete': "Um veículo espacial que usa propulsão para ir para o espaço sideral.",
-        'galinha': "Uma ave doméstica, criada para fornecer carne e ovos.",
-        'gato': "Um felino doméstico, conhecido por miar e por sua agilidade.",
-        'golfinho': "Um mamífero marinho inteligente, conhecido por saltar na água.",
-        'invejar': "Desejar ter o que pertence ou é de outra pessoa.",
-        'jabuti': "Um réptil terrestre, parecido com a tartaruga, com casco duro.",
-        'lábio': "A parte carnuda e móvel que contorna a boca.",
-        'lápis': "Um instrumento fino de madeira e grafite, usado para escrever ou desenhar.",
-        'leão': "Um grande felino, conhecido como o rei da selva por sua força e juba.",
-        'letra': "Cada sinal gráfico que forma o alfabeto e representa um som.",
-        'lixo': "Restos e materiais descartados que precisam ser jogados fora.",
-        'livro': "Um conjunto de páginas encadernadas, contendo textos ou imagens.",
-        'maçã': "Uma fruta redonda e crocante, geralmente vermelha ou verde.",
-        'macaco': "Um primata com cauda e braços longos, conhecido por subir em árvores.",
-        'neto': "O filho da filha ou do filho de uma pessoa.",
-        'onça': "Um grande felino predador, com pele pintada, típico da América do Sul.",
-        'pato': "Uma ave aquática, com pescoço curto e bico largo, que nada e voa.",
-        'peito': "A parte superior e frontal do tronco do corpo humano.",
-        'peixe': "Um animal aquático com brânquias e barbatanas, que vive em rios ou mares.",
-        'peteca': "Um brinquedo com penas na base, jogado com as mãos por cima de uma rede.",
-        'planejar': "Organizar ou estabelecer um conjunto de ações para atingir um objetivo.",
-        'planilha': "Um documento eletrônico com linhas e colunas, usado para cálculos e dados.",
-        'porco': "Um mamífero criado em fazendas para o consumo de sua carne.",
-        'porta': "Uma barreira móvel que permite a entrada e saída de um cômodo.",
-        'prato': "Um utensílio de mesa, geralmente redondo e raso, usado para servir a comida.",
-        'professor': "Uma pessoa que ensina alunos em escolas ou universidades.",
-        'sacada': "Uma varanda ou terraço que se projeta para fora do prédio.",
-        'salada': "Uma mistura de folhas, legumes e verduras, geralmente servida fria.",
-        'sapato': "Um calçado que cobre o pé, usado para proteger e andar.",
-        'sapo': "Um anfíbio que pula e vive perto de água, conhecido por coaxar.",
-        'sorriso': "Uma expressão facial de felicidade, feita com a boca.",
-        'sorvete': "Uma sobremesa gelada, doce e cremosa, feita de leite e açúcar.",
-        'tapete': "Um tecido grosso, usado no chão para decorar ou aquecer.",
-        'tato': "O sentido que permite sentir a textura e a temperatura das coisas através da pele.",
-        'tatu': "Um mamífero com o corpo coberto por uma carapaça dura e articulada.",
-        'telhado': "A estrutura superior da casa que a protege da chuva e do sol.",
-        'teto': "A parte interna superior de um cômodo ou construção.",
-        'tomada': "Um ponto na parede onde se conecta o plugue de aparelhos elétricos.",
-        'urubu': "Uma ave de rapina grande e preta, conhecida por se alimentar de carcaças.",
-    };
+    const DEFINITIONS = {}; // Will be populated by fetchDefinitions()
 
     /**
-     * Corrected Portuguese syllabification logic.
-     */
-    function getSilabas(palavra) {
-        // Base words with non-standard splits, used as failsafe (kept from original logic)
-        switch(palavra) {
-            case 'chupeta': return ['chu', 'pe', 'ta'];
-            case 'carro': return ['car', 'ro']; // Example of RR split
-            case 'tomate': return ['to', 'ma', 'te'];
-        }
-        
-        // --- NEW RULE-BASED SYLLABIFICATION ---
-        let processedPalavra = palavra;
-        
-        // 1. Split double consonants that must be separated (RR, SS, etc.)
-        processedPalavra = processedPalavra.replace(/([r|s|c|p|t])\1/g, '$1-$1');
-        
-        // 2. Separate consonants that must break between vowels (V-CV rule)
-        processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1-$2$3'); 
-        
-        // 3. Split complex consonant groups that must be separated: (VC-CV)
-        processedPalavra = processedPalavra.replace(/([bcdfghjklmnpqrstvwxyzç])([c|t|p|g|f|v])([l|r])/g, '$1-$2$3'); 
-        
-        // 4. Clean and split by the introduced hyphen
-        let silabas = processedPalavra.split('-');
-        
-        silabas = silabas.map(s => s.trim()).filter(s => s.length > 0);
-        
-        if (silabas.length === 0) return [palavra]; // Failsafe
-        
-        return silabas;
-    }
-
-
+    * RECODED: Retrieves the true definition and generates a false statement 
+    * using a definition from a random, different word.
+    */
     function getOrGenerateDefinition(word) {
         const trueDefinition = DEFINITIONS[word];
         
@@ -593,10 +488,12 @@
         if (distractorWord === word) {
             falseStatement = `A afirmação para ${word} é falsa, mas a definição de distração não foi encontrada.`; 
         } else {
+            // Construct the False statement: "A [current word] is in fact [distractor definition]"
             let formattedDistractor = distractorDefinition.toLowerCase();
             if (formattedDistractor.startsWith('um ') || formattedDistractor.startsWith('uma ') || formattedDistractor.startsWith('é ')) {
                 formattedDistractor = formattedDistractor.substring(formattedDistractor.indexOf(' ') + 1);
             }
+            // Use 'é na verdade' for smooth transition
             falseStatement = `Um(a) ${word} é na verdade ${formattedDistractor}.`;
         }
 
@@ -607,34 +504,106 @@
     }
 
 
+    /**
+     * Corrected Portuguese syllabification logic.
+     */
+    function getSilabas(palavra) {
+        // Base words with non-standard splits, used as failsafe (kept from original logic)
+        switch(palavra) {
+            case 'chupeta': return ['chu', 'pe', 'ta'];
+            case 'carro': return ['car', 'ro']; 
+            case 'tomate': return ['to', 'ma', 'te'];
+        }
+        
+        // --- NEW RULE-BASED SYLLABIFICATION (FIXED) ---
+        let processedPalavra = palavra;
+        
+        // 1. Split double consonants that must be separated (RR, SS, etc.)
+        processedPalavra = processedPalavra.replace(/([r|s|c|p|t])\1/g, '$1-$1');
+        
+        // 2. Separate consonants that must break between vowels (V-CV rule)
+        processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1-$2$3'); 
+        
+        // 3. Split complex consonant groups that must be separated: (VC-CV)
+        processedPalavra = processedPalavra.replace(/([bcdfghjklmnpqrstvwxyzç])([c|t|p|g|f|v])([l|r])/g, '$1-$2$3'); 
+        
+        // 4. Clean and split by the introduced hyphen
+        let silabas = processedPalavra.split('-');
+        
+        silabas = silabas.map(s => s.trim()).filter(s => s.length > 0);
+        
+        if (silabas.length === 0) return [palavra]; // Failsafe
+        
+        return silabas;
+    }
+
+
     function calcularTotalMaximo() {
         const totalSilabas = PALAVRAS.flatMap(p => getSilabas(p)).length;
         const totalFrases = PALAVRAS.length;
         return 4 + totalSilabas + PALAVRAS.length + totalFrases;
     }
 
-    // Função para carregar les mots depuis Palavras.txt (via URL GitHub)
-    async function fetchWords() {
-        const URL = 'https://regine-lambrecht.github.io/leitura/Palavras.txt';
+    /**
+     * NEW FUNCTION: Fetches and parses definitions from Perguntas.txt.
+     */
+    async function fetchDefinitions() {
+        const URL = 'Perguntas.txt'; // Assuming local path based on user request
         try {
             const response = await fetch(URL);
             if (!response.ok) {
-                // Tente charger localement (pour le mode local)
-                const responseLocal = await fetch('Palavras.txt');
-                if (!responseLocal.ok) {
-                    throw new Error(`Fichiers non trouvés (URL distante: ${response.status}, Local: ${responseLocal.status})`);
-                }
-                const text = await responseLocal.text();
-                PALAVRAS = text.trim().split('\n').map(word => word.trim().toLowerCase()).filter(word => word.length > 0);
+                console.warn(`Perguntas.txt not found (Status: ${response.status}). Definitions will be empty.`);
                 return;
             }
             const text = await response.text();
-            PALAVRAS = text.trim().split('\n').map(word => word.trim().toLowerCase()).filter(word => word.length > 0);
-
+            
+            // Parse text content: Expected format "word: definition" per line
+            text.split('\n').forEach(line => {
+                const parts = line.split(':');
+                if (parts.length >= 2) {
+                    const word = parts[0].trim().toLowerCase();
+                    // Join the rest of the parts to handle colons in the definition itself
+                    const definition = parts.slice(1).join(':').trim(); 
+                    if (word && definition) {
+                        DEFINITIONS[word] = definition;
+                    }
+                }
+            });
+            console.log(`Loaded ${Object.keys(DEFINITIONS).length} definitions from Perguntas.txt.`);
+            
         } catch (error) {
-            console.error("Erreur critique de chargement des mots. Le jeu ne peut pas démarrer.", error);
+            console.error("Error loading definitions from Perguntas.txt:", error);
         }
     }
+
+
+    // Function to load the word list (Palavras.txt) AND definitions (Perguntas.txt)
+    async function fetchWords() {
+        const URL_WORDS = 'https://regine-lambrecht.github.io/leitura/Palavras.txt'; // Using the original remote path for words
+
+        // 1. Load Palavras.txt
+        try {
+            const response = await fetch(URL_WORDS);
+            if (!response.ok) {
+                // Try local fallback for Palavras.txt
+                const responseLocal = await fetch('Palavras.txt');
+                if (!responseLocal.ok) {
+                    throw new Error(`Word files not found.`);
+                }
+                const text = await responseLocal.text();
+                PALAVRAS = text.trim().split('\n').map(word => word.trim().toLowerCase()).filter(word => word.length > 0);
+            } else {
+                const text = await response.text();
+                PALAVRAS = text.trim().split('\n').map(word => word.trim().toLowerCase()).filter(word => word.length > 0);
+            }
+        } catch (error) {
+            console.error("Critical error loading Palavras.txt:", error);
+        }
+
+        // 2. Load Definitions from Perguntas.txt
+        await fetchDefinitions();
+    }
+
 
     // --- Variables d'État Global ---
 
@@ -657,7 +626,7 @@
     let paresCorretosN1 = 0;
     let motActuelN2 = '';
     let palavraAnteriorN3 = null; 
-    let silabaAnteriorN2 = null; // <-- NEW: Stores the last syllable played in N2
+    let silabaAnteriorN2 = null; 
 
     // --- FUNÇÕES DE UTILIDADE ET PERSISTENCE ---
 
@@ -690,7 +659,7 @@
         estadoJogo = {...INITIAL_GAME_STATE};
         motActuelN2 = '';
         palavraAnteriorN3 = null; 
-        silabaAnteriorN2 = null; // Reset N2 previous syllable
+        silabaAnteriorN2 = null; 
         localStorage.removeItem('aprendendoComPedro');
 
         atualizarInterfaceHome();
@@ -1025,12 +994,10 @@
         
         let silabasCandidatas = [...silabasParaJogar];
 
-        // LOGIC: Prevent consecutive repetition unless only one syllable is available
+        // LOGIC FIX: Prevent consecutive repetition unless only one syllable is available
         if (silabasCandidatas.length > 1 && silabaAnteriorN2) {
-            // Filter out the previously played syllable
             silabasCandidatas = silabasCandidatas.filter(s => s !== silabaAnteriorN2);
             
-            // Failsafe (If filtering resulted in an empty list, which shouldn't happen here, use the original)
             if (silabasCandidatas.length === 0) {
                  silabasCandidatas = [...silabasParaJogar];
             }
@@ -1040,7 +1007,7 @@
         silabaAtual = silabasCandidatas[Math.floor(Math.random() * silabasCandidatas.length)].toLowerCase();
 
         // Update the previous syllable tracker
-        silabaAnteriorN2 = silabaAtual; // <-- NEW UPDATE
+        silabaAnteriorN2 = silabaAtual; 
         
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
 
@@ -1303,6 +1270,7 @@
     }
 
     async function inicializarJogo() {
+        // Load words and definitions
         await fetchWords();
 
         // CRITICAL CHECK: Si les words ne sont pas chargés
