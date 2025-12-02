@@ -528,15 +528,49 @@
         'teto': "A parte interna superior de um cômodo ou construção.",
         'tomada': "Um ponto na parede onde se conecta o plugue de aparelhos elétricos.",
         'urubu': "Uma ave de rapina grande e preta, conhecida por se alimentar de carcaças.",
-        // Duplicates handled in the list
-        'baleia': "O maior animal do planeta, um mamífero que vive nos oceanos.", 
-        'barata': "Um inseto noturno, de cor escura, que vive em lugares úmidos e sujos.", 
-        'cobra': "Um réptil longo e rastejante, muitas vezes venenoso.", 
-        'porco': "Um mamífero criado em fazendas para o consumo de sua carne.", 
-        'chupeta': "Um objeto de borracha que se dá a bebês para chupar.", 
-        'sorvete': "Uma sobremesa gelada, doce e cremosa, feita de leite e açúcar." 
-        // --- END OF DEFINITION LIST ---
+        // Duplicates handled
     };
+
+    /**
+     * Corrected Portuguese syllabification logic.
+     */
+    function getSilabas(palavra) {
+        // Base words with non-standard splits, used as failsafe (kept from original logic)
+        switch(palavra) {
+            case 'chupeta': return ['chu', 'pe', 'ta'];
+            case 'carro': return ['car', 'ro']; // Example of RR split
+            case 'tomate': return ['to', 'ma', 'te'];
+        }
+        
+        // This is a simplified rule-based syllabification for European/Brazilian Portuguese.
+        // 1. Split double consonants (RR, SS) and complex groups (CS, CT, GN, etc.)
+        // 2. Consonants usually stick with the following vowel (CV-CV rule)
+        // 3. Digraphs (CH, LH, NH, QU, GU) stick together (treated as single C)
+        
+        let processedPalavra = palavra;
+        
+        // Split complex consonant groups and double letters that must be separated (RR, SS, etc.)
+        processedPalavra = processedPalavra.replace(/([r|s])\1/g, '$1-$1'); // RR/SS split: car-ro, pas-sar
+        processedPalavra = processedPalavra.replace(/([bcdfghjklmnpqrstvwxyzç])([c|t|p|g|f|v])([l|r])/g, '$1-$2$3'); // Complex groups: a-tlê-ti-co
+        processedPalavra = processedPalavra.replace(/([t|d|c|s|p|g|f|v])(t)(l|r)/g, '$1-$2$3'); // More complex group splits
+        
+        // Separate consonants that must break between vowels (intervocalic single C)
+        // This regex attempts to find Vowel + Consonant + Vowel, and places the break BEFORE the consonant.
+        // It's a pragmatic, non-perfect approach for JavaScript implementation simplicity.
+        processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bcdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1-$2$3'); 
+        
+        // Basic split by vowel clusters (diphthongs and trigraphs are not perfectly handled here for simplicity,
+        // but it gives a closer result than the original regex for simple CV words.)
+        let silabas = processedPalavra.split('-');
+        
+        // Final cleaning: remove empty strings and merge remaining groups if needed
+        silabas = silabas.filter(s => s.length > 0);
+        
+        if (silabas.length === 0) return [palavra]; // Failsafe
+        
+        return silabas;
+    }
+
 
     /**
     * RECODED: Retrieves the true definition and generates a false statement 
@@ -589,18 +623,6 @@
         };
     }
 
-
-    function getSilabas(palavra) {
-        switch(palavra) {
-            case 'chupeta': return ['chu', 'pe', 'ta'];
-            case 'carro': return ['car', 'ro'];
-            case 'tomate': return ['to', 'ma', 'te'];
-            default:
-                const regex = /([bcdfghjklmnpqrstvwxyzç]?([aeiouyãõéêáíóú]{1,2}[bcdfghjklmnpqrstvwxyzç]?))/gi;
-                const matches = palavra.match(regex) || [palavra];
-                return matches.filter(s => s.length >= 2 || (matches.length === 1 && palavra.length >= 2));
-        }
-    }
 
     function calcularTotalMaximo() {
         const totalSilabas = PALAVRAS.flatMap(p => getSilabas(p)).length;
@@ -818,7 +840,7 @@
         }
     }
 
-    // NEW CODE: Lógica de inicialização do Nível 1 - SIMPLE SEQUENTIAL
+    // FINAL RECODED: Lógica de inicialização do Nível 1 - SIMPLE SEQUENTIAL
     function iniciarNivel1() {
         paresCorretosN1 = 0;
         estadoJogo.selecaoN1 = [];
@@ -1014,7 +1036,7 @@
              return;
         }
 
-        // CORRECTION: Choix d'une syllabe aléatoire parmi celles qui n'ont pas encore 2 réussites
+        // CORRECTION: Choix d'une syllabe aléatória entre as restantes
         silabaAtual = silabasParaJogar[Math.floor(Math.random() * silabasParaJogar.length)].toLowerCase();
 
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
@@ -1212,7 +1234,10 @@
             reponse_attendue: reponseAttendue
         };
 
-        const questionText = affirmation.charAt(0).toUpperCase() + affirmation.slice(1);
+        // FIX: To ensure only the first letter is capitalized (Sentence Case):
+        const lowerAffirmation = affirmation.toLowerCase();
+        const questionText = lowerAffirmation.charAt(0).toUpperCase() + lowerAffirmation.slice(1);
+        
         document.getElementById('frase-pergunta').textContent = questionText;
 
         // Réinitialiser les couleurs et l'état des boutons avant chaque nouvelle question
