@@ -736,25 +736,29 @@
         paresCorretosN1 = 0;
         estadoJogo.selecaoN1 = [];
 
-        // 1. Determine the index to load. We must look for the first *incomplete* one,
+        let damierIndexToLoad = estadoJogo.damierAtual;
+        
+        // 1. Determine the index to load. We must look for the first incomplete one,
         // starting from the currently stored index, to handle the "Voltar" case and starting the game.
-        let damierIndexToLoad = -1;
         
-        // Loop through all 4 sets starting from the current index (estadoJogo.damierAtual)
-        for (let i = 0; i < DADOS_LETRAS.length; i++) {
-            let currentIndex = (estadoJogo.damierAtual + i) % DADOS_LETRAS.length;
-            
-            if (estadoJogo.progressoNivel1[currentIndex] < 2) {
-                // Found the next incomplete set.
-                damierIndexToLoad = currentIndex;
-                break;
-            }
-        }
-        
-        if (damierIndexToLoad === -1) {
-             // All sets are complete (4/4). Go back to home.
-            mostrarTela('home');
-            return;
+        // If the current index has already been completed 2x, or if we are coming from the home screen
+        // and need to find the correct starting point (which should have been set by the home screen).
+        if (estadoJogo.progressoNivel1[estadoJogo.damierAtual] >= 2) {
+             let foundIncomplete = false;
+             for (let i = 0; i < DADOS_LETRAS.length; i++) {
+                let currentIndex = (estadoJogo.damierAtual + i) % DADOS_LETRAS.length;
+                
+                if (estadoJogo.progressoNivel1[currentIndex] < 2) {
+                    damierIndexToLoad = currentIndex;
+                    foundIncomplete = true;
+                    break;
+                }
+             }
+             if (!foundIncomplete) {
+                // All sets are complete (4/4).
+                mostrarTela('home');
+                return;
+             }
         }
         
         estadoJogo.damierAtual = damierIndexToLoad;
@@ -963,12 +967,12 @@
                  adicionarPonto('silaba');
             }
 
-            // Vérification de la progression du mot actuel (activation N3)
+            // Vérification de la progression du word actuel (activation N3)
             const silabasDoMot = getSilabas(palavraAtual);
             const motAtiveN3 = silabasDoMot.every(s => (estadoJogo.syllabesUniquesCompletes[s.toLowerCase()] || 0) >= 2);
 
             if (motAtiveN3 && !estadoJogo.palavrasAtivasN3[palavraAtual]) {
-                estadoJogo.palavrasAtivasN3[palavraAtual] = true; // Active le mot pour le N3
+                estadoJogo.palavrasAtivasN3[palavraAtual] = true; // Active le word pour le N3
                 motActuelN2 = '';
                 exibirMensagemBravo(() => iniciarNivel2()); // Bravo s'affiche à l'activation N3
             } else {
@@ -977,7 +981,7 @@
 
         } else {
             // En cas d'erreur, on relance le niveau 2 immédiatement,
-            // la logique de iniciarNivel2 reprendra le même mot et une syllabe restante (y compris celle manquée).
+            // la logique de iniciarNivel2 reprendra le même word et une syllabe restante (y compris celle manquée).
             iniciarNivel2();
         }
         salvarEstado();
@@ -989,7 +993,7 @@
         const firstLetter = correctWord[0];
         const correctSyllabeCount = getSilabas(correctWord).length;
 
-        // Filtrer les mots qui sont différents du mot correct
+        // Filtrer les words qui sont différents du word correct
         let candidates = allWords.filter(w =>
             w !== correctWord
         ).map(w => ({
@@ -997,14 +1001,14 @@
             syllableCount: getSilabas(w).length
         }));
 
-        // Prioriser les mots qui ressemblent (même début, même nombre de syllabes)
+        // Prioriser les words qui ressemblent (même début, même nombre de syllabes)
         candidates.sort((a, b) =>
             Math.abs(a.syllableCount - correctSyllabeCount) - Math.abs(b.syllableCount - correctSyllabeCount)
         );
 
         const distractors = [];
 
-        // Choisir deux distracteurs uniques
+        // Choisir deux distractors uniques
         while (distractors.length < 2 && candidates.length > 0) {
             const index = Math.floor(Math.random() * candidates.length);
             const candidate = candidates[index].word;
@@ -1026,7 +1030,7 @@
     }
 
     function iniciarNivel3() {
-        // Filtrar les mots actifs mais non complétés 2 fois
+        // Filtrar les words actifs mais non complétés 2 fois
         const palavrasDisponiveisN3 = PALAVRAS.filter(p => {
             return estadoJogo.palavrasAtivasN3[p] && (estadoJogo.palavrasCompletasN3[p] || 0) < 2;
         });
@@ -1093,7 +1097,7 @@
     let phraseActuelleData = null;
 
     function iniciarNivel4() {
-        // Filtrar les mots dont la phrase est activée mais non complétée 2x
+        // Filtrar les words dont la phrase est activée mais non complétée 2x
         const motsDisponiblesN4 = PALAVRAS.filter(p =>
             estadoJogo.frasesAtivasN4[p] &&
             (estadoJogo.frasesCompletasN4[p] || 0) < 2
@@ -1163,14 +1167,14 @@
     async function inicializarJogo() {
         await fetchWords();
 
-        // CRITICAL CHECK: Si les mots ne sont pas chargés
+        // CRITICAL CHECK: Si les words ne sont pas chargés
         if (PALAVRAS.length === 0) {
              document.querySelector('.container').innerHTML =
                 "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou ele está vazio). O jogo non pode iniciar.</p>";
              return;
         }
 
-        carregarEstado(); // Charger l'état après avoir obtention la liste des mots
+        carregarEstado(); // Charger l'état après avoir obtention la liste des words
         atualizarInterfaceHome();
     }
 
