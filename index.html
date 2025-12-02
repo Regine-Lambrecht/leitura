@@ -351,16 +351,16 @@
             <span class="contador-progresso" id="count-n1"></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-2" onclick="iniciarNivel(2)" disabled>
-            <span class="icon-container-left"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span>
-            <span class="content-left-group">Sílabas <span class="contador-progresso" id="count-n2"></span></span>
+            <span class="content-left-group">Sílabas <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span></span>
+            <span class="contador-progresso" id="count-n2"></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-3" onclick="iniciarNivel(3)" disabled>
-            <span class="icon-container-left"><i class="fa-solid fa-medal"></i></span>
-            <span class="content-left-group">Palavras <span class="contador-progresso" id="count-n3"></span></span>
+            <span class="content-left-group">Palavras <span class="icon-container"><i class="fa-solid fa-medal"></i></span></span>
+            <span class="contador-progresso" id="count-n3"></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-4" onclick="iniciarNivel(4)" disabled>
-            <span class="icon-container-left"><i class="fa-solid fa-user-graduate"></i></span>
-            <span class="content-left-group">Frases <span class="contador-progresso" id="count-n4"></span></span>
+            <span class="content-left-group">Frases <span class="icon-container"><i class="fa-solid fa-user-graduate"></i></span></span>
+            <span class="contador-progresso" id="count-n4"></span>
         </button>
 
         <button class="nivel-btn" id="btn-reset" onclick="recomecarDeZero()">
@@ -637,7 +637,6 @@
         const motsActifsN3 = Object.keys(estadoJogo.palavrasAtivasN3).length;
         const phrasesActivesN4 = Object.keys(estadoJogo.frasesAtivasN4).length;
 
-        const btnN1 = document.getElementById('btn-nivel-1');
         const btnN2 = document.getElementById('btn-nivel-2');
         const btnN3 = document.getElementById('btn-nivel-3');
         const btnN4 = document.getElementById('btn-nivel-4');
@@ -968,7 +967,7 @@
         
         // Prioriser les mots qui ressemblent (même début, même nombre de syllabes)
         candidates.sort((a, b) => 
-            Math.abs(a.syllableCount - correctSyllableCount) - Math.abs(b.syllableCount - correctSyllableCount)
+            Math.abs(a.syllableCount - correctSyllabeCount) - Math.abs(b.syllableCount - correctSyllabeCount)
         );
         
         const distractors = [];
