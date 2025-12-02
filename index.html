@@ -404,7 +404,7 @@
 </div>
 
 <script>
-    // Configuration des voix TTS
+    // Configuração das vozes TTS
     const synth = window.speechSynthesis;
     let brazilVoice = null;
     
@@ -457,31 +457,6 @@
             falso: 'Um tomate é geralmente de cor azul et a sabor de chocolate.'
         }
     };
-    
-    // Fonction pour charger les mots depuis Palavras.txt
-    async function fetchWords() {
-        try {
-            // Dans un environnement GitHub Pages, on utilise fetch pour charger le fichier.
-            // Si le fichier Palavras.txt n'est pas fourni, cette requête échouera.
-            const response = await fetch('Palavras.txt');
-            if (!response.ok) {
-                console.error("Palavras.txt non trouvé. Utilisation des mots par défaut.");
-                PALAVRAS = ['chupeta', 'carro', 'tomate']; 
-                return;
-            }
-            const text = await response.text();
-            PALAVRAS = text.trim().split('\n').map(word => word.trim().toLowerCase()).filter(word => word.length > 0);
-            
-            if (PALAVRAS.length === 0) {
-                 PALAVRAS = ['chupeta', 'carro', 'tomate']; // Fallback
-            }
-
-        } catch (error) {
-            console.error("Erreur de chargement de Palavras.txt, utilisation des mots par défaut.", error);
-            PALAVRAS = ['chupeta', 'carro', 'tomate']; // Fallback
-        }
-    }
-
 
     function getSilabas(palavra) {
         switch(palavra) {
@@ -496,9 +471,34 @@
     }
 
     function calcularTotalMaximo() {
+        // NOTE: Ceci dépend du nombre réel de PALAVRAS chargées.
         const totalSilabas = PALAVRAS.flatMap(getSilabas).length;
         const totalFrases = PALAVRAS.length; 
         return 4 + totalSilabas + PALAVRAS.length + totalFrases; 
+    }
+
+    // Fonction pour charger les mots depuis Palavras.txt (Rappel : doit être un fichier séparé)
+    async function fetchWords() {
+        const URL = 'https://regine-lambrecht.github.io/leitura/Palavras.txt';
+        try {
+            const response = await fetch(URL);
+            if (!response.ok) {
+                // Tente de charger depuis un chemin relatif si l'URL absolue échoue
+                const responseLocal = await fetch('Palavras.txt');
+                if (!responseLocal.ok) {
+                     throw new Error(`Fichiers non trouvés (URL distante: ${response.status}, Local: ${responseLocal.status})`);
+                }
+                const text = await responseLocal.text();
+                PALAVRAS = text.trim().split('\n').map(word => word.trim().toLowerCase()).filter(word => word.length > 0);
+                return;
+            }
+            const text = await response.text();
+            PALAVRAS = text.trim().split('\n').map(word => word.trim().toLowerCase()).filter(word => word.length > 0);
+            
+        } catch (error) {
+            console.error("Erreur critique de chargement des mots. Le jeu ne peut pas démarrer.", error);
+            // Dans ce cas critique, on laisse PALAVRAS vide. Le jeu affichera le message d'erreur.
+        }
     }
 
     // --- Variables d'État Global ---
@@ -587,6 +587,13 @@
     // --- LÓGICA DU SCORE ET PROGRESSION ---
     
     function atualizarInterfaceHome() {
+        // VÉRIFIE SI LES MOTS ONT ÉTÉ CHARGÉS AVANT DE CALCULER LES COMPTEURS
+        if (PALAVRAS.length === 0) {
+            document.querySelector('.container').innerHTML = 
+                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b>. O jogo não pode iniciar.</p>";
+            return;
+        }
+
         document.getElementById('score-valor').textContent = estadoJogo.scoreGlobal;
         verificarMensagemProgresso(estadoJogo.scoreGlobal);
         atualizarBotoesNivel();
@@ -598,7 +605,7 @@
         atualizarInterfaceHome();
     }
     
-    function actualizarBotoesNivel() {
+    function atualizarBotoesNivel() {
         const damierComplet = estadoJogo.progressoNivel1.filter(c => c >= 2).length;
         const totalPalavras = PALAVRAS.length;
         const motsActifsN3 = Object.keys(estadoJogo.palavrasAtivasN3).length;
@@ -651,6 +658,12 @@
     // --- NÍVEL 1: LETRAS ---
 
     function iniciarNivel(nivel) {
+        if (PALAVRAS.length === 0) {
+             document.querySelector('.container').innerHTML = 
+                "<h1>Erro</h1><p>Não foi possível iniciar o nível. O jogo não carregou as palavras.</p>";
+             return;
+        }
+
         mostrarTela(`nivel-${nivel}`);
         switch (nivel) {
             case 1: iniciarNivel1(); break;
@@ -743,7 +756,7 @@
                 iniciarNivel1();
             });
         } else {
-            // Passe au damier suivant (1ère réussite)
+            // 1ère réussite : PAS de Bravo. On passe juste au damier suivant.
             estadoJogo.damierAtual = proximoDamier;
             iniciarNivel1();
         }
@@ -1023,31 +1036,17 @@
         }, 1500); // Délai de 1.5 secondes pour le feedback
     }
 
-    // Fonction pour charger les mots depuis Palavras.txt (Rappel : doit être un fichier séparé)
-    async function fetchWords() {
-        try {
-            // Dans un environnement GitHub Pages, on utilise fetch pour charger le fichier.
-            const response = await fetch('Palavras.txt');
-            if (!response.ok) {
-                console.error("Palavras.txt non trouvé. Utilisation des mots par défaut.");
-                PALAVRAS = ['chupeta', 'carro', 'tomate']; 
-                return;
-            }
-            const text = await response.text();
-            PALAVRAS = text.trim().split('\n').map(word => word.trim().toLowerCase()).filter(word => word.length > 0);
-            
-            if (PALAVRAS.length === 0) {
-                 PALAVRAS = ['chupeta', 'carro', 'tomate']; // Fallback
-            }
-
-        } catch (error) {
-            console.error("Erreur de chargement de Palavras.txt, utilisation des mots par défaut.", error);
-            PALAVRAS = ['chupeta', 'carro', 'tomate']; // Fallback
-        }
-    }
-
     async function inicializarJogo() {
-        await fetchWords(); // Attendre le chargement des mots
+        // Fetch words, sans fallback durci (se base sur Palavras.txt ou un fichier équivalent)
+        await fetchWords(); 
+        
+        // CRITICAL CHECK: Si les mots ne sont pas chargés
+        if (PALAVRAS.length === 0) {
+             document.querySelector('.container').innerHTML = 
+                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou il est vide). O jogo não pode iniciar. Verifique l'URL ou l'accès au fichier.</p>";
+             return;
+        }
+
         carregarEstado(); // Charger l'état après avoir obtenu la liste des mots
     }
 
