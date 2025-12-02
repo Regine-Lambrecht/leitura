@@ -6,19 +6,19 @@
     <title>Aprendendo com o Pedro (Demo)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* Estilos CSS (style.css incorporado) */
+        /* Estilos CSS (style.css incorporé) */
         :root {
             --cor-principal: #3498db;
             --cor-fundo: #ecf0f1;
-            --cor-sucesso: #2ecc71;
-            --cor-erro: #e74c3c;
-            --cor-voltar: #3498db; /* Bleu pour le bouton Voltar */
+            --cor-sucesso: #2ecc71; 
+            --cor-erreur: #e74c3c;
+            --cor-voltar: #2ecc71; 
             --cor-reset: #e74c3c; 
             --tamanho-letra: 24px;
         }
 
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Times New Roman', Times, serif; 
             background-color: var(--cor-fundo);
             color: #333;
             margin: 0;
@@ -36,7 +36,8 @@
             position: relative;
         }
 
-        h1 {
+        h1, h2 {
+            font-family: 'Times New Roman', Times, serif; 
             color: var(--cor-principal);
             margin-bottom: 20px;
         }
@@ -70,14 +71,16 @@
             border-radius: 10px;
             cursor: pointer;
             transition: background-color 0.3s;
+            font-family: 'Times New Roman', Times, serif; 
         }
 
+        /* Voltar est VERT */
         .nivel-btn.voltar-btn {
             background-color: var(--cor-voltar); 
         }
         
         .nivel-btn.voltar-btn:hover {
-            background-color: #2980b9; 
+            background-color: #27ae60; 
         }
 
         .nivel-btn:hover:not(:disabled) {
@@ -110,6 +113,7 @@
             margin-top: 20px;
             padding: 10px;
             font-size: 1em;
+            font-family: 'Times New Roman', Times, serif; 
         }
 
         #btn-reset:hover {
@@ -158,7 +162,7 @@
 
         .btn-cancelar {
             padding: 10px 20px;
-            background-color: var(--cor-erro);
+            background-color: var(--cor-erreur);
             color: white;
             border: none;
             border-radius: 5px;
@@ -172,7 +176,8 @@
             gap: 10px;
         }
 
-        .opcao-btn, .btn-audio, .btn-verdadeiro-falso {
+        /* Styles pour les boutons de réponse dans les niveaux 2, 3 et 4 */
+        .opcao-btn, .btn-verdadeiro-falso {
             padding: 15px;
             margin: 10px 0;
             font-size: 1.2em;
@@ -181,6 +186,24 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.3s;
+            font-family: 'Times New Roman', Times, serif; 
+        }
+
+        /* Feedback Nível 4 */
+        .btn-verdadeiro-falso.feedback-correto {
+            background-color: var(--cor-sucesso);
+            color: white;
+            border-color: var(--cor-sucesso);
+        }
+        .btn-verdadeiro-falso.feedback-incorreto {
+            background-color: var(--cor-erreur);
+            color: white;
+            border-color: var(--cor-erreur);
+        }
+
+        /* Nível 3: Options de réponse (plus d'espace) */
+        #opcoes-palavras .opcao-btn {
+            margin: 15px 0; 
         }
         
         #opcoes-silabas .opcao-btn {
@@ -192,14 +215,26 @@
             background-color: #eee;
         }
         
+        /* Nível 3: Bouton Escutar (plus petit, aligné) */
         .btn-audio {
-            width: 100%;
+            width: auto; 
+            padding: 10px 20px;
             background-color: var(--cor-principal);
             color: white;
             border: none;
-            margin-bottom: 20px;
+            border-radius: 8px;
+            margin: 10px auto 25px auto; 
+            display: block;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-family: 'Times New Roman', Times, serif; 
         }
 
+        .btn-audio i {
+            margin: 0;
+            font-size: 1.4em;
+        }
+        
         /* Message Bravo et Overlay */
         #overlay {
             position: fixed;
@@ -243,7 +278,6 @@
             z-index: 1001; 
             width: 80%;
             max-width: 350px;
-            display: none;
         }
 
         #modal-confirmacao p {
@@ -264,6 +298,7 @@
             font-weight: bold;
             cursor: pointer;
             width: 50%;
+            font-family: 'Times New Roman', Times, serif; 
         }
 
         #btn-sim {
@@ -305,16 +340,16 @@
         </div>
 
         <button class="nivel-btn" id="btn-nivel-1" onclick="iniciarNivel(1)">
-            <i class="fa-solid fa-trophy"></i> Nível 1: Letras <span class="contador-progresso" id="count-n1"></span>
+            <i class="fa-solid fa-trophy"></i> Letras <span class="contador-progresso" id="count-n1"></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-2" onclick="iniciarNivel(2)" disabled>
-            <i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i> Nível 2: Sílabas <span class="contador-progresso" id="count-n2"></span>
+            <i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i> Sílabas <span class="contador-progresso" id="count-n2"></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-3" onclick="iniciarNivel(3)" disabled>
-            <i class="fa-solid fa-medal"></i> Nível 3: Palavras <span class="contador-progresso" id="count-n3"></span>
+            <i class="fa-solid fa-medal"></i> Palavras <span class="contador-progresso" id="count-n3"></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-4" onclick="iniciarNivel(4)" disabled>
-            <i class="fa-solid fa-user-graduate"></i> Nível 4: Frases <span class="contador-progresso" id="count-n4"></span>
+            <i class="fa-solid fa-user-graduate"></i> Frases <span class="contador-progresso" id="count-n4"></span>
         </button>
 
         <button class="nivel-btn" id="btn-reset" onclick="recomecarDeZero()">
@@ -323,7 +358,7 @@
     </div>
 
     <div id="tela-nivel-1" class="tela-jogo">
-        <h2>Nível 1: Letras (Pares)</h2>
+        <h2>Letras (Pares)</h2>
         <p>Encontre os 6 pares (Maiúscula e minúscula).</p>
         <div id="letras-grid"></div>
         <button class="btn-cancelar" onclick="cancelarSelecaoNivel1()">Cancelar</button>
@@ -331,25 +366,25 @@
     </div>
 
     <div id="tela-nivel-2" class="tela-jogo">
-        <h2>Nível 2: Sílabas</h2>
+        <h2>Sílabas</h2>
         <p>Qual é a sílaba **<span id="silaba-maiuscula" style="color: var(--cor-principal);"></span>** em minúsculas?</p>
         <div id="opcoes-silabas"></div>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
     </div>
 
     <div id="tela-nivel-3" class="tela-jogo">
-        <h2>Nível 3: Palavras</h2>
+        <h2>Palavras</h2>
         <p>Escute a palavra e a encontre entre as opções.</p>
-        <button class="btn-audio" onclick="falarPalavraAtual()"><i class="fa-solid fa-volume-up"></i> Escutar</button>
+        <button class="btn-audio" onclick="falarPalavraAtual()"><i class="fa-solid fa-volume-up"></i></button>
         <div id="opcoes-palavras"></div>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
     </div>
 
     <div id="tela-nivel-4" class="tela-jogo">
-        <h2>Nível 4: Frases</h2>
+        <h2>Frases</h2>
         <p id="frase-pergunta" style="font-size: 1.2em; margin: 20px 0;"></p>
-        <button class="btn-verdadeiro-falso" onclick="responderFrase('Verdadeiro')">Verdadeiro</button>
-        <button class="btn-verdadeiro-falso" onclick="responderFrase('Falso')">Falso</button>
+        <button class="btn-verdadeiro-falso" onclick="responderFrase('Verdadeiro', this)">Verdadeiro</button>
+        <button class="btn-verdadeiro-falso" onclick="responderFrase('Falso', this)">Falso</button>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
     </div>
 
@@ -397,7 +432,6 @@
     
     const PALAVRAS = ['chupeta', 'carro', 'tomate'];
     
-    // NOUVELLE STRUCTURE POUR LA GÉNÉRATION DES PHRASES (NIVEAU 4)
     const DEFINITIONS = {
         'chupeta': {
             verdadeiro: 'Uma chupeta é um objeto que se dá a bebês.',
@@ -427,8 +461,8 @@
 
     function calcularTotalMaximo() {
         const totalSilabas = PALAVRAS.flatMap(getSilabas).length;
-        const totalFrases = PALAVRAS.length; // Chaque mot a une définition/phrase
-        return 4 + totalSilabas + PALAVRAS.length + totalFrases; // 18 points max
+        const totalFrases = PALAVRAS.length; 
+        return 4 + totalSilabas + PALAVRAS.length + totalFrases; 
     }
 
     // --- Variáveis de Estado Global ---
@@ -441,8 +475,8 @@
         palavrasCompletasN2: {},
         palavrasAtivasN3: [],
         palavrasCompletasN3: {},
-        frasesAtivasN4: [], // Contient les mots dont les phrases sont activées
-        frasesCompletasN4: {} // { 'chupeta': 2 }
+        frasesAtivasN4: [], 
+        frasesCompletasN4: {} 
     };
 
     let estadoJogo = {...INITIAL_GAME_STATE};
@@ -533,25 +567,24 @@
         const totalPalavrasN3 = PALAVRAS.length;
         const motsActifsN3 = estadoJogo.palavrasAtivasN3.length;
         const phrasesActivesN4 = estadoJogo.frasesAtivasN4.length;
-        const phrasesCompletesN4 = Object.values(estadoJogo.frasesCompletasN4).filter(c => c >= 2).length;
-        
-        // N1
-        document.getElementById('count-n1').textContent = `(${damierComplet}/${DADOS_LETRAS.length})`;
 
-        // N2 
-        const btnN2 = document.getElementById('btn-nivel-2');
-        btnN2.disabled = (damierComplet === 0);
+        // Vrai check : y a-t-il au moins un mot/une phrase activée qui n'est pas complétée 2x ?
+        
+        // N2 : Reste-t-il des mots N2 non complétés 2x ET non activés N3 ?
+        const motsRestantsN2 = PALAVRAS.filter(p => !estadoJogo.palavrasAtivasN3.includes(p)).length;
+        btnN2.disabled = (damierComplet === 0) || (motsRestantsN2 === 0);
         btnN2.querySelector('.contador-progresso').textContent = `(${motsActifsN3}/${totalPalavrasN3})`;
         
-        // N3 
-        const btnN3 = document.getElementById('btn-nivel-3');
-        btnN3.disabled = (motsActifsN3 === 0);
+        // N3 : Reste-t-il des mots N3 activés mais non complétés 2x ?
+        const motsRestantsN3 = motsActifsN3 - estadoJogo.palavrasAtivasN3.filter(p => (estadoJogo.palavrasCompletasN3[p] || 0) >= 2).length;
+        btnN3.disabled = (motsActifsN3 === 0) || (motsRestantsN3 === 0);
         btnN3.querySelector('.contador-progresso').textContent = `(${phrasesActivesN4}/${totalPalavrasN3})`;
 
-        // N4 
-        const btnN4 = document.getElementById('btn-nivel-4');
-        btnN4.disabled = (phrasesActivesN4 === 0);
-        btnN4.querySelector('.contador-progresso').textContent = `(${phrasesCompletesN4}/${totalPalavrasN3})`;
+        // N4 : Reste-t-il des phrases N4 activées mais non complétées 2x ?
+        const phrasesRestantesN4 = phrasesActivesN4 - estadoJogo.frasesAtivasN4.filter(p => (estadoJogo.frasesCompletasN4[p] || 0) >= 2).length;
+        const phrasesCompletsN4x2 = phrasesActivesN4 - phrasesRestantesN4;
+        btnN4.disabled = (phrasesActivesN4 === 0) || (phrasesRestantesN4 === 0);
+        btnN4.querySelector('.contador-progresso').textContent = `(${phrasesCompletsN4x2}/${totalPalavrasN3})`;
     }
 
 
@@ -852,19 +885,20 @@
 
     function verificarPalavra(selection) {
         if (selection === palavraAtual) {
-            adicionarPonto('palavra');
             estadoJogo.palavrasCompletasN3[palavraAtual] = (estadoJogo.palavrasCompletasN3[palavraAtual] || 0) + 1;
 
             if (estadoJogo.palavrasCompletasN3[palavraAtual] >= 2) {
+                adicionarPonto('palavra'); 
+                
                 const motPhrase = PALAVRAS.find(p => p === palavraAtual);
-                if (motPhrase && !estadoJogo.frasesAtivasN4.includes(motPhrase)) { // Activation par mot
+                if (motPhrase && !estadoJogo.frasesAtivasN4.includes(motPhrase)) {
                     estadoJogo.frasesAtivasN4.push(motPhrase);
-                    exibirMensagemBravo(() => iniciarNivel3());
+                    exibirMensagemBravo(() => iniciarNivel3()); 
                 } else {
-                    iniciarNivel3();
+                    exibirMensagemBravo(() => iniciarNivel3()); 
                 }
             } else {
-                iniciarNivel3();
+                iniciarNivel3(); 
             }
 
         } else {
@@ -875,7 +909,7 @@
     
     // --- NÍVEL 4: FRASES (GÉNÉRATION DYNAMIQUE) ---
     
-    let phraseActuelleData = null; // {mot: 'carro', affirmation: '...', reponse_attendue: 'Falso'}
+    let phraseActuelleData = null;
 
     function iniciarNivel4() {
         const motsDisponiblesN4 = PALAVRAS.filter(p => 
@@ -888,11 +922,9 @@
             return;
         }
         
-        // Choisir un mot aléatoire
         const motChoisi = motsDisponiblesN4[Math.floor(Math.random() * motsDisponiblesN4.length)];
         const defs = DEFINITIONS[motChoisi];
 
-        // Choisir aléatoirement une affirmation vraie ou fausse
         const estVrai = Math.random() < 0.5;
         const affirmation = estVrai ? defs.verdadeiro : defs.falso;
         const reponseAttendue = estVrai ? 'Verdadeiro' : 'Falso';
@@ -903,28 +935,45 @@
             reponse_attendue: reponseAttendue
         };
 
-        // Afficher la phrase (première lettre majuscule, reste minuscule)
         const questionText = affirmation.charAt(0).toUpperCase() + affirmation.slice(1).toLowerCase();
         document.getElementById('frase-pergunta').textContent = questionText;
+        
+        // Réinitialiser les couleurs des boutons avant chaque nouvelle question
+        document.querySelectorAll('#tela-nivel-4 .btn-verdadeiro-falso').forEach(btn => {
+            btn.classList.remove('feedback-correto', 'feedback-incorreto');
+            btn.disabled = false;
+        });
     }
     
-    function responderFrase(resposta) {
+    function responderFrase(resposta, elementClicked) {
         if (!phraseActuelleData) return;
 
-        if (resposta === phraseActuelleData.reponse_attendue) {
-            adicionarPonto('frase');
-            const mot = phraseActuelleData.mot;
-            estadoJogo.frasesCompletasN4[mot] = (estadoJogo.frasesCompletasN4[mot] || 0) + 1;
+        const isCorrect = (resposta === phraseActuelleData.reponse_attendue);
+        
+        // 1. Afficher le feedback visuel immédiatement
+        elementClicked.classList.add(isCorrect ? 'feedback-correto' : 'feedback-incorreto');
 
-            if (estadoJogo.frasesCompletasN4[mot] >= 2) {
-                exibirMensagemBravo(() => iniciarNivel4());
+        // 2. Désactiver temporairement les boutons
+        document.querySelectorAll('#tela-nivel-4 .btn-verdadeiro-falso').forEach(btn => btn.disabled = true);
+        
+        setTimeout(() => {
+            // 3. Réactiver les boutons (fait dans la fonction suivante pour les cas simples)
+            
+            if (isCorrect) {
+                estadoJogo.frasesCompletasN4[phraseActuelleData.mot] = (estadoJogo.frasesCompletasN4[phraseActuelleData.mot] || 0) + 1;
+
+                if (estadoJogo.frasesCompletasN4[phraseActuelleData.mot] >= 2) {
+                    adicionarPonto('frase'); 
+                    exibirMensagemBravo(() => iniciarNivel4());
+                } else {
+                    iniciarNivel4();
+                }
             } else {
                 iniciarNivel4();
             }
-        } else {
-            iniciarNivel4();
-        }
-        salvarEstado();
+            salvarEstado();
+
+        }, 1500); // Délai de 1.5 secondes pour le feedback
     }
 
     // --- INITIALISATION ---
