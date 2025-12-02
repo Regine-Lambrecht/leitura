@@ -60,7 +60,7 @@
         .nivel-btn {
             display: flex;
             align-items: center;
-            justify-content: space-between; /* Pour pousser le compteur à droite */
+            justify-content: space-between; /* ALIGNEMENT SPÉCIFIQUE POUR POUSSER L'ICÔNE À DROITE */
             width: 100%;
             padding: 15px;
             margin: 10px 0;
@@ -74,9 +74,8 @@
             font-family: 'Times New Roman', Times, serif; 
         }
         
-        /* Conteneur pour Terme + Icônes (Tout ce qui est à gauche) */
-        .content-left-group {
-            display: flex;
+        .nivel-btn span {
+            display: flex; /* Conteneur pour le texte et les icônes */
             align-items: center;
         }
 
@@ -100,10 +99,8 @@
             color: #7f8c8d;
         }
         
-        /* Espacement des icônes à côté du terme */
-        .content-left-group i {
-            margin-left: 8px; /* Espace après le nom du niveau */
-            margin-right: 2px; /* Espacement entre icônes multiples */
+        .icon-container-left i {
+            margin-right: 10px; /* Espacement après l'icône */
             font-size: 1.5em;
         }
         
@@ -538,7 +535,8 @@
         progressoNivel1: [0, 0, 0, 0],
         damierAtual: 0,
         selecaoN1: [], 
-        palavrasCompletasN2: {},
+        // NOTE: Utilisation du score de syllabe unique, non par mot
+        syllabesUniquesCompletes: {},
         palavrasAtivasN3: {}, 
         palavrasCompletasN3: {},
         frasesAtivasN4: {}, 
@@ -644,33 +642,49 @@
         const btnN3 = document.getElementById('btn-nivel-3');
         const btnN4 = document.getElementById('btn-nivel-4');
 
-        // N1
+        // --- NIVEAU 1 (Letras) ---
+        // X = Damiers complétés 2x / Y = Total Damiers (4)
         document.getElementById('count-n1').textContent = `(${damierComplet}/${DADOS_LETRAS.length})`;
-        
-        // Desactivation finale N1
         btnNivel1 = document.getElementById('btn-nivel-1');
         btnNivel1.disabled = (damierComplet === DADOS_LETRAS.length);
         
-        // N2 : Reste-t-il des mots N2 non complétés 2x ET non activés N3 ?
-        const motsRestantsN2 = PALAVRAS.filter(p => !estadoJogo.palavrasAtivasN3[p]).length;
-        btnN2.disabled = (damierComplet < DADOS_LETRAS.length) || (motsRestantsN2 === 0);
-        btnN2.querySelector('.contador-progresso').textContent = `(${motsActifsN3}/${totalPalavras})`;
+        // --- NIVEAU 2 (Sílabas) ---
         
-        // N3 : Reste-t-il des mots N3 activés mais non complétés 2x ?
-        const motsRestantsN3 = motsActifsN3 - Object.keys(estadoJogo.palavrasAtivasN3).filter(p => (estadoJogo.palavrasCompletasN3[p] || 0) >= 2).length;
-        btnN3.disabled = (motsActifsN3 === 0) || (motsRestantsN3 === 0);
-        btnN3.querySelector('.contador-progresso').textContent = `(${phrasesActivesN4}/${totalPalavras})`;
+        // Y N2: Nombre total de syllabes uniques dans TOUS les mots
+        let toutesSilabesUniques = [...new Set(PALAVRAS.flatMap(getSilabas))].length;
+        
+        // X N2: Nombre de syllabes UNIQUES complétées 2x
+        let syllabesCompletesUniques = 0;
+        Object.keys(estadoJogo.syllabesUniquesCompletes).forEach(syllabe => {
+            if (estadoJogo.syllabesUniquesCompletes[syllabe] >= 2) {
+                syllabesCompletesUniques++;
+            }
+        });
+        
+        const motsRestantsN2 = totalPalavras - motsActifsN3; 
+        
+        btnN2.disabled = (damierComplet < DADOS_LETRAS.length) || (motsRestantsN2 === 0);
+        btnN2.querySelector('.contador-progresso').textContent = `(${syllabesCompletesUniques}/${toutesSilabesUniques})`; 
+        
+        
+        // --- NIVEAU 3 (Palavras) ---
+        const motsCompletsN3x2 = Object.keys(estadoJogo.palavrasAtivasN3).filter(p => (estadoJogo.palavrasCompletasN3[p] || 0) >= 2).length; 
+        
+        // Y N3: Total des mots ACTIVÉS 
+        btnN3.disabled = (motsActifsN3 === 0) || (motsActifsN3 > 0 && motsCompletsN3x2 === motsActifsN3);
+        btnN3.querySelector('.contador-progresso').textContent = `(${motsCompletsN3x2}/${motsActifsN3})`;
 
-        // N4 : Reste-t-il des phrases N4 activées mais non complétées 2x ?
-        const phrasesRestantesN4 = phrasesActivesN4 - Object.keys(estadoJogo.frasesAtivasN4).filter(p => (estadoJogo.frasesCompletasN4[p] || 0) >= 2).length;
-        const phrasesCompletsN4x2 = phrasesActivesN4 - phrasesRestantesN4;
-        btnN4.disabled = (phrasesActivesN4 === 0) || (phrasesRestantesN4 === 0);
-        btnN4.querySelector('.contador-progresso').textContent = `(${phrasesCompletsN4x2}/${totalPalavras})`;
+        // --- NIVEAU 4 (Frases) ---
+        const phrasesCompletsN4x2 = Object.keys(estadoJogo.frasesAtivasN4).filter(p => (estadoJogo.frasesCompletasN4[p] || 0) >= 2).length;
+        
+        // Y N4: Total des phrases ACTIVÉES
+        btnN4.disabled = (phrasesActivesN4 === 0) || (phrasesActivesN4 > 0 && phrasesCompletsN4x2 === phrasesActivesN4);
+        btnN4.querySelector('.contador-progresso').textContent = `(${phrasesCompletsN4x2}/${phrasesActivesN4})`;
     }
 
 
     function verificarMensagemProgresso(score) {
-        const totalMaximo = calcularTotalMaximo();
+        const totalMaximo = calcularTotalTotalMaximo();
         const ratio = score / totalMaximo;
         let message = "";
 
@@ -838,27 +852,20 @@
         let silabasRestantesDoMotAtual = [];
         if (motActuelN2) {
             const silabasDoMot = getSilabas(motActuelN2);
-            silabasRestantesDoMotAtual = silabasDoMot.filter(silaba => {
-                const key = `${motActuelN2}-${silaba.toLowerCase()}`;
-                return (estadoJogo.palavrasCompletasN2[key] || 0) < 2;
-            });
+            // Vérifie si TOUTES les syllabes du mot actuel ont été complétées 2x (via le compteur global)
+            const motComplete = silabasDoMot.every(s => (estadoJogo.syllabesUniquesCompletes[s.toLowerCase()] || 0) >= 2);
 
-            if (silabasRestantesDoMotAtual.length === 0) {
+            if (motComplete) {
                 motActuelN2 = '';
+            } else {
+                // Filtre les syllabes du mot actuel qui n'ont pas encore 2 réussites
+                silabasRestantesDoMotAtual = silabasDoMot.filter(s => (estadoJogo.syllabesUniquesCompletes[s.toLowerCase()] || 0) < 2);
             }
         }
 
         if (!motActuelN2) {
-            const motsNonActives = PALAVRAS.filter(p => {
-                // Si le mot est déjà dans palavrasAtivasN3 (activé N3), on ne le choisit pas pour le N2
-                if (estadoJogo.palavrasAtivasN3[p]) return false; 
-                
-                const silabas = getSilabas(p);
-                return silabas.some(silaba => {
-                    const key = `${p}-${silaba.toLowerCase()}`;
-                    return (estadoJogo.palavrasCompletasN2[key] || 0) < 2;
-                });
-            });
+            // Choisir un nouveau mot (un mot qui n'est pas encore actif N3)
+            const motsNonActives = PALAVRAS.filter(p => !estadoJogo.palavrasAtivasN3[p]);
 
             if (motsNonActives.length === 0) {
                 mostrarTela('home');
@@ -868,10 +875,7 @@
             motActuelN2 = motsNonActives[Math.floor(Math.random() * motsNonActives.length)];
             
             const silabasDoMot = getSilabas(motActuelN2);
-            silabasRestantesDoMotAtual = silabasDoMot.filter(silaba => {
-                const key = `${motActuelN2}-${silaba.toLowerCase()}`;
-                return (estadoJogo.palavrasCompletasN2[key] || 0) < 2;
-            });
+            silabasRestantesDoMotAtual = silabasDoMot.filter(s => (estadoJogo.syllabesUniquesCompletes[s.toLowerCase()] || 0) < 2);
         }
         
         palavraAtual = motActuelN2; 
@@ -883,7 +887,7 @@
              return;
         }
 
-        // CORRECTION: Choix d'une syllabe aléatoire parmi celles qui n'ont pas encore 2 réussites
+        // Choix d'une syllabe aléatoire parmi celles qui n'ont pas encore 2 réussites
         silabaAtual = silabasParaJogar[Math.floor(Math.random() * silabasParaJogar.length)].toLowerCase();
         
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
@@ -905,22 +909,18 @@
 
     function verificarSilaba(selection) {
         if (selection === silabaAtual) {
-            const key = `${palavraAtual}-${silabaAtual}`;
-            const currentCount = estadoJogo.palavrasCompletasN2[key] || 0;
-            estadoJogo.palavrasCompletasN2[key] = currentCount + 1;
+            const currentCount = estadoJogo.syllabesUniquesCompletes[silabaAtual] || 0;
+            estadoJogo.syllabesUniquesCompletes[silabaAtual] = currentCount + 1;
             
-            const didJustCompleteTwice = estadoJogo.palavrasCompletasN2[key] === 2;
+            const didJustCompleteTwice = estadoJogo.syllabesUniquesCompletes[silabaAtual] === 2;
             
             if (didJustCompleteTwice) {
                  adicionarPonto('silaba');
             }
 
-            // Vérifie si TODAS as sílabas do motActuelN2 foram completadas 2x pour ATIVAR N3
+            // Vérification de la progression du mot actuel (activation N3)
             const silabasDoMot = getSilabas(palavraAtual);
-            const motAtiveN3 = silabasDoMot.every(silaba => {
-                const sKey = `${palavraAtual}-${silaba.toLowerCase()}`;
-                return (estadoJogo.palavrasCompletasN2[sKey] || 0) >= 2;
-            });
+            const motAtiveN3 = silabasDoMot.every(s => (estadoJogo.syllabesUniquesCompletes[s.toLowerCase()] || 0) >= 2);
             
             if (motAtiveN3 && !estadoJogo.palavrasAtivasN3[palavraAtual]) {
                 estadoJogo.palavrasAtivasN3[palavraAtual] = true; // Active le mot pour le N3
@@ -931,8 +931,6 @@
             }
 
         } else {
-            // En cas d'erreur, on relance le niveau 2 immédiatement,
-            // la logique de iniciarNivel2 reprendra le même mot et une syllabe restante (y compris celle manquée).
             iniciarNivel2();
         }
         salvarEstado();
@@ -973,6 +971,7 @@
 
         // Ajout d'une protection si la liste PALAVRAS est trop courte ou mal formée
         while (distractors.length < 2) {
+             // Cria um distrator de backup se necessário
              distractors.push(correctWord.length > 3 ? correctWord.substring(0, correctWord.length-1) + 'o' : 'palavra');
         }
 
@@ -1120,7 +1119,7 @@
         // CRITICAL CHECK: Si les mots ne sont pas chargés
         if (PALAVRAS.length === 0) {
              document.querySelector('.container').innerHTML = 
-                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou ele está vazio). Le jeu ne peut pas démarrer. Verifiez a URL ou l'accès au fichier.</p>";
+                "<h1>Erro de Carregamento</h1><p>Não foi possível carregar o arquivo <b>Palavras.txt</b> (ou ele está vazio). O jogo não pode iniciar.</p>";
              return;
         }
 
