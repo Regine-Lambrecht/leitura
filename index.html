@@ -731,36 +731,19 @@
         }
     }
 
-    // DEFINITIVE RECODED: Lógica de inicialização do Nível 1
+    // FINAL RECODED: Lógica de inicialização do Nível 1 - SIMPLIFIED
     function iniciarNivel1() {
         paresCorretosN1 = 0;
         estadoJogo.selecaoN1 = [];
 
-        let damierIndexToLoad = estadoJogo.damierAtual;
-        
-        // 1. Determine the index to load. We must look for the first incomplete one,
-        // starting from the currently stored index, to handle the "Voltar" case and starting the game.
-        
-        // If the current index has already been completed 2x, or if we are coming from the home screen
-        // and need to find the correct starting point (which should have been set by the home screen).
-        if (estadoJogo.progressoNivel1[estadoJogo.damierAtual] >= 2) {
-             let foundIncomplete = false;
-             for (let i = 0; i < DADOS_LETRAS.length; i++) {
-                let currentIndex = (estadoJogo.damierAtual + i) % DADOS_LETRAS.length;
-                
-                if (estadoJogo.progressoNivel1[currentIndex] < 2) {
-                    damierIndexToLoad = currentIndex;
-                    foundIncomplete = true;
-                    break;
-                }
-             }
-             if (!foundIncomplete) {
-                // All sets are complete (4/4).
-                mostrarTela('home');
-                return;
-             }
+        // Check if all sets are completed (4/4)
+        if (estadoJogo.progressoNivel1.filter(c => c >= 2).length === DADOS_LETRAS.length) {
+            mostrarTela('home');
+            return;
         }
         
+        // Ensure damierAtual points to a valid index (0-3)
+        const damierIndexToLoad = estadoJogo.damierAtual % DADOS_LETRAS.length;
         estadoJogo.damierAtual = damierIndexToLoad;
         
         const damier = DADOS_LETRAS[estadoJogo.damierAtual];
@@ -830,29 +813,27 @@
 
     // FINAL RECODED: Lógica de sucesso do Nível 1 (Immediate Sequential Advance)
     function sucessoNivel1() {
-        // Pega o contador atual antes de incrementar
         const currentCount = estadoJogo.progressoNivel1[estadoJogo.damierAtual];
         const currentDamierIndex = estadoJogo.damierAtual;
 
-        // 1. Incrementa o contador de sucessos para o damier atual
+        // 1. Increment the count for the current damier
         estadoJogo.progressoNivel1[currentDamierIndex]++;
 
-        // 2. Verifica se esta foi a conclusão DUAS vezes (para dar o ponto)
+        // 2. Check if this was the SECOND completion (to award the point)
         const didJustCompleteTwice = (currentCount === 1) && (estadoJogo.progressoNivel1[currentDamierIndex] === 2);
         
-        // 3. Define o próximo damier SEQUENCIALMENTE (D1 -> D2 -> D3 -> D4 -> D1)
+        // 3. Advance the pointer to the NEXT SEQUENTIAL damier (D+1)
         estadoJogo.damierAtual = (currentDamierIndex + 1) % DADOS_LETRAS.length;
 
         if (didJustCompleteTwice) {
-            // Se completado 2 vezes: Adiciona ponto e exibe Bravo.
+            // Second solve: Award point and show Bravo, then advance.
             adicionarPonto('letra');
             
-            // Exibir Bravo, e só depois carregar o próximo set.
             exibirMensagemBravo(() => {
-                iniciarNivel1(); // Carrega o próximo set
+                iniciarNivel1(); // Load the next set
             });
         } else {
-            // 1ª sucesso: Recarrega o damier avançado IMEDIATAMENTE.
+            // First solve: Immediately load the next set (which was advanced in step 3)
             iniciarNivel1();
         }
         salvarEstado();
@@ -894,13 +875,13 @@
         let silabasRestantesDoMotAtual = [];
         if (motActuelN2) {
             const silabasDoMot = getSilabas(motActuelN2);
-            // Vérifie si TOUTES les syllabes du mot actuel ont été complétées 2x (via le compteur global)
+            // Vérifie si TOUTES les syllabes du word actuel ont été complétées 2x (via le compteur global)
             const motComplete = silabasDoMot.every(s => (estadoJogo.syllabesUniquesCompletes[s.toLowerCase()] || 0) >= 2);
 
             if (motComplete) {
                 motActuelN2 = '';
             } else {
-                // Filtre les syllabes du mot actuel qui n'ont pas encore 2 réussites
+                // Filtre les syllabes du word actuel qui n'ont pas encore 2 réussites
                 silabasRestantesDoMotAtual = silabasDoMot.filter(s => (estadoJogo.syllabesUniquesCompletes[s.toLowerCase()] || 0) < 2);
             }
         }
