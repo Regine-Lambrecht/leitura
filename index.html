@@ -133,7 +133,7 @@
             background-color: #c0392b;
         }
 
-        /* Visibilité des Telas */
+        /* Visibilidade des Telas */
         .tela-jogo {
             display: none;
             padding-top: 20px;
@@ -467,7 +467,7 @@
     };
 
     /**
-    * Génère une définition Vrai/Faux pour tout mot non couvert par DEFINITIONS.
+    * Génère une définition Vrai/Faux pour tout word non couvert par DEFINITIONS.
     */
     function generateDefinition(word) {
         const wordUpper = word.charAt(0).toUpperCase() + word.slice(1);
@@ -731,34 +731,30 @@
         }
     }
 
-    // RECODED: Lógica de inicialização do Nível 1 (Final Fix)
+    // FINAL RECODED: Lógica de inicialização do Nível 1
     function iniciarNivel1() {
         paresCorretosN1 = 0;
         estadoJogo.selecaoN1 = [];
 
-        // 1. Encontrar o PRIMEIRO damier que ainda não foi completado 2 vezes (ou manter o atual se for o caso de 1/2)
-        let damierIndexToLoad = estadoJogo.damierAtual;
-        let isCurrentDamierComplete = estadoJogo.progressoNivel1[estadoJogo.damierAtual] >= 2;
+        // Find the next incomplete damier to load.
+        let damierIndexToLoad = -1;
         
-        // Se o atual já está completo (2/2) OU se estamos reentrando no nível e o atual não é o primeiro incompleto:
-        if (isCurrentDamierComplete || estadoJogo.progressoNivel1.filter(c => c < 2).length < DADOS_LETRAS.length) {
-            
-            // Procura o primeiro índice com contagem < 2
-            let firstIncompleteIndex = -1;
-            for (let i = 0; i < DADOS_LETRAS.length; i++) {
-                if (estadoJogo.progressoNivel1[i] < 2) {
-                    firstIncompleteIndex = i;
-                    break;
-                }
-            }
+        // Loop through all 4 sets starting from the current damier to find the next incomplete one.
+        for (let i = 0; i < DADOS_LETRAS.length; i++) {
+             // Use the modulo operator to cycle through indices: 0, 1, 2, 3, 0, 1, 2, 3...
+            let currentIndex = (estadoJogo.damierAtual + i) % DADOS_LETRAS.length;
 
-            // Se for encontrado um incompleto, define esse como o atual
-            if (firstIncompleteIndex !== -1) {
-                damierIndexToLoad = firstIncompleteIndex;
-            } else {
-                // Caso todos estejam completos (jogo 100% no Nível 1), mantém o último
-                damierIndexToLoad = estadoJogo.damierAtual;
+            if (estadoJogo.progressoNivel1[currentIndex] < 2) {
+                // Found the next incomplete set.
+                damierIndexToLoad = currentIndex;
+                break;
             }
+        }
+        
+        if (damierIndexToLoad === -1) {
+             // All sets are complete (4/4). Go back to home.
+            mostrarTela('home');
+            return;
         }
         
         estadoJogo.damierAtual = damierIndexToLoad;
@@ -828,26 +824,31 @@
         salvarEstado();
     }
 
-    // RECODED: Lógica de sucesso do Nível 1
+    // FINAL RECODED: Lógica de sucesso do Nível 1 (Immediate Sequential Advance)
     function sucessoNivel1() {
         // Pega o contador atual antes de incrementar
         const currentCount = estadoJogo.progressoNivel1[estadoJogo.damierAtual];
+        const currentDamierIndex = estadoJogo.damierAtual;
 
         // 1. Incrementa o contador de sucessos para o damier atual
-        estadoJogo.progressoNivel1[estadoJogo.damierAtual]++;
+        estadoJogo.progressoNivel1[currentDamierIndex]++;
 
-        // 2. Verifica se esta foi a conclusão DUAS vezes
-        const didJustCompleteTwice = (currentCount === 1) && (estadoJogo.progressoNivel1[estadoJogo.damierAtual] === 2);
+        // 2. Verifica se esta foi a conclusão DUAS vezes (para dar o ponto)
+        const didJustCompleteTwice = (currentCount === 1) && (estadoJogo.progressoNivel1[currentDamierIndex] === 2);
+        
+        // 3. Define o próximo damier SEQUENCIALMENTE (D1 -> D2 -> D3 -> D4 -> D1)
+        estadoJogo.damierAtual = (currentDamierIndex + 1) % DADOS_LETRAS.length;
 
         if (didJustCompleteTwice) {
             // Se completado 2 vezes: Adiciona ponto e exibe Bravo.
             adicionarPonto('letra');
+            
+            // Exibir Bravo, e só depois carregar o próximo set.
             exibirMensagemBravo(() => {
-                // A função iniciarNivel1() vai encontrar o próximo damier incompleto.
-                iniciarNivel1();
+                iniciarNivel1(); // Carrega o próximo set (que foi avançado acima)
             });
         } else {
-            // 1ª sucesso (ou > 2º sucesso): Recarrega o mesmo damier (ele será embaralhado).
+            // 1ª sucesso: Recarrega o damier avançado IMEDIATAMENTE.
             iniciarNivel1();
         }
         salvarEstado();
@@ -1025,7 +1026,7 @@
     }
 
     function iniciarNivel3() {
-        // Filtrer les mots actifs mais non complétés 2 fois
+        // Filtrar les mots actifs mais non complétés 2 fois
         const palavrasDisponiveisN3 = PALAVRAS.filter(p => {
             return estadoJogo.palavrasAtivasN3[p] && (estadoJogo.palavrasCompletasN3[p] || 0) < 2;
         });
