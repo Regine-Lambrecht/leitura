@@ -12,8 +12,8 @@
             --cor-fundo: #ecf0f1;
             --cor-sucesso: #2ecc71;
             --cor-erro: #e74c3c;
-            --cor-voltar: #95a5a6; /* Gris pour le bouton Voltar */
-            --cor-reset: #e74c3c; /* Rouge pour le bouton Recomeçar */
+            --cor-voltar: #3498db; /* Bleu pour le bouton Voltar */
+            --cor-reset: #e74c3c; 
             --tamanho-letra: 24px;
         }
 
@@ -73,11 +73,11 @@
         }
 
         .nivel-btn.voltar-btn {
-            background-color: var(--cor-voltar) !important;
+            background-color: var(--cor-voltar); 
         }
         
         .nivel-btn.voltar-btn:hover {
-            background-color: #7f8c8d !important;
+            background-color: #2980b9; 
         }
 
         .nivel-btn:hover:not(:disabled) {
@@ -88,6 +88,11 @@
             background-color: #bdc3c7;
             cursor: not-allowed;
             color: #7f8c8d;
+        }
+        
+        .nivel-btn i {
+            margin: 0 5px;
+            font-size: 1.5em;
         }
         
         .contador-progresso {
@@ -224,7 +229,7 @@
             animation: fadeIn 0.3s;
         }
         
-        /* Modal de Confirmação (Novo) */
+        /* Modal de Confirmação */
         #modal-confirmacao {
             position: fixed;
             top: 50%;
@@ -235,7 +240,7 @@
             padding: 25px;
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            z-index: 1001; /* Doit être au-dessus de l'overlay */
+            z-index: 1001; 
             width: 80%;
             max-width: 350px;
             display: none;
@@ -303,7 +308,7 @@
             <i class="fa-solid fa-trophy"></i> Nível 1: Letras <span class="contador-progresso" id="count-n1"></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-2" onclick="iniciarNivel(2)" disabled>
-            <i class="fa-solid fa-trophies"></i> Nível 2: Sílabas <span class="contador-progresso" id="count-n2"></span>
+            <i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i> Nível 2: Sílabas <span class="contador-progresso" id="count-n2"></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-3" onclick="iniciarNivel(3)" disabled>
             <i class="fa-solid fa-medal"></i> Nível 3: Palavras <span class="contador-progresso" id="count-n3"></span>
@@ -381,7 +386,7 @@
         synth.speak(utterance);
     }
 
-    // --- DADOS DO JOGO (LIMITÉS AUX 3 MOTS) ---
+    // --- DADOS DU JEU ---
 
     const DADOS_LETRAS = [
         ['A', 'a', 'E', 'e', 'I', 'i', 'O', 'o', 'U', 'u', 'Y', 'y'],
@@ -392,12 +397,22 @@
     
     const PALAVRAS = ['chupeta', 'carro', 'tomate'];
     
-    const FRASES = [
-        { palavra: 'chupeta', frase: 'Uma chupeta é um objeto que se dá a bebês.', resposta_correta: 'Verdadeiro' },
-        { palavra: 'carro', frase: 'Um carro é um animal perigoso.', resposta_correta: 'Falso' },
-        { palavra: 'tomate', frase: 'Um tomate é geralmente de cor azul.', resposta_correta: 'Falso' }
-    ];
-    
+    // NOUVELLE STRUCTURE POUR LA GÉNÉRATION DES PHRASES (NIVEAU 4)
+    const DEFINITIONS = {
+        'chupeta': {
+            verdadeiro: 'Uma chupeta é um objeto que se dá a bebês.',
+            falso: 'Uma chupeta é usada para limpar o chão da casa.'
+        },
+        'carro': {
+            verdadeiro: 'Um carro tem quatro rodas e pode levar pessoas para viajar.',
+            falso: 'Um carro é um animal perigoso que mora nas árvores.'
+        },
+        'tomate': {
+            verdadeiro: 'O tomate é uma fruta ou legume usado para fazer saladas.',
+            falso: 'Um tomate é geralmente de cor azul e tem sabor de chocolate.'
+        }
+    };
+
     function getSilabas(palavra) {
         switch(palavra) {
             case 'chupeta': return ['chu', 'pe', 'ta'];
@@ -412,7 +427,8 @@
 
     function calcularTotalMaximo() {
         const totalSilabas = PALAVRAS.flatMap(getSilabas).length;
-        return 4 + totalSilabas + PALAVRAS.length + FRASES.length; // 18 points max
+        const totalFrases = PALAVRAS.length; // Chaque mot a une définition/phrase
+        return 4 + totalSilabas + PALAVRAS.length + totalFrases; // 18 points max
     }
 
     // --- Variáveis de Estado Global ---
@@ -425,8 +441,8 @@
         palavrasCompletasN2: {},
         palavrasAtivasN3: [],
         palavrasCompletasN3: {},
-        frasesAtivasN4: [],
-        frasesCompletasN4: {}
+        frasesAtivasN4: [], // Contient les mots dont les phrases sont activées
+        frasesCompletasN4: {} // { 'chupeta': 2 }
     };
 
     let estadoJogo = {...INITIAL_GAME_STATE};
@@ -434,6 +450,7 @@
     let palavraAtual = ''; 
     let fraseAtual = null; 
     let paresCorretosN1 = 0; 
+    let motActuelN2 = ''; 
 
     // --- FUNÇÕES DE UTILIDADE ET PERSISTENCE ---
 
@@ -451,35 +468,23 @@
         localStorage.setItem('aprendendoComPedro', JSON.stringify(estadoJogo));
     }
     
-    /**
-     * Affiche la modal de confirmation pour la réinitialisation.
-     */
     function recomecarDeZero() {
         document.getElementById('overlay').style.display = 'block';
         document.getElementById('modal-confirmacao').style.display = 'block';
     }
 
-    /**
-     * Annule la réinitialisation (clic sur "Não").
-     */
     function cancelaRecomeco() {
         document.getElementById('overlay').style.display = 'none';
         document.getElementById('modal-confirmacao').style.display = 'none';
     }
 
-    /**
-     * Effectue la réinitialisation (clic sur "Sim").
-     */
     function confirmaRecomeco() {
-        // Cacher la modal et l'overlay
         cancelaRecomeco(); 
         
-        // Réinitialiser l'état local
         estadoJogo = {...INITIAL_GAME_STATE};
-        // Vider le localStorage
+        motActuelN2 = ''; 
         localStorage.removeItem('aprendendoComPedro');
         
-        // Recharger l'interface et revenir à l'accueil
         atualizarInterfaceHome();
         mostrarTela('home');
     }
@@ -496,6 +501,8 @@
     function exibirMensagemBravo(callback) {
         const msgElement = document.getElementById('mensagem-bravo');
         const overlayElement = document.getElementById('overlay');
+        
+        document.getElementById('modal-confirmacao').style.display = 'none'; 
         
         overlayElement.style.display = 'block';
         msgElement.style.display = 'block';
@@ -539,12 +546,12 @@
         // N3 
         const btnN3 = document.getElementById('btn-nivel-3');
         btnN3.disabled = (motsActifsN3 === 0);
-        btnN3.querySelector('.contador-progresso').textContent = `(${phrasesActivesN4}/${FRASES.length})`;
+        btnN3.querySelector('.contador-progresso').textContent = `(${phrasesActivesN4}/${totalPalavrasN3})`;
 
         // N4 
         const btnN4 = document.getElementById('btn-nivel-4');
         btnN4.disabled = (phrasesActivesN4 === 0);
-        btnN4.querySelector('.contador-progresso').textContent = `(${phrasesCompletesN4}/${FRASES.length})`;
+        btnN4.querySelector('.contador-progresso').textContent = `(${phrasesCompletesN4}/${totalPalavrasN3})`;
     }
 
 
@@ -698,26 +705,47 @@
     let silabaAtual = '';
     
     function iniciarNivel2() {
-        const motsNonActives = PALAVRAS.filter(p => !estadoJogo.palavrasAtivasN3.includes(p));
+        let silabasRestantesDoMotAtual = [];
+        if (motActuelN2) {
+            const silabasDoMot = getSilabas(motActuelN2);
+            silabasRestantesDoMotAtual = silabasDoMot.filter(silaba => {
+                const key = `${motActuelN2}-${silaba.toLowerCase()}`;
+                return (estadoJogo.palavrasCompletasN2[key] || 0) < 2;
+            });
 
-        if (motsNonActives.length === 0) {
-            mostrarTela('home');
-            return;
+            if (silabasRestantesDoMotAtual.length === 0) {
+                motActuelN2 = '';
+            }
         }
 
-        palavraAtual = motsNonActives[Math.floor(Math.random() * motsNonActives.length)];
+        if (!motActuelN2) {
+            const motsNonActives = PALAVRAS.filter(p => {
+                if (estadoJogo.palavrasAtivasN3.includes(p)) return false; 
+                
+                const silabas = getSilabas(p);
+                return silabas.some(silaba => {
+                    const key = `${p}-${silaba.toLowerCase()}`;
+                    return (estadoJogo.palavrasCompletasN2[key] || 0) < 2;
+                });
+            });
 
-        const silabasDoMot = getSilabas(palavraAtual);
-        silabasParaJogar = silabasDoMot.filter(silaba => {
-            const key = `${palavraAtual}-${silaba.toLowerCase()}`;
-            return (estadoJogo.palavrasCompletasN2[key] || 0) < 2;
-        });
+            if (motsNonActives.length === 0) {
+                mostrarTela('home');
+                return;
+            }
+
+            motActuelN2 = motsNonActives[Math.floor(Math.random() * motsNonActives.length)];
+            
+            const silabasDoMot = getSilabas(motActuelN2);
+            silabasRestantesDoMotAtual = silabasDoMot.filter(silaba => {
+                const key = `${motActuelN2}-${silaba.toLowerCase()}`;
+                return (estadoJogo.palavrasCompletasN2[key] || 0) < 2;
+            });
+        }
         
-        if (silabasParaJogar.length === 0) {
-            iniciarNivel2(); 
-            return;
-        }
-
+        palavraAtual = motActuelN2; 
+        silabasParaJogar = silabasRestantesDoMotAtual;
+        
         silabaAtual = silabasParaJogar[Math.floor(Math.random() * silabasParaJogar.length)].toLowerCase();
         
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
@@ -751,9 +779,10 @@
             
             if (motAtiveN3 && !estadoJogo.palavrasAtivasN3.includes(palavraAtual)) {
                 estadoJogo.palavrasAtivasN3.push(palavraAtual);
+                motActuelN2 = ''; 
                 exibirMensagemBravo(() => iniciarNivel2());
             } else {
-                iniciarNivel2();
+                iniciarNivel2(); 
             }
 
         } else {
@@ -827,9 +856,9 @@
             estadoJogo.palavrasCompletasN3[palavraAtual] = (estadoJogo.palavrasCompletasN3[palavraAtual] || 0) + 1;
 
             if (estadoJogo.palavrasCompletasN3[palavraAtual] >= 2) {
-                const frase = FRASES.find(f => f.palavra === palavraAtual);
-                if (frase && !estadoJogo.frasesAtivasN4.includes(frase.frase)) {
-                    estadoJogo.frasesAtivasN4.push(frase.frase);
+                const motPhrase = PALAVRAS.find(p => p === palavraAtual);
+                if (motPhrase && !estadoJogo.frasesAtivasN4.includes(motPhrase)) { // Activation par mot
+                    estadoJogo.frasesAtivasN4.push(motPhrase);
                     exibirMensagemBravo(() => iniciarNivel3());
                 } else {
                     iniciarNivel3();
@@ -844,33 +873,50 @@
         salvarEstado();
     }
     
-    // --- NÍVEL 4: FRASES ---
+    // --- NÍVEL 4: FRASES (GÉNÉRATION DYNAMIQUE) ---
     
+    let phraseActuelleData = null; // {mot: 'carro', affirmation: '...', reponse_attendue: 'Falso'}
+
     function iniciarNivel4() {
-        const frasesParaJogar = FRASES.filter(f => 
-            estadoJogo.frasesAtivasN4.includes(f.frase) && 
-            (estadoJogo.frasesCompletasN4[f.frase] || 0) < 2
+        const motsDisponiblesN4 = PALAVRAS.filter(p => 
+            estadoJogo.frasesAtivasN4.includes(p) && 
+            (estadoJogo.frasesCompletasN4[p] || 0) < 2
         );
 
-        if (frasesParaJogar.length === 0) {
+        if (motsDisponiblesN4.length === 0) {
             mostrarTela('home');
             return;
         }
-
-        fraseAtual = frasesParaJogar[Math.floor(Math.random() * frasesParaJogar.length)];
         
-        const questionText = fraseAtual.frase.charAt(0).toUpperCase() + fraseAtual.frase.slice(1).toLowerCase();
+        // Choisir un mot aléatoire
+        const motChoisi = motsDisponiblesN4[Math.floor(Math.random() * motsDisponiblesN4.length)];
+        const defs = DEFINITIONS[motChoisi];
+
+        // Choisir aléatoirement une affirmation vraie ou fausse
+        const estVrai = Math.random() < 0.5;
+        const affirmation = estVrai ? defs.verdadeiro : defs.falso;
+        const reponseAttendue = estVrai ? 'Verdadeiro' : 'Falso';
+
+        phraseActuelleData = {
+            mot: motChoisi,
+            affirmation: affirmation,
+            reponse_attendue: reponseAttendue
+        };
+
+        // Afficher la phrase (première lettre majuscule, reste minuscule)
+        const questionText = affirmation.charAt(0).toUpperCase() + affirmation.slice(1).toLowerCase();
         document.getElementById('frase-pergunta').textContent = questionText;
     }
     
     function responderFrase(resposta) {
-        if (!fraseAtual) return;
+        if (!phraseActuelleData) return;
 
-        if (resposta === fraseAtual.resposta_correta) {
+        if (resposta === phraseActuelleData.reponse_attendue) {
             adicionarPonto('frase');
-            estadoJogo.frasesCompletasN4[fraseAtual.frase] = (estadoJogo.frasesCompletasN4[fraseAtual.frase] || 0) + 1;
+            const mot = phraseActuelleData.mot;
+            estadoJogo.frasesCompletasN4[mot] = (estadoJogo.frasesCompletasN4[mot] || 0) + 1;
 
-            if (estadoJogo.frasesCompletasN4[fraseAtual.frase] >= 2) {
+            if (estadoJogo.frasesCompletasN4[mot] >= 2) {
                 exibirMensagemBravo(() => iniciarNivel4());
             } else {
                 iniciarNivel4();
