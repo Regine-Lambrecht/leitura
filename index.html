@@ -621,7 +621,8 @@
     }
 
     function iniciarNivel1() {
-        paresCorretosN1 = 0;
+        // CORRECTION: Assurer la réinitialisation de paresCorretosN1 avant de dessiner la grille
+        paresCorretosN1 = 0; 
         estadoJogo.selecaoN1 = [];
         const damier = DADOS_LETRAS[estadoJogo.damierAtual];
         const melange = [...damier].sort(() => Math.random() - 0.5);
@@ -675,7 +676,9 @@
             elem1.classList.remove('selecionada');
             elem2.classList.remove('selecionada');
 
+            // CORRECTION: S'assurer que le succès est traité immédiatement après les 6 paires
             if (paresCorretosN1 === 6) {
+                // Appel de la fonction de succès qui gère le passage au damier suivant
                 sucessoNivel1();
             }
         } else {
@@ -689,6 +692,7 @@
     }
 
     function sucessoNivel1() {
+        // Incrémente le compteur de réussites pour le damier actuel
         estadoJogo.progressoNivel1[estadoJogo.damierAtual]++;
 
         const damierComplet2Fois = estadoJogo.progressoNivel1[estadoJogo.damierAtual] >= 2;
@@ -697,13 +701,16 @@
         if (damierComplet2Fois) {
             adicionarPonto('letra');
             exibirMensagemBravo(() => {
+                // Passe au damier suivant
                 estadoJogo.damierAtual = proximoDamier;
                 iniciarNivel1();
             });
         } else {
+            // Passe au damier suivant (1ère réussite)
             estadoJogo.damierAtual = proximoDamier;
             iniciarNivel1();
         }
+        salvarEstado(); // Sauvegarde l'état après la progression
     }
 
     // --- NÍVEL 2: SÍLABAS ---
