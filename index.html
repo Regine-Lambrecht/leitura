@@ -351,16 +351,16 @@
             <span class="contador-progresso" id="count-n1"></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-2" onclick="iniciarNivel(2)" disabled>
-            <span class="content-left-group">Sílabas <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span></span>
-            <span class="contador-progresso" id="count-n2"></span>
+            <span class="icon-container-left"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span>
+            <span class="content-left-group">Sílabas <span class="contador-progresso" id="count-n2"></span></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-3" onclick="iniciarNivel(3)" disabled>
-            <span class="content-left-group">Palavras <span class="icon-container"><i class="fa-solid fa-medal"></i></span></span>
-            <span class="contador-progresso" id="count-n3"></span>
+            <span class="icon-container-left"><i class="fa-solid fa-medal"></i></span>
+            <span class="content-left-group">Palavras <span class="contador-progresso" id="count-n3"></span></span>
         </button>
         <button class="nivel-btn" id="btn-nivel-4" onclick="iniciarNivel(4)" disabled>
-            <span class="content-left-group">Frases <span class="icon-container"><i class="fa-solid fa-user-graduate"></i></span></span>
-            <span class="contador-progresso" id="count-n4"></span>
+            <span class="icon-container-left"><i class="fa-solid fa-user-graduate"></i></span>
+            <span class="content-left-group">Frases <span class="contador-progresso" id="count-n4"></span></span>
         </button>
 
         <button class="nivel-btn" id="btn-reset" onclick="recomecarDeZero()">
@@ -535,7 +535,6 @@
         progressoNivel1: [0, 0, 0, 0],
         damierAtual: 0,
         selecaoN1: [], 
-        // NOTE: Utilisation du score de syllabe unique, non par mot
         syllabesUniquesCompletes: {},
         palavrasAtivasN3: {}, 
         palavrasCompletasN3: {},
@@ -638,12 +637,13 @@
         const motsActifsN3 = Object.keys(estadoJogo.palavrasAtivasN3).length;
         const phrasesActivesN4 = Object.keys(estadoJogo.frasesAtivasN4).length;
 
+        const btnN1 = document.getElementById('btn-nivel-1');
         const btnN2 = document.getElementById('btn-nivel-2');
         const btnN3 = document.getElementById('btn-nivel-3');
         const btnN4 = document.getElementById('btn-nivel-4');
 
         // --- NIVEAU 1 (Letras) ---
-        // X = Damiers complétés 2x / Y = Total Damiers (4)
+        // Y = Total Damiers (4). FIXÉ À 4.
         document.getElementById('count-n1').textContent = `(${damierComplet}/${DADOS_LETRAS.length})`;
         btnNivel1 = document.getElementById('btn-nivel-1');
         btnNivel1.disabled = (damierComplet === DADOS_LETRAS.length);
@@ -670,21 +670,27 @@
         // --- NIVEAU 3 (Palavras) ---
         const motsCompletsN3x2 = Object.keys(estadoJogo.palavrasAtivasN3).filter(p => (estadoJogo.palavrasCompletasN3[p] || 0) >= 2).length; 
         
-        // Y N3: Total des mots ACTIVÉS 
+        // Y N3: Total des mots ACTIVÉS (0 si aucun mot n'est actif)
+        const denominateurN3 = motsActifsN3;
+        const displayDenominateurN3 = denominateurN3 === 0 ? 0 : denominateurN3;
+
         btnN3.disabled = (motsActifsN3 === 0) || (motsActifsN3 > 0 && motsCompletsN3x2 === motsActifsN3);
-        btnN3.querySelector('.contador-progresso').textContent = `(${motsCompletsN3x2}/${motsActifsN3})`;
+        btnN3.querySelector('.contador-progresso').textContent = `(${motsCompletsN3x2}/${displayDenominateurN3})`;
 
         // --- NIVEAU 4 (Frases) ---
         const phrasesCompletsN4x2 = Object.keys(estadoJogo.frasesAtivasN4).filter(p => (estadoJogo.frasesCompletasN4[p] || 0) >= 2).length;
         
         // Y N4: Total des phrases ACTIVÉES
+        const denominateurN4 = phrasesActivesN4;
+        const displayDenominateurN4 = denominateurN4 === 0 ? 0 : denominateurN4;
+
         btnN4.disabled = (phrasesActivesN4 === 0) || (phrasesActivesN4 > 0 && phrasesCompletsN4x2 === phrasesActivesN4);
-        btnN4.querySelector('.contador-progresso').textContent = `(${phrasesCompletsN4x2}/${phrasesActivesN4})`;
+        btnN4.querySelector('.contador-progresso').textContent = `(${phrasesCompletsN4x2}/${displayDenominateurN4})`;
     }
 
 
     function verificarMensagemProgresso(score) {
-        const totalMaximo = calcularTotalTotalMaximo();
+        const totalMaximo = calcularTotalMaximo();
         const ratio = score / totalMaximo;
         let message = "";
 
@@ -864,8 +870,16 @@
         }
 
         if (!motActuelN2) {
-            // Choisir un nouveau mot (un mot qui n'est pas encore actif N3)
-            const motsNonActives = PALAVRAS.filter(p => !estadoJogo.palavrasAtivasN3[p]);
+            const motsNonActives = PALAVRAS.filter(p => {
+                // Si le mot est déjà dans palavrasAtivasN3 (activé N3), on ne le choisit pas pour le N2
+                if (estadoJogo.palavrasAtivasN3[p]) return false; 
+                
+                const silabas = getSilabas(p);
+                return silabas.some(silaba => {
+                    const key = `${p}-${silaba.toLowerCase()}`;
+                    return (estadoJogo.syllabesUniquesCompletes[silaba.toLowerCase()] || 0) < 2;
+                });
+            });
 
             if (motsNonActives.length === 0) {
                 mostrarTela('home');
@@ -887,7 +901,7 @@
              return;
         }
 
-        // Choix d'une syllabe aléatoire parmi celles qui n'ont pas encore 2 réussites
+        // CORRECTION: Choix d'une syllabe aléatoire parmi celles qui n'ont pas encore 2 réussites
         silabaAtual = silabasParaJogar[Math.floor(Math.random() * silabasParaJogar.length)].toLowerCase();
         
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
@@ -931,6 +945,8 @@
             }
 
         } else {
+            // En cas d'erreur, on relance le niveau 2 immédiatement,
+            // la logique de iniciarNivel2 reprendra le même mot et une syllabe restante (y compris celle manquée).
             iniciarNivel2();
         }
         salvarEstado();
