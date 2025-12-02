@@ -404,7 +404,7 @@
 </div>
 
 <script>
-    // Configuração das vozes TTS
+    // Configuration des voix TTS
     const synth = window.speechSynthesis;
     let brazilVoice = null;
     
@@ -432,7 +432,7 @@
         synth.speak(utterance);
     }
 
-    // --- DADOS DU JEU ---
+    // --- DADOS DU JEU (Initialisation statique et dynamique) ---
 
     const DADOS_LETRAS = [
         ['A', 'a', 'E', 'e', 'I', 'i', 'O', 'o', 'U', 'u', 'Y', 'y'],
@@ -441,7 +441,7 @@
         ['K', 'k', 'L', 'l', 'M', 'm', 'N', 'n', 'S', 's', 'X', 'x']
     ];
     
-    const PALAVRAS = ['chupeta', 'carro', 'tomate'];
+    let PALAVRAS = []; // Sera rempli par fetch
     
     const DEFINITIONS = {
         'chupeta': {
@@ -457,6 +457,31 @@
             falso: 'Um tomate é geralmente de cor azul et a sabor de chocolate.'
         }
     };
+    
+    // Fonction pour charger les mots depuis Palavras.txt
+    async function fetchWords() {
+        try {
+            // Dans un environnement GitHub Pages, on utilise fetch pour charger le fichier.
+            // Si le fichier Palavras.txt n'est pas fourni, cette requête échouera.
+            const response = await fetch('Palavras.txt');
+            if (!response.ok) {
+                console.error("Palavras.txt non trouvé. Utilisation des mots par défaut.");
+                PALAVRAS = ['chupeta', 'carro', 'tomate']; 
+                return;
+            }
+            const text = await response.text();
+            PALAVRAS = text.trim().split('\n').map(word => word.trim().toLowerCase()).filter(word => word.length > 0);
+            
+            if (PALAVRAS.length === 0) {
+                 PALAVRAS = ['chupeta', 'carro', 'tomate']; // Fallback
+            }
+
+        } catch (error) {
+            console.error("Erreur de chargement de Palavras.txt, utilisation des mots par défaut.", error);
+            PALAVRAS = ['chupeta', 'carro', 'tomate']; // Fallback
+        }
+    }
+
 
     function getSilabas(palavra) {
         switch(palavra) {
@@ -506,7 +531,7 @@
         } else {
             estadoJogo = {...INITIAL_GAME_STATE};
         }
-        atualizarInterfaceHome();
+        // NOTE: L'interface est mise à jour après le chargement des mots dans inicializarJogo
     }
 
     function salvarEstado() {
@@ -573,7 +598,7 @@
         atualizarInterfaceHome();
     }
     
-    function atualizarBotoesNivel() {
+    function actualizarBotoesNivel() {
         const damierComplet = estadoJogo.progressoNivel1.filter(c => c >= 2).length;
         const totalPalavras = PALAVRAS.length;
         const motsActifsN3 = Object.keys(estadoJogo.palavrasAtivasN3).length;
@@ -719,7 +744,6 @@
             });
         } else {
             // Passe au damier suivant (1ère réussite)
-            // L'appel à exibirMensagemBravo n'est PAS ici.
             estadoJogo.damierAtual = proximoDamier;
             iniciarNivel1();
         }
@@ -999,8 +1023,36 @@
         }, 1500); // Délai de 1.5 secondes pour le feedback
     }
 
+    // Fonction pour charger les mots depuis Palavras.txt (Rappel : doit être un fichier séparé)
+    async function fetchWords() {
+        try {
+            // Dans un environnement GitHub Pages, on utilise fetch pour charger le fichier.
+            const response = await fetch('Palavras.txt');
+            if (!response.ok) {
+                console.error("Palavras.txt non trouvé. Utilisation des mots par défaut.");
+                PALAVRAS = ['chupeta', 'carro', 'tomate']; 
+                return;
+            }
+            const text = await response.text();
+            PALAVRAS = text.trim().split('\n').map(word => word.trim().toLowerCase()).filter(word => word.length > 0);
+            
+            if (PALAVRAS.length === 0) {
+                 PALAVRAS = ['chupeta', 'carro', 'tomate']; // Fallback
+            }
+
+        } catch (error) {
+            console.error("Erreur de chargement de Palavras.txt, utilisation des mots par défaut.", error);
+            PALAVRAS = ['chupeta', 'carro', 'tomate']; // Fallback
+        }
+    }
+
+    async function inicializarJogo() {
+        await fetchWords(); // Attendre le chargement des mots
+        carregarEstado(); // Charger l'état après avoir obtenu la liste des mots
+    }
+
     // --- INITIALISATION ---
-    document.addEventListener('DOMContentLoaded', carregarEstado);
+    document.addEventListener('DOMContentLoaded', inicializarJogo);
 </script>
 
 </body>
