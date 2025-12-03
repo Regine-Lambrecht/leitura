@@ -574,7 +574,6 @@
     ];
     
     // IDs (ÍNDICES 1-BASED) que concedem PONTO (Fim da palavra)
-    // Usado para contar 1 ponto por palavra (total 20)
     const PONTOS_IDS_N3 = [3, 6, 9, 12, 15, 18, 21, 23, 26, 29, 32, 35, 38, 40, 42, 45, 47, 49, 52, 54];
     
     const MAX_SILABAS_LOOP_N3 = DESAFIO_SILABAS_SEQUENCIAL.length; // 54 sílabas no ditado
@@ -1107,8 +1106,7 @@
         atualizarInterfaceHome();
     }
 
-    // --- NÍVEL 3: SÍLABAS (RECODIFICADO) ---
-    // A lista de sílabas e pontos já está definida globalmente: DESAFIO_SILABAS_SEQUENCIAL e PONTOS_IDS_N3
+    // --- NÍVEL 3: SÍLABAS (REESCRITO) ---
 
     function generateDistractorsSilabas(correct) {
         // ... (Distractor generation logic remains the same for variety)
@@ -1150,7 +1148,6 @@
         // 2. SET STARTING INDEX BASED ON CURRENT SCORE (WORD COUNT)
         const currentWordCount = estadoJogo.progressoNivel3;
 
-        // --- UNBREAKABLE START LOGIC ---
         let startIndex;
         if (currentWordCount === 0) {
             // IF score is 0, start at index 0 (the first syllable: "a" from "abelha")
@@ -1164,15 +1161,15 @@
         }
         
         estadoJogo.indiceSilabaAtual = startIndex;
-        salvarEstado(); // Save the corrected starting index immediately
+        salvarEstado(); 
         // --- END UNBREAKABLE START LOGIC ---
 
 
         // 3. --- CORE LOGIC ---
-        // Ensure index is safe (this prevents the infinite loop/crash from bad data)
+        // Ensure index is safe before access (essential for crash prevention)
         let safeIndex = parseInt(estadoJogo.indiceSilabaAtual);
         if (isNaN(safeIndex) || safeIndex < 0 || safeIndex >= MAX_SILABAS_LOOP_N3) {
-            // Emergency brake: reset to 0 if data is corrupt
+            // Emergency brake: reset to 0 if data is corrupt/non-numeric
             safeIndex = 0;
             estadoJogo.indiceSilabaAtual = 0;
             salvarEstado();
