@@ -778,15 +778,21 @@
 
     function mostrarModalRecomeco(nivel) {
         const modalText = document.getElementById('modal-reset-text');
-        nivelSendoResetado = nivel;
-        let nivelNome = '';
+        
+        let nivelParaResetar;
 
         if (nivel === 'level') {
-            // Find the highest incomplete level to target the reset
-            nivel = getHighestIncompleteLevel();
+            // Encontra o nível mais alto incompleto (ou o mais alto se tudo completo)
+            nivelParaResetar = getHighestIncompleteLevel();
+        } else {
+            nivelParaResetar = nivel; // 'global'
         }
+        
+        // Armazena o nível real a ser resetado globalmente
+        nivelSendoResetado = nivelParaResetar; 
 
-        switch(nivel) {
+        let nivelNome = '';
+        switch(nivelParaResetar) {
             case 1: nivelNome = 'Letras (Pares)'; break;
             case 2: nivelNome = 'Letras de Palavras'; break;
             case 3: nivelNome = 'Sílabas'; break;
@@ -798,7 +804,7 @@
             modalText.textContent = "Você vai perder TODOS os pontos e todo o progresso. Quer mesmo recomeçar de zero?";
             document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(true);
         } else {
-            modalText.textContent = `Você vai perder todos os pontos do Nível ${nivel} (${nivelNome}). Quer mesmo recomeçar?`;
+            modalText.textContent = `Você vai perder todos os pontos do Nível ${nivelParaResetar} (${nivelNome}). Quer mesmo recomeçar?`;
             document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(false);
         }
 
@@ -818,10 +824,11 @@
         if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) return 3;
         if (estadoJogo.progressoN4 < MAX_N4_COMPLETIONS) return 4;
         if (estadoJogo.progressoN5 < MAX_N5_COMPLETIONS) return 5;
+        // Se tudo completo, reseta o último para dar o que fazer.
         return 5; 
     }
 
-    // --- NOVA FUNÇÃO: Reseta o nível localmente (coloca 0) ---
+    // --- FUNÇÃO: Reseta o nível localmente (coloca 0) ---
     function resetarNivelAlvo(nivelAlvo) {
         switch (nivelAlvo) {
             case 1:
@@ -852,7 +859,7 @@
         return nivelAlvo;
     }
 
-    // --- NOVA FUNÇÃO: Recalcula o score global somando todos os progressos ---
+    // --- FUNÇÃO: Recalcula o score global somando todos os progressos ---
     function recalcularScoreGlobal() {
         const n1Score = estadoJogo.progressoNivel1.filter(c => c >= 2).length;
         const n2Score = estadoJogo.progressoNivel2;
@@ -862,37 +869,31 @@
         
         estadoJogo.scoreGlobal = n1Score + n2Score + n3Score + n4Score + n5Score;
     }
-    // --- FIM NOVAS FUNÇÕES ---
+    // --- FIM FUNÇÕES DE RESET/RECALCULO ---
 
     function confirmaRecomeco(resetGlobal) {
         cancelaRecomeco();
-        let nivel = nivelSendoResetado;
+        const nivel = nivelSendoResetado; // Usa o nível já determinado em mostrarModalRecomeco
         
-        if (nivel === 'level') {
-            nivel = getHighestIncompleteLevel();
-        }
-
         if (resetGlobal) {
             estadoJogo = {...INITIAL_GAME_STATE};
             localStorage.removeItem('aprendendoAleitura');
         } else {
             // PASSO 1: Reseta o nível alvo para 0
-            nivel = resetarNivelAlvo(nivel); 
-            // PASSO 2: Recalcula o score global somando os contadores (o do alvo agora é 0)
+            resetarNivelAlvo(nivel); 
+            // PASSO 2: Recalcula o score global somando os contadores
             recalcularScoreGlobal();
         }
 
+        // Importante: Atualiza a interface e salva o estado antes de iniciar o novo nível
         atualizarInterfaceHome();
         
-        if (resetGlobal) {
-            mostrarTela('home');
-        } else if (nivel >= 1 && nivel <= 5) {
-            if (document.getElementById(`tela-nivel-${nivel}`)) {
-                iniciarNivel(nivel);
-            } else {
-                 mostrarTela('home');
-            }
+        // INICIA O NÍVEL CORRETO APÓS O RESET
+        if (!resetGlobal && nivel >= 1 && nivel <= 5) {
+            // Troca a tela E inicia o nível
+            iniciarNivel(nivel);
         } else {
+            // Se for reset global ou o nível for inválido, volta para a home
             mostrarTela('home');
         }
     }
@@ -948,12 +949,7 @@
     }
 
     function adicionarPonto() {
-        // Incrementa o contador do nível local (este passo ocorre em verificarPares, verificarAnagrama, etc.)
-        // E depois chama a atualização da interface, que fará o Recálculo total.
-        
-        // Nota: Onde você estava chamando 'adicionarPonto()', a pontuação local (progressoNivelX) 
-        // já deve ter sido incrementada. A função abaixo apenas garante que o score global reflita isso.
-        
+        // A pontuação global agora é atualizada APENAS via recalcularScoreGlobal.
         atualizarInterfaceHome(); 
     }
 
@@ -1028,11 +1024,26 @@
         }
 
         // Sequential check
-        if (nivel === 2 && estadoJogo.progressoNivel1.filter(c => c >= 2).length < MAX_N1_COMPLETIONS) { mostrarTela('home'); return; }
-        if (nivel === 3 && estadoJogo.progressoNivel2 < MAX_N2_COMPLETIONS) { mostrarTela('home'); return; }
-        if (nivel === 4 && estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) { mostrarTela('home'); return; }
-        if (nivel === 5 && estadoJogo.progressoN4 < MAX_N4_COMPLETIONS) { mostrarTela('home'); return; }
+        // Se o nível for maior que 1 e o nível anterior não estiver completo, retorna para home
+        if (nivel > 1) {
+            const nivelAnterior = nivel - 1;
+            const progressos = [
+                estadoJogo.progressoNivel1.filter(c => c >= 2).length, 
+                estadoJogo.progressoNivel2, 
+                estadoJogo.progressoNivel3, 
+                estadoJogo.progressoN4, 
+                estadoJogo.progressoN5
+            ];
+            const maximos = [MAX_N1_COMPLETIONS, MAX_N2_COMPLETIONS, MAX_N3_COMPLETIONS, MAX_N4_COMPLETIONS, MAX_N5_COMPLETIONS];
 
+            if (progressos[nivelAnterior - 1] < maximos[nivelAnterior - 1]) {
+                // Se o nível anterior ainda não estiver completo
+                mostrarTela('home');
+                return;
+            }
+        }
+        
+        // Troca a tela e inicia o nível específico
         mostrarTela(`nivel-${nivel}`);
         switch (nivel) {
             case 1: iniciarNivel1(); break;
@@ -1138,10 +1149,6 @@
         
         estadoJogo.damierAtual = (currentDamierIndex + 1) % DADOS_LETRAS.length;
 
-        if (didJustCompleteTwice) {
-            // Se o progresso local foi feito, a função atualizarInterfaceHome fará o recálculo do score global
-        } 
-        
         if (estadoJogo.progressoNivel1.filter(c => c >= 2).length === DADOS_LETRAS.length) {
             exibirMensagemBravo(() => mostrarTela('home')); 
         } else {
