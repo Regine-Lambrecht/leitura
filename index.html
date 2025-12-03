@@ -12,7 +12,7 @@
             --cor-fundo: #ecf0f1;
             --cor-sucesso: #2ecc71; /* VERT (Succès/Bravo) */
             --cor-erreur: #e74c3c;
-            --cor-voltar: #3498db; /* BLEU para Voltar */
+            --cor-voltar: #3499db; /* BLEU para Voltar */
             --cor-reset: #e74c3c;
             --tamanho-letra: 24px;
         }
@@ -45,15 +45,37 @@
         /* Seção de Pontuação et Messages */
         #score-container {
             margin-bottom: 20px;
-            padding: 10px;
-            border: 2px solid var(--cor-principal);
+            padding: 15px; /* Increased padding */
+            border: none; 
+            background: #f9f9f9;
             border-radius: 10px;
+            display: flex; /* Flex layout for image and text */
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            
+            /* GLOBAL TEXT TRANSFORMATION & SIZE INCREASE */
+            text-transform: uppercase;
+            font-size: 1.1em;
+        }
+        
+        #pedro-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        #score-text-content {
+            text-align: left;
+            flex-grow: 1;
         }
 
         #progresso-msg {
             font-weight: bold;
             color: var(--cor-sucesso);
-            margin-top: 10px;
+            margin-top: 5px;
+            font-size: 1.1em; /* Make message slightly bigger */
         }
 
         /* Boutons de Niveau */
@@ -433,17 +455,21 @@
         <h1>Oi Pedro ! Vamos estudar !</h1>
 
         <div id="score-container">
-            <p>Conquistas: <span id="score-valor">0</span> / 64 Estrelas! ✨</p>
-            <p id="progresso-msg"></p>
+            <img id="pedro-image" src="https://regine-lambrecht.github.io/leitura/Pedro.png" alt="Pedro Icon">
+            
+            <div id="score-text-content">
+                <p>CONQUISTAS: <span id="score-valor">0</span> / 64 PONTOS!</p>
+                <p id="progresso-msg"></p>
+            </div>
         </div>
 
         <button class="nivel-btn" id="btn-nivel-1" onclick="iniciarNivel(1)">
-            <span class="content-left-group">Letras (**pares**) <span class="icon-container"><i class="fa-solid fa-trophy"></i></span></span>
+            <span class="content-left-group">Letras (pares) <span class="icon-container"><i class="fa-solid fa-trophy"></i></span></span>
             <span class="contador-progresso" id="count-n1"></span>
         </button>
         
         <button class="nivel-btn" id="btn-nivel-2" onclick="iniciarNivel(2)" disabled>
-            <span class="content-left-group">Letras de **palavras** <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span></span>
+            <span class="content-left-group">Letras de palavras <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span></span>
             <span class="contador-progresso" id="count-n2"></span>
         </button>
 
@@ -458,17 +484,17 @@
         </button>
 
         <button class="nivel-btn" id="btn-nivel-5" onclick="iniciarNivel(5)" disabled>
-            <span class="content-left-group">**Palavras** (**áudio**) <span class="icon-container"><i class="fa-solid fa-graduation-cap"></i></span></span>
+            <span class="content-left-group">Palavras (áudio) <span class="icon-container"><i class="fa-solid fa-graduation-cap"></i></span></span>
             <span class="contador-progresso" id="count-n5"></span>
         </button>
 
 
         <button id="btn-reset-level" onclick="mostrarModalRecomeco('level')">
-            <i class="fa-solid fa-undo"></i> Recomeçar o nível
+            <i class="fa-solid fa-undo"></i> RECOMEÇAR O NÍVEL
         </button>
 
         <button id="btn-reset-global" onclick="mostrarModalRecomeco('global')">
-            <i class="fa-solid fa-sync-alt"></i> Recomeçar TUDO de **zero**
+            <i class="fa-solid fa-sync-alt"></i> RECOMEÇAR TUDO DE ZERO
         </button>
     </div>
 
@@ -526,7 +552,7 @@
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
     </div>
 
-    <div id="mensagem-bravo" style="display:none;">Bravo Pedro!</div>
+    <div id="mensagem-bravo" style="display:none;">BRAVO PEDRO!</div>
 
 </div>
 
@@ -661,6 +687,7 @@
     const MAX_N5_COMPLETIONS = 10; // Palavras Áudio (Words 51-60)
 
     function calcularTotalMaximo() {
+        // 4 + 10 + 20 + 20 + 10 = 64
         return MAX_N1_COMPLETIONS + MAX_N2_COMPLETIONS + MAX_N3_COMPLETIONS + MAX_N4_COMPLETIONS + MAX_N5_COMPLETIONS;
     }
 
@@ -754,8 +781,8 @@
         if (estadoJogo.progressoNivel1.filter(c => c >= 2).length < MAX_N1_COMPLETIONS) return 1;
         if (estadoJogo.progressoNivel2 < MAX_N2_COMPLETIONS) return 2;
         if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) return 3;
-        if (estadoJogo.progressoNivel4 < MAX_N4_COMPLETIONS) return 4;
-        if (estadoJogo.progressoNivel5 < MAX_N5_COMPLETIONS) return 5;
+        if (estadoJogo.progressoN4 < MAX_N4_COMPLETIONS) return 4;
+        if (estadoJogo.progressoN5 < MAX_N5_COMPLETIONS) return 5;
         return 5; 
     }
 
@@ -788,11 +815,11 @@
                     silabaAnteriorN3 = null;
                     break;
                 case 4:
-                    estadoJogo.progressoNivel4 = 0;
+                    estadoJogo.progressoN4 = 0;
                     estadoJogo.palavrasCompletasN4 = {};
                     break;
                 case 5:
-                    estadoJogo.progressoNivel5 = 0;
+                    estadoJogo.progressoN5 = 0;
                     estadoJogo.palavrasCompletasN5 = {};
                     palavraAnteriorN5 = null;
                     break;
@@ -894,15 +921,15 @@
         if (n3Completed) btnN3.classList.add('completed'); else btnN3.classList.remove('completed');
         
         // --- NIVEAU 4 (Identificação) ---
-        const n4Completed = estadoJogo.progressoNivel4 >= MAX_N4_COMPLETIONS;
+        const n4Completed = estadoJogo.progressoN4 >= MAX_N4_COMPLETIONS;
         btnN4.disabled = !n3Completed || n4Completed;
-        btnN4.querySelector('.contador-progresso').textContent = `(${Math.min(estadoJogo.progressoNivel4, MAX_N4_COMPLETIONS)}/${MAX_N4_COMPLETIONS})`;
+        btnN4.querySelector('.contador-progresso').textContent = `(${Math.min(estadoJogo.progressoN4, MAX_N4_COMPLETIONS)}/${MAX_N4_COMPLETIONS})`;
         if (n4Completed) btnN4.classList.add('completed'); else btnN4.classList.remove('completed');
         
         // --- NIVEAU 5 (Palavras Áudio) ---
-        const n5Completed = estadoJogo.progressoNivel5 >= MAX_N5_COMPLETIONS;
+        const n5Completed = estadoJogo.progressoN5 >= MAX_N5_COMPLETIONS;
         btnN5.disabled = !n4Completed || n5Completed;
-        btnN5.querySelector('.contador-progresso').textContent = `(${Math.min(estadoJogo.progressoNivel5, MAX_N5_COMPLETIONS)}/${MAX_N5_COMPLETIONS})`;
+        btnN5.querySelector('.contador-progresso').textContent = `(${Math.min(estadoJogo.progressoN5, MAX_N5_COMPLETIONS)}/${MAX_N5_COMPLETIONS})`;
         if (n5Completed) btnN5.classList.add('completed'); else btnN5.classList.remove('completed');
     }
 
@@ -924,7 +951,7 @@
             message = "Continue praticando! Você vai pegar o jeito! 💪";
         }
         
-        document.getElementById('progresso-msg').textContent = message;
+        document.getElementById('progresso-msg').textContent = message.toUpperCase();
     }
 
     // --- NÍVEL 1: LETRAS (DAMIER) ---
@@ -1296,7 +1323,7 @@
                 estadoJogo.palavrasCompletasN3[wordKey] = 1; // Mark word as counted
                 adicionarPonto();
 
-                if (estadoJogo.progressoNivel3 >= MAX_N3_COMPLETIONS) {
+                if (estadoJogo.progressoNivel3 === MAX_N3_COMPLETIONS) {
                     // LEVEL COMPLETION: Show Bravo, then go home
                     exibirMensagemBravo(() => mostrarTela('home'));
                     return;
@@ -1316,7 +1343,7 @@
     // --- NÍVEL 4: IDENTIFICAÇÃO DE PALAVRAS ---
     
     function iniciarNivel4() {
-        if (estadoJogo.progressoNivel4 >= MAX_N4_COMPLETIONS) {
+        if (estadoJogo.progressoN4 >= MAX_N4_COMPLETIONS) {
             mostrarTela('home');
             return;
         }
@@ -1369,11 +1396,11 @@
             if ((estadoJogo.palavrasCompletasN4[key] || 0) === 0) {
                 estadoJogo.palavrasCompletasN4[key] = 1;
 
-                if (estadoJogo.progressoNivel4 < MAX_N4_COMPLETIONS) {
-                    estadoJogo.progressoNivel4++;
+                if (estadoJogo.progressoN4 < MAX_N4_COMPLETIONS) {
+                    estadoJogo.progressoN4++;
                     adicionarPonto();
 
-                    if (estadoJogo.progressoNivel4 === MAX_N4_COMPLETIONS) {
+                    if (estadoJogo.progressoN4 === MAX_N4_COMPLETIONS) {
                         // SUCCESS: Show Bravo, then go home
                         exibirMensagemBravo(() => mostrarTela('home'));
                         return;
@@ -1392,7 +1419,7 @@
     // --- NÍVEL 5: PALAVRAS (ÁUDIO) ---
 
     function iniciarNivel5() {
-        if (estadoJogo.progressoNivel5 >= MAX_N5_COMPLETIONS) {
+        if (estadoJogo.progressoN5 >= MAX_N5_COMPLETIONS) {
             mostrarTela('home');
             return;
         }
@@ -1457,11 +1484,11 @@
             if ((estadoJogo.palavrasCompletasN5[key] || 0) === 0) {
                 estadoJogo.palavrasCompletasN5[key] = 1;
 
-                if (estadoJogo.progressoNivel5 < MAX_N5_COMPLETIONS) {
-                    estadoJogo.progressoNivel5++;
+                if (estadoJogo.progressoN5 < MAX_N5_COMPLETIONS) {
+                    estadoJogo.progressoN5++;
                     adicionarPonto();
 
-                    if (estadoJogo.progressoNivel5 === MAX_N5_COMPLETIONS) {
+                    if (estadoJogo.progressoN5 === MAX_N5_COMPLETIONS) {
                         // SUCCESS: Show Bravo, then go home
                         exibirMensagemBravo(() => mostrarTela('home'));
                         return;
