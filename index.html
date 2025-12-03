@@ -1,48 +1,26 @@
-/* --- CORREÇÃO DE RESPONSIVIDADE PARA NÍVEL 2 --- */
+/* Nível 4 (Identificação) */
+        #identificacao-alvo {
+            font-size: 2.5em; /* Tamanho base para desktop */
+            font-weight: bold;
+            color: var(--cor-principal);
+            margin-bottom: 25px;
+        }
+        
+        /* CORREÇÃO DE RESPONSIVIDADE PARA TELAS PEQUENAS */
         @media (max-width: 600px) {
-            /* Reduz o tamanho da palavra alvo e da seleção atual */
-            #palavra-alvo-container,
-            #selecao-atual {
-                font-size: 2em; /* Reduz de 2.5em para 2em */
-                letter-spacing: 3px; /* Reduz o espaçamento entre letras */
-            }
-
-            /* Reduz o tamanho e a largura/altura dos blocos de letras */
-            .anagrama-letra {
-                width: 40px; /* Reduzido de 45px */
-                height: 40px; /* Reduzido de 45px */
-                font-size: 1.3em; /* Reduzido de 1.5em */
+            /* ... (outras regras) ... */
+            
+            /* Nova regra para o Nível 4 */
+            #identificacao-alvo {
+                font-size: 2em; /* Reduz o tamanho da palavra alvo no mobile */
             }
         }
         
-        /* --- ESTILOS DE RESPONSIVIDADE (MOBILE-FIRST) --- (Ajustados para incluir o Nível 2) */
+        /* Ajuste extra para telas ultra-estreitas (400px) */
         @media (max-width: 400px) {
-            /* Nível 2: Ajuste extra para telas ultra-estreitas */
-            #palavra-alvo-container,
-            #selecao-atual {
-                font-size: 1.5em; /* Reduz ainda mais */
+            /* ... (outras regras) ... */
+            #identificacao-alvo {
+                font-size: 1.8em; /* Reduz ainda mais em telas muito pequenas */
             }
-            .anagrama-letra {
-                width: 30px; 
-                height: 30px;
-                font-size: 1.1em;
-            }
-            
-            #letras-grid {
-                 /* Em telas ultra-estreitas, forçamos 3 colunas para Nível 1 */
-                grid-template-columns: repeat(3, 1fr);
-            }
-            .letra-quadro {
-                height: 60px;
-                font-size: 1.5em;
-            }
-            #opcoes-silabas,
-            #opcoes-identificacao,
-            #opcoes-palavras {
-                /* Em telas muito estreitas, empilha as opções verticalmente */
-                flex-direction: column; 
-            }
-            #silaba-container {
-                font-size: 2.5em;
-            }
+            /* ... (outras regras) ... */
         }
