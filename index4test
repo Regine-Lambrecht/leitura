@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jogo de escrita</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script type="module">
+        // Firebase SDKs
+        // Manter importações, mas a inicialização será ignorada.
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Ativar logs de debug para facilitar a depuração
+        setLogLevel('Debug');
+
+        // REMOVIDO: Variáveis globais do Canvas
+        // Para simular o ambiente fora do Canvas, definimos configurações mínimas.
+        const FAKE_FIREBASE_CONFIG = {}; 
+        const FAKE_AUTH_ENABLED = false; // Desativa a tentativa de conexão Firebase/Firestore
+
+        let db = null;
+        let auth = null;
+        let userId = null;
+        let userDocRef = null;
+        let currentLevel = null; // Rastreia o nível ativo
+        
+        // Estrutura de dados padrão do usuário
+        const defaultState = {
+            totalScore: 0, // X/64
+            level0Score: 0, // /4
+            level1Score: 0, // /10
+            level2Score: 0, // /20
+            level3Score: 0, // /20
+            level4Score: 0, // /10
+            
+            // Rastreia a conclusão das 8 etapas do Nível 0
+            level0StagesCompleted: Array(8).fill(false),
+            // Rastreia as 10 palavras do Nível 1
+            level1WordsCompleted: Array(10).fill(false),
+            // Rastreia as 60 sílabas do Nível 2
+            level2SyllablesCompleted: Array(60).fill(false),
+            // Rastreia as 20 palavras do Nível 3
+            level3WordsCompleted: Array(20).fill(false),
+            // Rastreia as 10 palavras do Nível 4
+            level4WordsCompleted: Array(10).fill(false),
+        };
+
+        let gameState = { ...defaultState };
+
+        const GRID_ORDER = [1, 2, 3, 4, 1, 2, 3, 4];
+        const GRID_LETTERS = {
+            1: ['I', 'A', 'E', 'U', 'O', 'Y'],
+            2: ['D', 'B', 'P', 'Q', 'R', 'X'],
+            3: ['C', 'F', 'G', 'H', 'J', 'K'],
+            4: ['L', 'M', 'N', 'S', 'T', 'V'],
+        };
+        
+        const LEVEL1_WORDS = [
+            "Professor", "Jabuti", "Galinha", "Diploma", "Chiclete",
+            "Peixe", "Quatro", "Foguete", "Barata", "Quadro"
+        ];
+
+        // 60 sílabas do Nível 2
+        const LEVEL2_SYLLABLES = [
+            "ca", "cho", "rro", "ca", "bi", "ne", "do", "min", "gão", 
+            "fes", "te", "jar", "gol", "fi", "nho", "in", "ve", "jar", 
+            "pla", "ne", "jar", "pla", "ni", "lha", "sor", "ri", "so", 
+            "chu", "pe", "ta", "bo", "la", "cha", "ma", "ca", "co", 
+            "pe", "te", "ca", "u", "ru", "bu", "sa", "la", "da", 
+            "a", "be", "lha", "a", "ra", "nha", "te", "lha", "do", 
+            "sa", "pa", "to", "a", "ra", "ra"
+        ];
+
+        // 20 Palavras do Nível 3
+        const LEVEL3_WORDS = [
+            "Cobra", "Lábio", "Porco", "Boliche", "Sacada", 
+            "Caneta", "Chapéu", "Chave", "Baleia", "Lápis",
+            "Casada", "Navio", "Chuva", "Cofre", "Prato", 
+            "Coelho", "Livro", "Leão", "Cabide", "Sorvete"
+        ];
+        
+        // 10 Palavras do Nível 4
+        const LEVEL4_WORDS = [
+            "Porta", "Tapete", "Onça", "Peito", "Maçã",
+            "Letra", "Brasil", "Tomada", "Banana", "Vaca"
+        ];
+
+        // Variáveis de estado dos Níveis
+        let currentStageIndex = 0; // Nível 0
+        let selectedCell = null; // Nível 0
+        let cellsToMatch = 6; // Nível 0
+        let currentMatchesFound = 0; // Nível 0
+
+        let currentWordIndex = 0; // Nível 1
+        let currentGuess = []; // Nível 1
+        let letterButtons = []; // Nível 1
+
+        let currentSyllableIndex = 0; // Nível 2
+        
+        let currentLevel3WordIndex = 0; // Nível 3
+
+        let currentLevel4WordIndex = 0; // Nível 4
+
+
+        // --- Inicialização do Firebase e Autenticação ---
+        async function initializeFirebase() {
+             if (!FAKE_AUTH_ENABLED) {
+                // Modo offline/GitHub: Carrega o estado inicial do localStorage
+                const savedState = localStorage.getItem('gameState');
+                if (savedState) {
+                    gameState = JSON.parse(savedState);
+                } else {
+                    gameState = { ...defaultState };
+                }
+                updateUI();
+                return;
+            }
+
+            // Lógica original de inicialização do Firebase (removida para o GitHub)
+        }
+
+        // --- Listener de Tempo Real e Carregamento de Dados ---
+        function setupRealtimeListener() {
+            // Ignorado no modo GitHub
+            if (!FAKE_AUTH_ENABLED) return;
+        }
+        
+        // --- Atualização e Salvamento de Dados ---
+
+        async function saveGameState() {
+            if (!FAKE_AUTH_ENABLED) {
+                // Modo offline/GitHub: Salva no localStorage (Temporário)
+                localStorage.setItem('gameState', JSON.stringify(gameState));
+                updateUI();
+                return;
+            }
+            
+            // Lógica original de salvamento do Firebase (removida para o GitHub)
+            if (!userDocRef) return;
+            try {
+                await setDoc(userDocRef, gameState, { merge: true });
+                updateUI(); 
+            } catch (error) {
+                console.error("Erro ao salvar o estado do jogo (Firebase):", error);
+            }
+        }
+
+        function calculateTotalScore() {
+            return gameState.level0Score + gameState.level1Score + gameState.level2Score + gameState.level3Score + gameState.level4Score;
+        }
+
+        function updateUI() {
+            const totalScore = calculateTotalScore();
+            document.getElementById('total-score').textContent = `${totalScore}/64`;
+
+            // Atualiza contadores dos botões (usa o valor real salvo/padrão)
+            document.getElementById('counter-0').textContent = `${gameState.level0Score}/4`;
+            document.getElementById('counter-1').textContent = `${gameState.level1Score}/10`;
+            document.getElementById('counter-2').textContent = `${gameState.level2Score}/20`;
+            document.getElementById('counter-3').textContent = `${gameState.level3Score}/20`;
+            document.getElementById('counter-4').textContent = `${gameState.level4Score}/10`;
+
+            const levelButtons = [
+                { id: 'btn-level-0', score: gameState.level0Score, max: 4, next: 'btn-level-1' },
+                { id: 'btn-level-1', score: gameState.level1Score, max: 10, next: 'btn-level-2' },
+                { id: 'btn-level-2', score: gameState.level2Score, max: 20, next: 'btn-level-3' },
+                { id: 'btn-level-3', score: gameState.level3Score, max: 20, next: 'btn-level-4' },
+                { id: 'btn-level-4', score: gameState.level4Score, max: 10, next: null },
+            ];
+
+            let previousLevelCompleted = true; // Assume o nível 0 está desbloqueado
+            
+            // Lógica de ativação/cores
+            levelButtons.forEach((level, index) => {
+                const btn = document.getElementById(level.id);
+                
+                // Limpa classes de cor/estado
+                btn.classList.remove('active-green', 'completed-dark', 'inactive-gray', 'cursor-not-allowed');
+                btn.disabled = false;
+                
+                // Lógica Padrão (Sequencial)
+                if (level.score === level.max) {
+                    // Nível COMPLETO
+                    btn.classList.add('completed-dark', 'cursor-not-allowed');
+                    btn.disabled = true;
+                    previousLevelCompleted = true;
+
+                } else if (previousLevelCompleted) {
+                    // Nível ATIVO (Atual)
+                    btn.classList.add('active-green');
+                    previousLevelCompleted = false; // Desbloqueia apenas o primeiro não concluído
+
+                } else {
+                    // Nível INATIVO (Bloqueado)
+                    btn.classList.add('inactive-gray', 'cursor-not-allowed');
+                    btn.disabled = true;
+                }
+            });
+        }
+
+        // --- Lógica de Navegação e Confirmação ---
+        
+        // Abre o modal de confirmação para Reset
+        window.showResetModal = function() {
+            document.getElementById('reset-modal').classList.remove('hidden');
+        }
+
+        // Fecha o modal de confirmação
+        window.closeResetModal = function() {
+            document.getElementById('reset-modal').classList.add('hidden');
+        }
+
+        // Executa o Reset
+        window.resetAllScores = async function() {
+            closeResetModal();
+            // Resetar para o estado default (início da jogabilidade)
+            gameState = { ...defaultState };
+            
+            // Ao resetar, re-inicializa o localStorage
+            if (!FAKE_AUTH_ENABLED) {
+                localStorage.setItem('gameState', JSON.stringify(defaultState));
+            }
+
+            try {
+                // Se o Firebase estivesse ativo, usaria setDoc(userDocRef, defaultState) aqui
+                alertInApp("Pontuações resetadas", "todas as suas pontuações foram zeradas com sucesso.", "green");
+                updateUI(); 
+                showHomepage();
+            } catch (error) {
+                 alertInApp("Erro", "falha ao resetar pontuações.", "red");
+                console.error("Erro ao resetar pontuações:", error);
+            }
+        }
+
+        window.showHomepage = function() {
+            currentLevel = null;
+            document.getElementById('homepage').style.display = 'block';
+            document.getElementById('level0-screen').style.display = 'none';
+            document.getElementById('level1-screen').style.display = 'none'; // Esconde Nível 1
+            document.getElementById('level2-screen').style.display = 'none'; // Esconde Nível 2
+            document.getElementById('level3-screen').style.display = 'none'; // Esconde Nível 3
+            document.getElementById('level4-screen').style.display = 'none'; // Esconde Nível 4
+            document.getElementById('voltar-button').style.display = 'none';
+            updateUI(); // atualiza a ui da homepage
+        }
+
+        window.showLevel = function(level) {
+            document.getElementById('homepage').style.display = 'none';
+            document.getElementById('voltar-button').style.display = 'block';
+            
+            // Esconder todas as telas de nível primeiro
+            document.getElementById('level0-screen').style.display = 'none';
+            document.getElementById('level1-screen').style.display = 'none';
+            document.getElementById('level2-screen').style.display = 'none';
+            document.getElementById('level3-screen').style.display = 'none'; 
+            document.getElementById('level4-screen').style.display = 'none'; // Esconde Nível 4
+            currentLevel = level;
+            
+            // Se o botão estiver desativado (nível bloqueado), impede o acesso
+            const btnId = `btn-level-${level}`;
+            const btn = document.getElementById(btnId);
+            if (btn && btn.disabled) {
+                alertInApp("Nível Bloqueado", "complete o nível anterior para desbloquear.", "red");
+                showHomepage();
+                return;
+            }
+
+
+            if (level === 0) {
+                // Determina o índice inicial (início da jogabilidade)
+                currentStageIndex = gameState.level0StagesCompleted.findIndex(status => !status);
+                if (currentStageIndex === -1) {
+                    currentStageIndex = 0; // Recomeça se estiver completo
+                }
+                
+                document.getElementById('level0-screen').style.display = 'block';
+                loadGrid();
+            } else if (level === 1) {
+                // Encontra a primeira palavra não concluída
+                currentWordIndex = gameState.level1WordsCompleted.findIndex(status => !status);
+                if (currentWordIndex === -1) {
+                    currentWordIndex = 0; // Recomeça se estiver completo
+                }
+
+                document.getElementById('level1-screen').style.display = 'block';
+                loadLevel1Word();
+
+            } else if (level === 2) {
+                 // Encontra a primeira sílaba não concluída
+                currentSyllableIndex = gameState.level2SyllablesCompleted.findIndex(status => !status);
+                if (currentSyllableIndex === -1) {
+                    currentSyllableIndex = 0; // Recomeça se estiver completo
+                }
+
+                document.getElementById('level2-screen').style.display = 'block';
+                loadLevel2Syllable();
+            } else if (level === 3) {
+                 // Encontra a primeira palavra não concluída
+                currentLevel3WordIndex = gameState.level3WordsCompleted.findIndex(status => !status);
+                if (currentLevel3WordIndex === -1) {
+                    currentLevel3WordIndex = 0; // Recomeça se estiver completo
+                }
+
+                document.getElementById('level3-screen').style.display = 'block';
+                loadLevel3Word();
+            } else if (level === 4) {
+                 // Encontra a primeira palavra não concluída
+                currentLevel4WordIndex = gameState.level4WordsCompleted.findIndex(status => !status);
+                if (currentLevel4WordIndex === -1) {
+                    currentLevel4WordIndex = 0; // Recomeça se estiver completo
+                }
+
+                document.getElementById('level4-screen').style.display = 'block';
+                loadLevel4Word();
+            }
+            
+            else {
+                document.getElementById('level0-screen').style.display = 'block'; // Usar o slot de nível 0 para mensagem temporária
+                document.getElementById('level0-screen').innerHTML = `<h2>Nível ${level} (em construção)</h2>`;
+            }
+        }
+        
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // --- Lógica do Jogo Nível 0 ---
+        
+        function loadGrid() {
+            // Se estiver em modo de teste, o isStageCompleted deve ser ignorado para jogabilidade
+            const isStageCompleted = gameState.level0StagesCompleted[currentStageIndex];
+
+            // Se o nível estiver completo, apenas exibe a última tela
+            if (currentStageIndex >= GRID_ORDER.length) {
+                 const gridTitle = document.getElementById('grid-title-level-0');
+                 gridTitle.textContent = `Nível 0: Letras (concluído)`;
+                 document.getElementById('grid-container-level-0').innerHTML = '<p style="text-align: center; margin-top: 30px;">Todas as 8 etapas do Nível 0 foram concluídas. Volte ao início para jogar novamente.</p>';
+                 return;
+            }
+            
+            const stage = GRID_ORDER[currentStageIndex];
+            const gridContainer = document.getElementById('grid-container-level-0');
+            gridContainer.innerHTML = '';
+            
+            // 1. Configura o Título e o Status
+            const gridTitle = document.getElementById('grid-title-level-0');
+            const gridRepeat = currentStageIndex < 4 ? '1ª rodada' : '2ª rodada';
+            gridTitle.textContent = `Grupo ${stage} (${gridRepeat})`;
+
+            // 2. Prepara o conjunto de letras para o estágio atual (letra principal e letra de match)
+            const letters = GRID_LETTERS[stage];
+            const allCells = [];
+
+            letters.forEach(charUpper => {
+                const charLower = charUpper.toLowerCase();
+                
+                // Célula 1: Maiúscula
+                allCells.push({
+                    text: charUpper,
+                    match: charLower,
+                    isUpper: true
+                });
+                
+                // Célula 2: Minúscula
+                allCells.push({
+                    text: charLower,
+                    match: charUpper,
+                    isUpper: false
+                });
+            });
+
+            // Embaralha para jogabilidade
+            shuffleArray(allCells);
+            
+            currentMatchesFound = 0;
+
+            allCells.forEach(data => {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.textContent = data.text;
+                cell.setAttribute('data-match', data.match);
+                cell.setAttribute('data-is-upper', data.isUpper);
+
+                // No modo demo, se o nível estiver completo no gameState, ainda permite jogar.
+                if (data.text.trim() !== '') {
+                    cell.addEventListener('click', handleCellClick);
+                }
+
+                gridContainer.appendChild(cell);
+            });
+            
+            // Sempre jogável no modo teste ou se não estiver no último grupo concluído
+            gridContainer.style.pointerEvents = 'auto';
+        }
+        
+        function handleCellClick(event) {
+            const clickedCell = event.target;
+            
+            if (clickedCell.classList.contains('matched') || clickedCell.classList.contains('in-match-check')) {
+                return;
+            }
+            
+            // 1. Desseleciona se a mesma célula for clicada novamente
+            if (selectedCell === clickedCell) {
+                selectedCell.classList.remove('selected');
+                selectedCell = null;
+                return;
+            }
+            
+            // 2. Se for a SEGUNDA seleção (Tenta Match)
+            if (selectedCell !== null) {
+                // Impede cliques adicionais
+                clickedCell.classList.add('in-match-check');
+                selectedCell.classList.add('in-match-check');
+
+                const text1 = selectedCell.textContent.trim();
+                const text2 = clickedCell.textContent.trim();
+
+                const match1 = selectedCell.getAttribute('data-match');
+                const match2 = clickedCell.getAttribute('data-match');
+                
+                // Lógica de Match: O texto de uma célula deve corresponder ao 'data-match' da outra
+                const isMatch = (text1.toLowerCase() === match2.toLowerCase()) && 
+                                (text2.toLowerCase() === match1.toLowerCase());
+
+                if (isMatch) {
+                    // Match correto - Marca permanente e avança se for o último
+                    selectedCell.classList.remove('selected', 'in-match-check');
+                    clickedCell.classList.remove('selected', 'in-match-check');
+                    
+                    selectedCell.classList.add('matched');
+                    clickedCell.classList.add('matched');
+                    
+                    currentMatchesFound++;
+                    selectedCell = null;
+                    
+                    if (currentMatchesFound === cellsToMatch) { 
+                        handleStageCompletion();
+                    }
+                } else {
+                    // Match incorreto - Feedback visual rápido e reseta
+                    clickedCell.classList.add('selected'); 
+                    setTimeout(() => {
+                        selectedCell.classList.remove('selected', 'in-match-check');
+                        clickedCell.classList.remove('selected', 'in-match-check');
+                        selectedCell = null; 
+                    }, 600);
+                }
+            } 
+            // 3. Se for a PRIMEIRA seleção
+            else {
+                 // Garante que só uma célula esteja selecionada
+                document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
+
+                clickedCell.classList.add('selected');
+                selectedCell = clickedCell;
+            }
+        }
+
+        async function handleStageCompletion() {
+            // 1. Marca a etapa como concluída
+            gameState.level0StagesCompleted[currentStageIndex] = true;
+
+            // 2. Lógica de Pontuação (1 ponto quando o grupo N é resolvido pela SEGUNDA vez)
+            if (currentStageIndex >= 4) { // Se for a 2ª rodada (índice 4, 5, 6, 7)
+                const correspondingFirstStageIndex = currentStageIndex - 4;
+
+                if (gameState.level0StagesCompleted[correspondingFirstStageIndex]) {
+                    if (gameState.level0Score < 4) {
+                        gameState.level0Score++;
+                        alertInApp("Ponto ganho!", `você ganhou 1 ponto por completar o grupo ${GRID_ORDER[currentStageIndex]} pela segunda vez!`, "green");
+                    }
+                }
+            } else {
+                // REMOVIDO: alertInApp("Grupo completo!", "próximo grupo...", "blue");
+            }
+            
+            // 3. Salva o novo estado e score
+            await saveGameState(); 
+            
+            // 4. Configura o AVANÇO IMEDIATO
+            currentStageIndex++; 
+
+            if (currentStageIndex >= GRID_ORDER.length) {
+                // Todas as 8 etapas concluídas
+                // REMOVIDO: alertInApp("Nível 0 concluído!", "você completou todas as etapas do nível letras.", "green");
+                showHomepage();
+            } else {
+                // Carrega o próximo grupo imediatamente
+                loadGrid(); 
+            }
+        }
+        
+        // --- Lógica do Jogo Nível 1 ---
+        
+        window.loadLevel1Word = function() {
+            currentGuess = [];
+            
+            // Pular palavras já completas
+            while(currentWordIndex < LEVEL1_WORDS.length && gameState.level1WordsCompleted[currentWordIndex]) {
+                currentWordIndex++;
+            }
+
+            if (currentWordIndex >= LEVEL1_WORDS.length) {
+                // REMOVIDO: alertInApp("Nível 1 concluído!", "você completou todas as palavras.", "green");
+                showHomepage();
+                return;
+            }
+
+            const currentWord = LEVEL1_WORDS[currentWordIndex];
+            const lowerWord = currentWord.toLowerCase();
+            const lowerLetters = lowerWord.split('');
+            const shuffledLetters = [...lowerLetters];
+            shuffleArray(shuffledLetters);
+
+            const wordDisplay = document.getElementById('level1-word-display');
+            const anagramContainer = document.getElementById('level1-anagram-container');
+            const guessContainer = document.getElementById('level1-guess-container');
+            const wordCounter = document.getElementById('level1-word-counter');
+            
+            wordDisplay.textContent = currentWord.toUpperCase();
+            wordCounter.textContent = `Palavra ${currentWordIndex + 1} de 10`;
+
+            anagramContainer.innerHTML = '';
+            guessContainer.innerHTML = '';
+            letterButtons = [];
+
+            // Cria slots de preenchimento para a resposta
+            for (let i = 0; i < lowerWord.length; i++) {
+                 const slot = document.createElement('div');
+                 slot.className = 'guess-slot';
+                 guessContainer.appendChild(slot);
+            }
+
+            // Cria botões de letras embaralhadas
+            shuffledLetters.forEach((letter, index) => {
+                const button = document.createElement('button');
+                button.className = 'letter-button';
+                button.textContent = letter;
+                button.setAttribute('data-index', index);
+                button.setAttribute('data-original-letter', letter);
+                button.onclick = () => selectLetter(button, letter);
+                anagramContainer.appendChild(button);
+                letterButtons.push(button);
+            });
+        }
+        
+        function selectLetter(button, letter) {
+            if (button.disabled) return;
+            
+            // Adiciona a letra à tentativa
+            currentGuess.push({ letter: letter, buttonIndex: button.getAttribute('data-index') });
+            
+            // Desabilita o botão
+            button.disabled = true;
+            button.classList.add('selected-disabled');
+
+            // Atualiza a exibição da tentativa
+            updateGuessDisplay();
+            
+            // Verifica se a palavra está completa
+            if (currentGuess.length === LEVEL1_WORDS[currentWordIndex].length) {
+                checkWord();
+            }
+        }
+        
+        window.undoLastSelection = function() {
+            if (currentGuess.length === 0) return;
+
+            const lastSelection = currentGuess.pop();
+            const buttonToReEnable = letterButtons.find(btn => btn.getAttribute('data-index') === lastSelection.buttonIndex);
+
+            if (buttonToReEnable) {
+                buttonToReEnable.disabled = false;
+                buttonToReEnable.classList.remove('selected-disabled');
+            }
+            
+            updateGuessDisplay();
+        }
+
+        function updateGuessDisplay() {
+            const guessSlots = document.querySelectorAll('#level1-guess-container .guess-slot');
+            guessSlots.forEach((slot, index) => {
+                if (currentGuess[index]) {
+                    slot.textContent = currentGuess[index].letter;
+                } else {
+                    slot.textContent = '';
+                }
+            });
+        }
+        
+        async function checkWord() {
+            const solvedWord = currentGuess.map(item => item.letter).join('');
+            const correctWord = LEVEL1_WORDS[currentWordIndex].toLowerCase();
+            
+            if (solvedWord === correctWord) {
+                // Acerto!
+                gameState.level1WordsCompleted[currentWordIndex] = true;
+                // Só incrementa o score se ainda não atingiu o máximo
+                if (gameState.level1Score < 10) {
+                     gameState.level1Score++;
+                }
+                await saveGameState(); // Salva o novo estado e score (e chama updateUI)
+
+                // REMOVIDO: alertInApp("Palavra correta!", "próxima palavra em breve.", "green");
+                
+
+                // Avança para a próxima palavra
+                setTimeout(() => {
+                    currentWordIndex++;
+                    loadLevel1Word();
+                }, 1500);
+                
+            } else {
+                // Erro!
+                // REMOVIDO: alertInApp("Palavra incorreta!", "tente novamente.", "red");
+                
+                // Reseta a seleção após um pequeno delay
+                setTimeout(() => {
+                    currentGuess = [];
+                    updateGuessDisplay();
+                    letterButtons.forEach(btn => {
+                        btn.disabled = false;
+                        btn.classList.remove('selected-disabled');
+                    });
+                }, 800);
+            }
+        }
+
+        // --- Lógica do Jogo Nível 2 ---
+        
+        // Caracteres comuns para distratores de sílabas
+        const VOGAIS = ['a', 'e', 'i', 'o', 'u'];
+        const CONSOANTES = ['c', 'b', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'x', 'z'];
+        
+        function generateSyllableDistractors(correctSyllable) {
+            const distractors = new Set();
+            const originalChars = correctSyllable.split('');
+            
+            while (distractors.size < 2) {
+                // Escolhe um índice para mudar
+                const idx = Math.floor(Math.random() * originalChars.length);
+                let charToReplace = originalChars[idx];
+                let replacement = charToReplace;
+
+                // Tenta trocar por uma letra diferente (vogal por vogal, consoante por consoante)
+                if (VOGAIS.includes(charToReplace)) {
+                    replacement = VOGAIS[Math.floor(Math.random() * VOGAIS.length)];
+                } else if (CONSOANTES.includes(charToReplace)) {
+                    replacement = CONSOANTES[Math.floor(Math.random() * CONSOANTES.length)];
+                }
+
+                if (replacement !== charToReplace) {
+                     let newSyllableChars = [...originalChars];
+                     newSyllableChars[idx] = replacement;
+                     const newSyllable = newSyllableChars.join('');
+                     
+                     if (newSyllable !== correctSyllable && !distractors.has(newSyllable)) {
+                         distractors.add(newSyllable);
+                     }
+                }
+            }
+            return Array.from(distractors);
+        }
+
+        window.loadLevel2Syllable = function() {
+            // VERIFICAÇÃO CRÍTICA DE CONCLUSÃO
+            if (currentSyllableIndex >= LEVEL2_SYLLABLES.length) {
+                // Garante que o score final de 20/20 seja salvo antes de sair
+                if (gameState.level2Score < 20) {
+                    gameState.level2Score = 20;
+                    saveGameState(); 
+                }
+                // REMOVIDO: alertInApp("Nível 2 concluído!", "você completou todas as sílabas.", "green");
+                showHomepage();
+                return;
+            }
+
+            const correctSyllableLower = LEVEL2_SYLLABLES[currentSyllableIndex];
+            const correctSyllableUpper = correctSyllableLower.toUpperCase();
+            
+            // 1. Geração de Distratores
+            const distractors = generateSyllableDistractors(correctSyllableLower);
+            
+            const options = [correctSyllableLower, ...distractors];
+            shuffleArray(options); // Embaralha a posição da resposta
+
+            // 2. Atualização da UI
+            const syllableDisplay = document.getElementById('level2-syllable-display');
+            const optionsContainer = document.getElementById('level2-options-container');
+            const syllableCounter = document.getElementById('level2-syllable-counter');
+
+            syllableDisplay.textContent = correctSyllableUpper;
+            syllableCounter.textContent = `Sílabas: ${currentSyllableIndex + 1} de ${LEVEL2_SYLLABLES.length}`;
+            optionsContainer.innerHTML = '';
+
+            // 3. Criação dos Botões
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'syllable-button';
+                button.textContent = option;
+                
+                const isCorrect = (option === correctSyllableLower);
+                
+                button.onclick = () => checkSyllableMatch(button, isCorrect);
+                optionsContainer.appendChild(button);
+            });
+        }
+        
+        async function checkSyllableMatch(clickedButton, isCorrect) {
+            // Desativa todos os botões temporariamente
+            document.querySelectorAll('.syllable-button').forEach(btn => btn.disabled = true);
+
+            if (isCorrect) {
+                clickedButton.classList.add('syllable-correct');
+                
+                // 1. Marca a sílaba como concluída
+                gameState.level2SyllablesCompleted[currentSyllableIndex] = true;
+                
+                // 2. Lógica de Pontuação (1 ponto a cada 3 sílabas)
+                if ((currentSyllableIndex + 1) % 3 === 0) {
+                    if (gameState.level2Score < 20) {
+                        gameState.level2Score++;
+                        alertInApp("Ponto ganho!", "1 ponto adicionado. Boa!", "green");
+                    }
+                } else {
+                    // REMOVIDO: alertInApp("Correto!", "próxima sílaba...", "blue");
+                }
+                
+                // 3. Salva o estado
+                await saveGameState();
+
+                // 4. Avança para a próxima sílaba
+                setTimeout(() => {
+                    currentSyllableIndex++;
+                    loadLevel2Syllable();
+                }, 1000);
+                
+            } else {
+                clickedButton.classList.add('syllable-incorrect');
+                // Revela a resposta correta
+                document.querySelectorAll('.syllable-button').forEach(btn => {
+                    if (btn.textContent === LEVEL2_SYLLABLES[currentSyllableIndex]) {
+                        btn.classList.add('syllable-correct');
+                    }
+                });
+
+                // REMOVIDO: alertInApp("Incorreto!", "tente novamente.", "red");
+
+                // Reseta os botões para a sílaba atual após um delay
+                setTimeout(() => {
+                    document.querySelectorAll('.syllable-button').forEach(btn => {
+                        btn.classList.remove('syllable-correct', 'syllable-incorrect');
+                        btn.disabled = false;
+                    });
+                }, 1500);
+            }
+        }
+        
+        // --- Lógica do Jogo Nível 3 & 4 (Distratores N-2, N+1) ---
+        
+        // Função utilitária para obter distratores da lista (N-2 e N+1)
+        function getDistractors(currentIndex, list) {
+            const numWords = list.length;
+            const words = list.map(w => w.toLowerCase());
+            
+            // Distrator 1: Palavra Duas Antes (N-2)
+            let prevIndex = (currentIndex - 2 + numWords) % numWords;
+            
+            // Distrator 2: Palavra Uma Depois (N+1)
+            let nextIndex = (currentIndex + 1) % numWords;
+
+            return [
+                words[prevIndex],
+                words[nextIndex]
+            ];
+        }
+
+        window.loadLevel3Word = function() {
+            // VERIFICAÇÃO DE CONCLUSÃO
+            if (currentLevel3WordIndex >= LEVEL3_WORDS.length) {
+                if (gameState.level3Score < 20) {
+                    gameState.level3Score = 20;
+                    saveGameState(); 
+                }
+                // REMOVIDO: alertInApp("Nível 3 concluído!", "você completou todas as palavras.", "green");
+                showHomepage();
+                return;
+            }
+            
+            const correctWordUpper = LEVEL3_WORDS[currentLevel3WordIndex].toUpperCase();
+            const correctWordLower = LEVEL3_WORDS[currentLevel3WordIndex].toLowerCase();
+            
+            // 1. Geração de Distratores (Usando a nova lógica N-2, N+1)
+            const distractors = getDistractors(currentLevel3WordIndex, LEVEL3_WORDS);
+            
+            const options = [correctWordLower, ...distractors];
+            shuffleArray(options); // Embaralha a posição da resposta
+
+            // 2. Atualização da UI
+            const wordDisplay = document.getElementById('level3-word-display');
+            const optionsContainer = document.getElementById('level3-options-container');
+            const wordCounter = document.getElementById('level3-word-counter');
+
+            wordDisplay.textContent = correctWordUpper;
+            wordCounter.textContent = `Palavras: ${currentLevel3WordIndex + 1} de ${LEVEL3_WORDS.length}`;
+            optionsContainer.innerHTML = '';
+            
+            // 3. Criação dos Botões
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'word-button';
+                button.textContent = option;
+                
+                const isCorrect = (option === correctWordLower);
+                
+                button.onclick = () => checkLevel3Match(button, isCorrect);
+                optionsContainer.appendChild(button);
+            });
+        }
+        
+        async function checkLevel3Match(clickedButton, isCorrect) {
+            // Desativa todos os botões temporariamente
+            document.querySelectorAll('.word-button').forEach(btn => btn.disabled = true);
+
+            if (isCorrect) {
+                clickedButton.classList.add('word-correct');
+                
+                // 1. Marca a palavra como concluída
+                gameState.level3WordsCompleted[currentLevel3WordIndex] = true;
+                
+                // 2. Lógica de Pontuação (1 ponto por palavra)
+                if (gameState.level3Score < 20) {
+                    gameState.level3Score++;
+                    alertInApp("Ponto ganho!", "1 ponto adicionado. Boa!", "green");
+                } else {
+                    // REMOVIDO: alertInApp("Correto!", "próxima palavra...", "blue");
+                }
+                
+                // 3. Salva o estado
+                await saveGameState();
+
+                // 4. Avança para a próxima palavra
+                setTimeout(() => {
+                    currentLevel3WordIndex++;
+                    loadLevel3Word();
+                }, 1000);
+                
+            } else {
+                clickedButton.classList.add('word-incorrect');
+                // Revela a resposta correta
+                document.querySelectorAll('.word-button').forEach(btn => {
+                    if (btn.textContent === LEVEL3_WORDS[currentLevel3WordIndex].toLowerCase()) {
+                        btn.classList.add('word-correct');
+                    }
+                });
+
+                // REMOVIDO: alertInApp("Incorreto!", "tente novamente.", "red");
+
+                // Reseta os botões para a palavra atual após um delay
+                setTimeout(() => {
+                    document.querySelectorAll('.word-button').forEach(btn => {
+                        btn.classList.remove('word-correct', 'word-incorrect');
+                        btn.disabled = false;
+                    });
+                }, 1500);
+            }
+        }
+        
+        // --- Lógica do Jogo Nível 4 (Áudio) ---
+
+        const synth = window.speechSynthesis;
+        let portugueseVoice = null;
+
+        // Tenta encontrar uma voz em Português do Brasil
+        function initializeTTS() {
+            if (!synth) return;
+            const voices = synth.getVoices();
+            portugueseVoice = voices.find(voice => voice.lang === 'pt-BR') || voices.find(voice => voice.lang.startsWith('pt'));
+            
+            // Adiciona um listener para o caso das vozes carregarem mais tarde
+            if (!portugueseVoice && voices.length === 0) {
+                 synth.onvoiceschanged = () => {
+                     const updatedVoices = synth.getVoices();
+                     portugueseVoice = updatedVoices.find(voice => voice.lang === 'pt-BR') || updatedVoices.find(voice => voice.lang.startsWith('pt'));
+                     synth.onvoiceschanged = null; // Remove o listener após encontrar a voz
+                 };
+            }
+        }
+        
+        // Inicializa o TTS (chamado no DOMContentLoaded)
+        initializeTTS();
+
+        window.speakWord = function(word) {
+            // CORREÇÃO: Removida a condição synth.speaking para permitir repetir o áudio se necessário.
+            if (!synth) return;
+
+            const utterance = new SpeechSynthesisUtterance(word);
+            
+            // Configura a voz e idioma
+            if (portugueseVoice) {
+                utterance.voice = portugueseVoice;
+            } else {
+                utterance.lang = 'pt-BR'; // Fallback
+            }
+
+            synth.speak(utterance);
+        }
+
+        window.loadLevel4Word = function() {
+            // VERIFICAÇÃO DE CONCLUSÃO
+            if (currentLevel4WordIndex >= LEVEL4_WORDS.length) {
+                if (gameState.level4Score < 10) {
+                    gameState.level4Score = 10;
+                    saveGameState(); 
+                }
+                // REMOVIDO: alertInApp("Nível 4 concluído!", "você completou todas as palavras.", "green");
+                showHomepage();
+                return;
+            }
+            
+            const correctWordUpper = LEVEL4_WORDS[currentLevel4WordIndex].toUpperCase();
+            const correctWordLower = LEVEL4_WORDS[currentLevel4WordIndex].toLowerCase();
+            
+            // 1. Geração de Distratores (Usando a nova lógica N-2, N+1)
+            const distractors = getDistractors(currentLevel4WordIndex, LEVEL4_WORDS);
+            
+            const options = [correctWordLower, ...distractors];
+            shuffleArray(options); // Embaralha a posição da resposta
+
+            // 2. Atualização da UI
+            const optionsContainer = document.getElementById('level4-options-container');
+            const wordCounter = document.getElementById('level4-word-counter');
+
+            wordCounter.textContent = `Palavra: ${currentLevel4WordIndex + 1} de ${LEVEL4_WORDS.length}`;
+            optionsContainer.innerHTML = '';
+            
+            // 3. Criação dos Botões
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'audio-button';
+                button.textContent = option;
+                
+                const isCorrect = (option === correctWordLower);
+                
+                button.onclick = () => checkLevel4Match(button, isCorrect);
+                optionsContainer.appendChild(button);
+            });
+            
+            // 4. CORREÇÃO: Inicia a reprodução do áudio automaticamente
+            speakWord(LEVEL4_WORDS[currentLevel4WordIndex]);
+        }
+        
+        async function checkLevel4Match(clickedButton, isCorrect) {
+            // Desativa todos os botões temporariamente
+            document.querySelectorAll('.audio-button').forEach(btn => btn.disabled = true);
+            synth.cancel(); // Para qualquer fala em curso
+
+            if (isCorrect) {
+                clickedButton.classList.add('audio-correct');
+                
+                // 1. Marca a palavra como concluída
+                gameState.level4WordsCompleted[currentLevel4WordIndex] = true;
+                
+                // 2. Lógica de Pontuação (1 ponto por palavra)
+                if (gameState.level4Score < 10) {
+                    gameState.level4Score++;
+                    alertInApp("Ponto ganho!", "1 ponto adicionado. Finalizado!", "green");
+                }
+                
+                // 3. Salva o estado
+                await saveGameState();
+
+                // 4. Avança para a próxima palavra
+                setTimeout(() => {
+                    currentLevel4WordIndex++;
+                    loadLevel4Word();
+                }, 1000);
+                
+            } else {
+                clickedButton.classList.add('audio-incorrect');
+                
+                // REMOVIDO: alertInApp("Incorreto!", "tente novamente.", "red");
+
+                // Reseta os botões para a palavra atual após um delay
+                setTimeout(() => {
+                    document.querySelectorAll('.audio-button').forEach(btn => {
+                        btn.classList.remove('audio-correct', 'audio-incorrect');
+                        btn.disabled = false;
+                    });
+                }, 1500);
+            }
+        }
+
+
+        // --- Componente de Alerta Customizado (Em vez de alert() do navegador) ---
+        function alertInApp(title, message, type) {
+            const modal = document.getElementById('alert-modal');
+            const iconEl = document.getElementById('alert-icon');
+            const titleEl = document.getElementById('alert-title');
+            const messageEl = document.getElementById('alert-message');
+            const classes = {
+                'green': { bg: 'bg-green-100', text: 'text-green-800', icon: 'fa-check-circle' },
+                'blue': { bg: 'bg-blue-100', text: 'text-blue-800', icon: 'fa-info-circle' },
+                'red': { bg: 'bg-red-100', text: 'text-red-800', icon: 'fa-times-circle' }
+            };
+
+            const selectedClass = classes[type] || classes['blue'];
+
+            modal.className = `fixed inset-0 flex items-center justify-center p-4 z-50 bg-black bg-opacity-50`;
+            modal.querySelector('.bg-white').className = `bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full transition-all duration-300 transform scale-100`;
+
+            titleEl.textContent = title.charAt(0).toUpperCase() + title.slice(1); // Capitaliza a primeira letra do título do alerta
+            messageEl.textContent = message;
+            
+            // Atualiza cores e ícones
+            iconEl.className = `fas ${selectedClass.icon} ${selectedClass.text} text-3xl`;
+            modal.querySelector('.bg-white').style.borderColor = `var(--${type}-color)`; // Use CSS variable if defined, ou just rely on text color
+            titleEl.className = `text-xl font-bold ${selectedClass.text}`;
+
+            modal.classList.remove('hidden');
+            
+            // Fecha automaticamente após 3 segundos
+            setTimeout(() => modal.classList.add('hidden'), 3000);
+        }
+
+        // --- Inicialização ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFirebase();
+            showHomepage(); // garante que a homepage é mostrada no início
+        });
+
+    </script>
+    <style>
+        /* Estilos Globais e Mobile-First */
+        :root {
+            --primary-green: #10b981;
+            --completed-dark: #047857;
+            --inactive-gray: #9ca3af;
+            --primary-gray: #4b5563;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+            flex-grow: 1;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: var(--primary-gray);
+            margin-bottom: 20px;
+        }
+
+        /* --- Score Card --- */
+        .score-card {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .score-card p {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary-green); /* Usa a cor ativa para a pontuação */
+            margin: 0;
+        }
+
+        /* --- Botões de Nível --- */
+        .level-button {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 18px;
+            margin: 15px 0;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            transition: background-color 0.3s, transform 0.1s;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+        
+        .level-button:active {
+            transform: scale(0.95);
+        }
+
+        .level-button .icon-text {
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .level-button i {
+            margin-right: 15px;
+            font-size: 1.3em;
+        }
+
+        .level-button .counter {
+            font-size: 1em;
+            font-weight: normal;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        /* Estilos de estado (Nova lógica de cores) */
+        
+        /* Nível Ativo/Atual (Verde) */
+        .level-button.active-green {
+            background-color: var(--primary-green);
+        }
+        .level-button.active-green:hover {
+            background-color: #059669; /* Verde um pouco mais escuro */
+        }
+        
+        /* Nível Concluído (Verde Escuro/Cinzento Desativado) */
+        .level-button.completed-dark {
+            background-color: var(--completed-dark);
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        /* Nível Inativo/Bloqueado (Cinza) */
+        .level-button.inactive-gray {
+            background-color: var(--inactive-gray);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+
+        /* --- Reset Button --- */
+        #reset-all-button {
+            /* CORRIGIDO: Redução da largura e centralização */
+            width: 80%; 
+            max-width: 300px;
+            display: block;
+            margin: 30px auto 0 auto; 
+            
+            padding: 12px;
+            background-color: #dc2626; /* Vermelho */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+
+        #reset-all-button:hover {
+            background-color: #b91c1c;
+        }
+
+        /* --- Tela de Nível 0 --- */
+        #level0-screen {
+            display: none;
+            padding-bottom: 80px; /* Espaço para o botão Voltar fixo */
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .cell {
+            background-color: #e0f7fa;
+            border: 2px solid #00bcd4;
+            padding: 15px 5px;
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            user-select: none;
+            touch-action: manipulation;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        
+        .cell:active {
+            transform: scale(0.95);
+        }
+
+        .cell.selected {
+            background-color: #ff9800; /* Laranja de Seleção */
+            color: white;
+            border-color: #e65100;
+            box-shadow: 0 0 15px rgba(255, 152, 0, 0.7);
+        }
+        
+        .cell.matched {
+            background-color: var(--primary-green); /* Verde de Acerto */
+            color: white;
+            border-color: #047857;
+            pointer-events: none;
+        }
+        
+        /* --- Tela de Nível 1 --- */
+        #level1-screen {
+            display: none;
+            padding-bottom: 80px;
+            text-align: center;
+        }
+        
+        #level1-word-display {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--primary-gray);
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #level1-guess-container {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 30px;
+            min-height: 40px;
+        }
+
+        .guess-slot {
+            width: 30px;
+            height: 35px;
+            border-bottom: 2px solid var(--primary-gray);
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            line-height: 35px;
+            color: var(--primary-green);
+        }
+
+        #level1-anagram-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            background-color: #e8e8e8;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .letter-button {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 10px 15px;
+            font-size: 1.2em;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-transform: lowercase; /* Garante que o texto do botão é minúsculo */
+        }
+        
+        .letter-button:hover:not(:disabled) {
+            background-color: #f0f0f0;
+        }
+        
+        .letter-button:disabled {
+            background-color: #d1d5db; /* Cinza de desativado */
+            color: #4b5563;
+            cursor: not-allowed;
+        }
+        
+        .letter-button.selected-disabled {
+             background-color: #a7f3d0; /* Verde claro para a letra selecionada */
+             color: var(--completed-dark);
+        }
+        
+        /* CORREÇÃO APLICADA: Estilo do Botão Cancelar/Undo */
+        #undo-button {
+            background-color: #ef4444; /* Vermelho */
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-top: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+
+        #undo-button:hover {
+            background-color: #dc2626;
+        }
+        
+        /* --- Tela de Nível 2 --- */
+        #level2-screen {
+            display: none;
+            padding-bottom: 80px;
+            text-align: center;
+        }
+        
+        #level2-syllable-display {
+            font-size: 3em;
+            font-weight: bold;
+            color: #00bcd4;
+            margin: 40px 0 30px 0;
+            padding: 15px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Layout horizontal para opções de sílabas */
+        #level2-options-container {
+            display: flex;
+            flex-direction: row; 
+            justify-content: space-around; 
+            align-items: center;
+            gap: 10px; 
+            width: 95%; 
+            max-width: 600px;
+            margin: 0 auto 30px auto;
+        }
+
+        .syllable-button {
+            width: 30%; 
+            padding: 15px 5px; 
+            background-color: #ffe0b2; /* Laranja Claro */
+            color: #5d4037; /* Marrom escuro */
+            border: 2px solid #ff9800;
+            border-radius: 8px;
+            font-size: 1.3em; 
+            text-transform: lowercase;
+            transition: background-color 0.2s;
+            cursor: pointer;
+            flex-grow: 1; 
+        }
+        
+        .syllable-button:active {
+            transform: scale(0.98);
+        }
+
+        .syllable-button:hover:not(:disabled) {
+            background-color: #ffb74d;
+        }
+        
+        .syllable-button:disabled {
+             cursor: not-allowed;
+        }
+
+        .syllable-correct {
+            background-color: var(--primary-green) !important;
+            color: white !important;
+            border-color: var(--completed-dark) !important;
+            pointer-events: none;
+        }
+
+        .syllable-incorrect {
+            background-color: #ef5350 !important; /* Vermelho Erro */
+            color: white !important;
+            border-color: #b71c1c !important;
+        }
+        
+        /* --- Tela de Nível 3 --- */
+        #level3-screen {
+            display: none;
+            padding-bottom: 80px;
+            text-align: center;
+        }
+        
+        #level3-word-display {
+            font-size: 3em;
+            font-weight: bold;
+            color: var(--primary-gray);
+            margin: 40px 0 30px 0;
+            padding: 15px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #level3-options-container {
+            display: flex;
+            flex-direction: column; /* As palavras são mais longas, melhor em coluna */
+            gap: 15px;
+            width: 90%; 
+            max-width: 350px;
+            margin: 0 auto 30px auto;
+        }
+
+        .word-button {
+            width: 100%;
+            padding: 15px;
+            background-color: #e3f2fd; /* Azul muito claro */
+            color: #0d47a1; /* Azul escuro */
+            border: 2px solid #42a5f5;
+            border-radius: 8px;
+            font-size: 1.3em;
+            text-transform: lowercase;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        
+        .word-button:active {
+            transform: scale(0.98);
+        }
+        
+        .word-button:hover:not(:disabled) {
+            background-color: #90caf9;
+        }
+
+        .word-correct {
+            background-color: var(--primary-green) !important;
+            color: white !important;
+            border-color: var(--completed-dark) !important;
+            pointer-events: none;
+        }
+
+        .word-incorrect {
+            background-color: #ef5350 !important; /* Vermelho Erro */
+            color: white !important;
+            border-color: #b71c1c !important;
+        }
+        
+        /* --- Tela de Nível 4 --- */
+        #level4-screen {
+            display: none;
+            padding-bottom: 80px;
+            text-align: center;
+        }
+        
+        #level4-audio-control {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary-gray);
+            margin: 40px 0 30px 0;
+            padding: 0; /* Removido padding para deixar o botão centrado */
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #level4-options-container {
+            display: flex;
+            flex-direction: column; /* Em coluna para palavras longas */
+            gap: 15px;
+            width: 90%; 
+            max-width: 350px;
+            margin: 0 auto 30px auto;
+        }
+        
+        .audio-button {
+            width: 100%;
+            padding: 15px;
+            background-color: #fffde7; /* Amarelo muito claro */
+            color: #f57f17; /* Laranja escuro */
+            border: 2px solid #ffeb3b;
+            border-radius: 8px;
+            font-size: 1.5em;
+            text-transform: lowercase;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+
+        .audio-button:active {
+            transform: scale(0.98);
+        }
+
+        .audio-button:hover:not(:disabled) {
+            background-color: #fff9c4;
+        }
+
+        .audio-correct {
+            background-color: var(--primary-green) !important;
+            color: white !important;
+            border-color: var(--completed-dark) !important;
+            pointer-events: none;
+        }
+
+        .audio-incorrect {
+            background-color: #ef5350 !important; /* Vermelho Erro */
+            color: white !important;
+            border-color: #b71c1c !important;
+        }
+        
+        #repeat-audio-button {
+            background-color: #607d8b; /* Cinza azulado */
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.2em;
+            margin: 20px auto; /* Centraliza e adiciona margem */
+            display: block; /* Garante que ocupe o espaço para centralização */
+            cursor: pointer;
+        }
+
+
+        /* --- Botão Voltar (Fixo) --- */
+        .back-button {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-gray);
+            color: white;
+            border: none;
+            font-size: 1.1em;
+            text-align: center;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            display: block;
+        }
+        
+        .back-button i {
+            margin-right: 10px;
+        }
+
+        /* --- Reset Modal (Confirmação) --- */
+        /* CORRIGIDO: Certifica que .hidden desative o display */
+        .modal.hidden, #alert-modal.hidden {
+            display: none !important; 
+        }
+
+        .modal {
+            background-color: rgba(0, 0, 0, 0.6);
+            transition: opacity 0.3s;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 350px;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* ESTILO DO MODAL DE RESET */
+        #reset-modal .button-group {
+             display: flex; 
+             /* Inverte a ordem para que Cancelar (verde) fique à direita e Resetar (vermelho) à esquerda */
+             flex-direction: row-reverse; 
+             justify-content: space-around; 
+             gap: 15px; 
+        }
+        
+        #reset-modal .modal-button {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: background-color 0.3s;
+            flex-grow: 1; 
+            font-weight: bold;
+            border: none; /* Garante que não haja borda padrão */
+        }
+        
+        /* CORREÇÃO: CANCELAR (à direita, verde) */
+        #reset-modal .modal-button.cancel {
+            background-color: var(--primary-green); /* Verde */
+            color: white; 
+        }
+        
+        #reset-modal .modal-button.cancel:hover {
+            background-color: #059669; 
+        }
+
+        /* CORREÇÃO: RESETAR (à esquerda, texto vermelho sem fundo) */
+        #reset-modal .modal-button.reset {
+            background-color: transparent; /* Sem fundo */
+            color: #dc2626; /* Texto vermelho */
+            box-shadow: none; /* Remove sombra, se houver */
+        }
+
+        #reset-modal .modal-button.reset:hover {
+            background-color: #fef2f2; /* Fundo leve ao passar o mouse */
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 1. HOMEPAGE -->
+    <div id="homepage" class="container">
+        <h1>📚 Jogo de Escrita</h1>
+        
+        <!-- Score Card -->
+        <div class="score-card">
+            <p>Pontuação total: <span id="total-score">0/64</span></p>
+        </div>
+        
+        <!-- Botões de Nível -->
+        <!-- Nível 0: Letras -->
+        <button id="btn-level-0" class="level-button active-green" onclick="showLevel(0)">
+            <span class="icon-text">
+                <i class="fas fa-flag-checkered"></i> Nível 0: Letras
+            </span>
+            <span class="counter" id="counter-0">0/4</span>
+        </button>
+        
+        <!-- Nível 1: Letras em Palavras -->
+        <button id="btn-level-1" class="level-button inactive-gray cursor-not-allowed" onclick="showLevel(1)" disabled>
+            <span class="icon-text">
+                <i class="fas fa-trophy"></i> Nível 1: Letras em Palavras
+            </span>
+            <span class="counter" id="counter-1">0/10</span>
+        </button>
+        
+        <!-- Nível 2: Sílabas -->
+        <button id="btn-level-2" class="level-button inactive-gray cursor-not-allowed" onclick="showLevel(2)" disabled>
+            <span class="icon-text">
+                <i class="fas fa-eye"></i> Nível 2: Sílabas
+            </span>
+            <span class="counter" id="counter-2">0/20</span>
+        </button>
+        
+        <!-- Nível 3: Palavras -->
+        <button id="btn-level-3" class="level-button inactive-gray cursor-not-allowed" onclick="showLevel(3)" disabled>
+            <span class="icon-text">
+                <i class="fas fa-medal"></i> Nível 3: Palavras
+            </span>
+            <span class="counter" id="counter-3">0/20</span>
+        </button>
+        
+        <!-- Nível 4: Áudio -->
+        <button id="btn-level-4" class="level-button inactive-gray cursor-not-allowed" onclick="showLevel(4)" disabled>
+            <span class="icon-text">
+                <i class="fas fa-graduation-cap"></i> Nível 4: Áudio
+            </span>
+            <span class="counter" id="counter-4">0/10</span>
+        </button>
+
+        <!-- Reset Button: Capitalização corrigida para "Resetar todas as pontuações" -->
+        <button id="reset-all-button" onclick="showResetModal()">
+            <i class="fas fa-sync-alt"></i> Resetar todas as pontuações
+        </button>
+    </div>
+
+    <!-- 2. TELA DO NÍVEL 0 (LETRAS) -->
+    <div id="level0-screen" class="container" style="display: none;">
+        <h2>Nível 0: Letras (maiúscula x minúscula)</h2>
+        <h3 id="grid-title-level-0" style="text-align: center; color: #00796b;">Grupo 1 (1ª rodada)</h3>
+        
+        <div id="grid-container-level-0" class="grid-container">
+            <!-- Células do jogo de 3x4 (12 células) -->
+        </div>
+    </div>
+    
+    <!-- 3. TELA DO NÍVEL 1 (LETRAS EM PALAVRAS - ANAGRAMA) -->
+    <div id="level1-screen" class="container" style="display: none;">
+        <h2>Nível 1: Letras em Palavras</h2>
+        <h3 id="level1-word-counter">Palavra 1 de 10</h3>
+
+        <!-- Palavra a ser adivinhada (em maiúsculas) -->
+        <div id="level1-word-display">PROFESSOR</div>
+
+        <!-- Slots para a resposta do anagrama -->
+        <div id="level1-guess-container">
+            <!-- Slots serão preenchidos pelo JS -->
+        </div>
+
+        <!-- Botões de letras embaralhadas (anagrama) -->
+        <div id="level1-anagram-container">
+            <!-- Botões de letras serão preenchidos pelo JS -->
+        </div>
+        
+        <!-- Botão Cancelar -->
+        <button id="undo-button" onclick="undoLastSelection()">
+             <i class="fas fa-undo"></i> Cancelar
+        </button>
+    </div>
+
+    <!-- 4. TELA DO NÍVEL 2 (SÍLABAS) -->
+    <div id="level2-screen" class="container" style="display: none;">
+        <h2>Nível 2: Sílabas (maiúscula x minúscula)</h2>
+        <h3 id="level2-syllable-counter">Sílabas: 1 de 60</h3>
+
+        <!-- Sílaba a ser correspondida (em maiúsculas) -->
+        <div id="level2-syllable-display">CA</div>
+
+        <!-- Opções de botões (Resposta correta + 2 distratores) -->
+        <div id="level2-options-container">
+            <!-- Botões serão preenchidos pelo JS -->
+        </div>
+        
+        <p style="font-style: italic; color: #6b7280;">escolha a sílaba minúscula correspondente.</p>
+    </div>
+    
+    <!-- 5. TELA DO NÍVEL 3 (PALAVRAS) -->
+    <div id="level3-screen" class="container" style="display: none;">
+        <h2>Nível 3: Palavras (maiúscula x minúscula)</h2>
+        <h3 id="level3-word-counter">Palavra: 1 de 20</h3>
+
+        <!-- Palavra a ser correspondida (em maiúsculas) -->
+        <div id="level3-word-display">COBRA</div>
+
+        <!-- Opções de botões (Resposta correta + 2 distratores) -->
+        <div id="level3-options-container">
+            <!-- Botões serão preenchidos pelo JS -->
+        </div>
+        
+        <p style="font-style: italic; color: #6b7280;">escolha a palavra minúscula correspondente.</p>
+    </div>
+    
+    <!-- 6. TELA DO NÍVEL 4 (ÁUDIO) -->
+    <div id="level4-screen" class="container" style="display: none;">
+        <!-- Título corrigido: (ouvir e selecionar) -> (escutar e selecionar) -->
+        <h2>Nível 4: Áudio (escutar e selecionar)</h2> 
+        <h3 id="level4-word-counter">Palavra: 1 de 10</h3>
+
+        <!-- Área de controle e status do áudio -->
+        <div id="level4-audio-control">
+            <!-- Botão de Repetição de Áudio (Texto alterado para ESCUTAR) -->
+            <button id="repeat-audio-button" onclick="speakWord(LEVEL4_WORDS[currentLevel4WordIndex])">
+                 <i class="fas fa-volume-up"></i> Escutar
+            </button>
+        </div>
+
+        <!-- Opções de botões (Resposta correta + 2 distratores) -->
+        <div id="level4-options-container">
+            <!-- Botões serão preenchidos pelo JS -->
+        </div>
+        
+        <p style="font-style: italic; color: #6b7280;">selecione a palavra que você ouviu.</p>
+    </div>
+
+
+    <!-- 7. Botão Voltar Fixo -->
+    <button id="voltar-button" class="back-button" onclick="showHomepage()" style="display: none;">
+        <i class="fas fa-arrow-left"></i> voltar
+    </button>
+
+    <!-- 8. MODAL DE CONFIRMAÇÃO DE RESET -->
+    <!-- Adicionado 'hidden' e estilo ajustado no CSS -->
+    <div id="reset-modal" class="modal hidden fixed inset-0 flex items-center justify-center z-50">
+        <div class="modal-content text-center bg-white p-6 rounded-xl shadow-2xl">
+            <h3 class="text-xl font-bold text-red-600 mb-4">Atenção!</h3>
+            <p class="mb-6">Você tem certeza que deseja resetar todas as suas pontuações? Esta ação não pode ser desfeita.</p>
+            
+            <!-- CORRIGIDO: Estrutura e Ordem dos botões no Modal -->
+            <div class="button-group">
+                <!-- Botão RESETAR (Texto Vermelho, Sem Fundo, Esquerda) -->
+                <button onclick="resetAllScores()" class="modal-button reset">
+                    Resetar
+                </button>
+                <!-- Botão CANCELAR (Fundo Verde, Texto Branco, Direita) -->
+                <button onclick="closeResetModal()" class="modal-button cancel">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 9. MODAL DE ALERTA CUSTOMIZADO (SUBSTITUI alert()) -->
+    <!-- CORRIGIDO: Adicionada classe 'modal' para usar a regra .modal.hidden -->
+    <div id="alert-modal" class="modal hidden fixed inset-0 flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full transition-all duration-300 transform">
+            <div class="flex items-center">
+                <i id="alert-icon" class="fas fa-info-circle text-blue-800 text-3xl mr-4"></i>
+                <div>
+                    <h3 id="alert-title" class="text-xl font-bold text-blue-800">aviso</h3>
+                    <p id="alert-message" class="text-sm mt-1"></p>
+                </div>
+            </div>
+            <button onclick="document.getElementById('alert-modal').classList.add('hidden')" 
+                    class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+</body>
+</html>
