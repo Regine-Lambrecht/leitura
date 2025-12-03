@@ -60,8 +60,9 @@
         }
         
         #pedro-image {
-            width: 50px;
-            height: 50px;
+            /* INCREASED SIZE TO 150x150px */
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
             object-fit: cover;
         }
@@ -614,7 +615,8 @@
 
     
     function getSilabas(palavra) {
-        // --- REVISED SYLLABIFICATION LOGIC ---
+        // This function is still needed for Level 4 and 5 distractors (for word size comparison)
+
         let processedPalavra = palavra.toLowerCase();
         
         // 1. Split double consonants (RR, SS, etc.)
@@ -704,7 +706,7 @@
         selecaoN2: [], 
         
         progressoNivel3: 0, 
-        syllabesCompletasPorPalavra: {}, // Tracks solved syllables per word (e.g., {'caneta': ['ca', 'ne']})
+        syllabesCompletasPorPalavra: {}, // Tracks solved syllables (Key: syllable, Value: 1 if solved)
         
         progressoN4: 0, // NEW: Identification
         palavrasCompletasN4: {}, 
@@ -811,7 +813,7 @@
                     break;
                 case 3:
                     estadoJogo.progressoNivel3 = 0;
-                    estadoJogo.syllabesCompletasPorPalavra = {};
+                    estadoJogo.syllabesCompletasPorPalavra = {}; // Reset syllable tracker
                     silabaAnteriorN3 = null;
                     break;
                 case 4:
@@ -967,7 +969,7 @@
         if (nivel === 2 && estadoJogo.progressoNivel1.filter(c => c >= 2).length < MAX_N1_COMPLETIONS) { mostrarTela('home'); return; }
         if (nivel === 3 && estadoJogo.progressoNivel2 < MAX_N2_COMPLETIONS) { mostrarTela('home'); return; }
         if (nivel === 4 && estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) { mostrarTela('home'); return; }
-        if (nivel === 5 && estadoJogo.progressoNivel4 < MAX_N4_COMPLETIONS) { mostrarTela('home'); return; }
+        if (nivel === 5 && estadoJogo.progressoN4 < MAX_N4_COMPLETIONS) { mostrarTela('home'); return; }
 
         mostrarTela(`nivel-${nivel}`);
         switch (nivel) {
@@ -1237,50 +1239,26 @@
             return;
         }
         
-        // 1. Find a word where not all syllables have been completed
-        let palavrasNaoCompletas = PALAVRAS_PARA_N3.filter(p => {
-            const wordKey = p.toLowerCase();
-            const allSyllables = getSilabas(p);
-            const solvedSyllables = estadoJogo.syllabesCompletasPorPalavra[wordKey] || [];
-            
-            // Check if every syllable in the word is present in the solved list
-            return allSyllables.some(syllable => !solvedSyllables.includes(syllable));
-        });
-
-        // If all words are syllable-complete, filter down to words not yet counted (max 20)
-        if (palavrasNaoCompletas.length === 0) {
-            palavrasNaoCompletas = PALAVRAS_PARA_N3.filter(p => (estadoJogo.palavrasCompletasN3[p.toLowerCase()] || 0) < 1);
-            if (palavrasNaoCompletas.length === 0) {
-                 mostrarTela('home');
-                 return;
-            }
-        }
+        // --- STEP 1: Determine the target syllable (must be one that hasn't been completed yet) ---
         
-        const motChoisi = palavrasNaoCompletas[Math.floor(Math.random() * palavrasNaoCompletas.length)];
-        const wordKey = motChoisi.toLowerCase();
+        let silabasNaoCompletas = SILABAS_ALVO.filter(s => (estadoJogo.syllabesCompletasPorPalavra[s] || 0) < 1);
         
-        // 2. Select a target syllable that hasn't been solved for this word yet
-        const allSyllables = getSilabas(motChoisi);
-        const solvedSyllables = estadoJogo.syllabesCompletasPorPalavra[wordKey] || [];
+        // If all 29 unique syllables are solved, loop the list for the remaining challenges (up to 20 total)
+        const silabasSource = silabasNaoCompletas.length > 0 ? silabasNaoCompletas : SILABAS_ALVO;
         
-        let silabasCandidatas = allSyllables.filter(syllable => !solvedSyllables.includes(syllable));
-
-        // If all syllables for this specific word are done, select a random one (Fallback, unlikely due to filter)
-        if (silabasCandidatas.length === 0) {
-             silabasCandidatas = allSyllables;
-        }
-
         // LOGIC FIX: Prevent consecutive repetition of the *syllable*
+        let silabasCandidatas = [...silabasSource];
         if (silabasCandidatas.length > 1 && silabaAnteriorN3) {
              silabasCandidatas = silabasCandidatas.filter(s => s !== silabaAnteriorN3);
              if (silabasCandidatas.length === 0) {
-                 silabasCandidatas = allSyllables; // Fallback
+                 silabasCandidatas = silabasSource; // Fallback
              }
         }
         
         silabaAtual = silabasCandidatas[Math.floor(Math.random() * silabasCandidatas.length)];
         silabaAnteriorN3 = silabaAtual; 
-        palavraAtual = motChoisi; // Set current word for score check
+        
+        // Note: For Level 3, the target word is no longer relevant for the challenge, only the syllable.
 
         
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
@@ -1302,25 +1280,16 @@
 
     function verificarSilaba(selection) {
         if (selection === silabaAtual) {
-            const wordKey = palavraAtual.toLowerCase();
+            const syllableKey = silabaAtual;
             
-            // 1. Mark syllable as completed for this word (if not already done)
-            if (!estadoJogo.syllabesCompletasPorPalavra[wordKey]) {
-                estadoJogo.syllabesCompletasPorPalavra[wordKey] = [];
-            }
-            if (!estadoJogo.syllabesCompletasPorPalavra[wordKey].includes(silabaAtual)) {
-                estadoJogo.syllabesCompletasPorPalavra[wordKey].push(silabaAtual);
+            // 1. Check if this specific syllable has been solved once
+            if ((estadoJogo.syllabesCompletasPorPalavra[syllableKey] || 0) === 0) {
+                estadoJogo.syllabesCompletasPorPalavra[syllableKey] = 1;
             }
 
-            // 2. Check if the entire word is now complete (all its syllables solved)
-            const allSyllables = getSilabas(palavraAtual);
-            const solvedSyllables = estadoJogo.syllabesCompletasPorPalavra[wordKey];
-            const wordIsComplete = allSyllables.every(syllable => solvedSyllables.includes(syllable));
-            
-            // 3. If the word is COMPLETE AND it hasn't been counted yet (progressoN3 < 20)
-            if (wordIsComplete && (estadoJogo.palavrasCompletasN3[wordKey] || 0) === 0) {
+            // 2. Count toward the MAX_N3_COMPLETIONS goal (20 points total)
+            if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) {
                 estadoJogo.progressoNivel3++;
-                estadoJogo.palavrasCompletasN3[wordKey] = 1; // Mark word as counted
                 adicionarPonto();
 
                 if (estadoJogo.progressoNivel3 === MAX_N3_COMPLETIONS) {
@@ -1330,7 +1299,7 @@
                 }
             }
             
-            // PARTIAL SUCCESS (Syallble solved or Word solved but point already counted): Just advance
+            // PARTIAL SUCCESS: Just advance
             iniciarNivel3();
 
         } else {
