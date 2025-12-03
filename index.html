@@ -78,6 +78,15 @@
             display: flex;
             align-items: center;
         }
+        
+        /* NEW: Completed Level Color (Green) */
+        .nivel-btn.completed {
+            background-color: var(--cor-sucesso);
+            cursor: default;
+        }
+        .nivel-btn.completed:hover:not(:disabled) {
+            background-color: #27ae60; /* Darker green on hover */
+        }
 
         /* Voltar est BLEU */
         .nivel-btn.voltar-btn {
@@ -99,7 +108,7 @@
             color: #7f8c8d;
         }
 
-        /* Conteneur pour les icônes à droite du terme */
+        /* Conteneur pour les icônes à direita do termo */
         .icon-container {
             margin-left: 10px;
             display: flex;
@@ -117,33 +126,39 @@
             border-radius: 5px;
         }
 
-        /* Bouton Recomeçar */
-        #btn-reset {
-            background-color: var(--cor-reset);
+        /* Bouton Recomeçar (on home screen) */
+        #btn-reset-level {
+            background-color: #f39c12; 
             color: white;
-            margin-top: 20px;
+            margin: 10px auto; /* Centered margin */
             padding: 10px;
             font-size: 1em;
             font-family: 'Times New Roman', Times, serif;
             justify-content: center;
-        }
-        
-        .nivel-btn#btn-reset {
-            /* Ensures the reset button style is used on the "Recomeçar o nível" button */
-            display: none; /* Hidden by default on home screen */
-        }
-        
-        .tela-jogo #btn-reset {
-             /* Show the button only within a level screen */
             display: flex; 
-            margin-top: 10px; 
-            background-color: #f39c12; /* Unique color for level reset */
+            width: 70%; /* Reduced width */
+            max-width: 300px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
         }
 
-
-        #btn-reset:hover {
-            background-color: #e67e22;
+        #btn-reset-global {
+            background-color: var(--cor-reset);
+            color: white;
+            margin: 20px auto 0 auto; /* Centered margin */
+            padding: 10px;
+            font-size: 1em;
+            font-family: 'Times New Roman', Times, serif;
+            justify-content: center;
+            display: flex; 
+            width: 70%; /* Reduced width */
+            max-width: 300px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
         }
+
 
         /* Visibilidade des Telas */
         .tela-jogo {
@@ -418,17 +433,17 @@
         <h1>Oi Pedro ! Vamos estudar !</h1>
 
         <div id="score-container">
-            <p>Pontuação Global: <span id="score-valor">0</span> pontos</p>
+            <p>Conquistas: <span id="score-valor">0</span> / 64 Estrelas! ✨</p>
             <p id="progresso-msg"></p>
         </div>
 
         <button class="nivel-btn" id="btn-nivel-1" onclick="iniciarNivel(1)">
-            <span class="content-left-group">Letras (Pares) <span class="icon-container"><i class="fa-solid fa-trophy"></i></span></span>
+            <span class="content-left-group">Letras (**pares**) <span class="icon-container"><i class="fa-solid fa-trophy"></i></span></span>
             <span class="contador-progresso" id="count-n1"></span>
         </button>
         
         <button class="nivel-btn" id="btn-nivel-2" onclick="iniciarNivel(2)" disabled>
-            <span class="content-left-group">Letras de Palavras <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span></span>
+            <span class="content-left-group">Letras de **palavras** <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span></span>
             <span class="contador-progresso" id="count-n2"></span>
         </button>
 
@@ -443,13 +458,17 @@
         </button>
 
         <button class="nivel-btn" id="btn-nivel-5" onclick="iniciarNivel(5)" disabled>
-            <span class="content-left-group">Palavras (Áudio) <span class="icon-container"><i class="fa-solid fa-graduation-cap"></i></span></span>
+            <span class="content-left-group">**Palavras** (**áudio**) <span class="icon-container"><i class="fa-solid fa-graduation-cap"></i></span></span>
             <span class="contador-progresso" id="count-n5"></span>
         </button>
 
 
-        <button class="nivel-btn" id="btn-reset-global" onclick="mostrarModalRecomeco('global')">
-            <i class="fa-solid fa-sync-alt"></i> Recomeçar TUDO de zero
+        <button id="btn-reset-level" onclick="mostrarModalRecomeco('level')">
+            <i class="fa-solid fa-undo"></i> Recomeçar o nível
+        </button>
+
+        <button id="btn-reset-global" onclick="mostrarModalRecomeco('global')">
+            <i class="fa-solid fa-sync-alt"></i> Recomeçar TUDO de **zero**
         </button>
     </div>
 
@@ -459,9 +478,6 @@
         <div id="letras-grid"></div>
         <button class="btn-cancelar" onclick="cancelarSelecaoNivel1()">Cancelar</button>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
-        <button class="nivel-btn" id="btn-reset" onclick="mostrarModalRecomeco(1)">
-            <i class="fa-solid fa-sync-alt"></i> Recomeçar o nível
-        </button>
     </div>
 
     <div id="tela-nivel-2" class="tela-jogo">
@@ -476,9 +492,6 @@
         
         <button class="btn-cancelar" id="btn-cancelar-anagrama" onclick="cancelarSelecaoNivel2()">Cancelar</button>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
-        <button class="nivel-btn" id="btn-reset" onclick="mostrarModalRecomeco(2)">
-            <i class="fa-solid fa-sync-alt"></i> Recomeçar o nível
-        </button>
     </div>
 
     <div id="tela-nivel-3" class="tela-jogo">
@@ -492,9 +505,6 @@
         
         <div id="opcoes-silabas"></div>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
-        <button class="nivel-btn" id="btn-reset" onclick="mostrarModalRecomeco(3)">
-            <i class="fa-solid fa-sync-alt"></i> Recomeçar o nível
-        </button>
     </div>
 
     <div id="tela-nivel-4" class="tela-jogo">
@@ -502,12 +512,10 @@
         <p>Encontre a palavra em minúsculas que corresponde à palavra MAIÚSCULA.</p>
         
         <div id="identificacao-alvo"></div>
+        
         <div id="opcoes-identificacao"></div>
 
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
-        <button class="nivel-btn" id="btn-reset" onclick="mostrarModalRecomeco(4)">
-            <i class="fa-solid fa-sync-alt"></i> Recomeçar o nível
-        </button>
     </div>
 
     <div id="tela-nivel-5" class="tela-jogo">
@@ -516,9 +524,6 @@
         <button class="btn-audio" onclick="falarPalavraAtual()"><i class="fa-solid fa-volume-up"></i></button>
         <div id="opcoes-palavras"></div>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
-        <button class="nivel-btn" id="btn-reset" onclick="mostrarModalRecomeco(5)">
-            <i class="fa-solid fa-sync-alt"></i> Recomeçar o nível
-        </button>
     </div>
 
     <div id="mensagem-bravo" style="display:none;">Bravo Pedro!</div>
@@ -574,34 +579,29 @@
     ];
     let PALAVRAS = PALAVRAS_BASE.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
-    // --- HARDCODED SYLLABLE LIST FOR LEVEL 3 ---
+    // --- HARDCODED SYLLABLE LIST FOR LEVEL 3 (29 Total) ---
     const SILABAS_ALVO = [
-        'a', 'be', 'lha', 'ra', 'na', 'ba', 'lei', 'bo', 'la', 'cha', 
+        'a', 'be', 'lha', 'ra', 'nha', 'ba', 'lei', 'bo', 'la', 'cha', 
         'li', 'che', 'bra', 'sil', 'ca', 'bi', 'de', 'ne', 'ta', 'sa', 
-        'cha', 've', 'chu', 'pe', 'ta', 'co', 'bra', 'e', 'lho', 'fre',
-        'rro', 'te', 'páu', 'ar' 
-        // Note: Using a slightly expanded set to ensure 29+ unique syllables if needed,
-        // but the core logic focuses on uniqueness. The actual list provided earlier 
-        // was derived from the words, so this list is now used directly.
+        've', 'chu', 'pe', 'co', 'bra', 'e', 'lho', 'fre', 'páu' 
     ];
 
     
     function getSilabas(palavra) {
-        // --- REVISED SYLLABIFICATION LOGIC (Pure Rule-Based) ---
+        // --- REVISED SYLLABIFICATION LOGIC ---
         let processedPalavra = palavra.toLowerCase();
         
         // 1. Split double consonants (RR, SS, etc.)
         processedPalavra = processedPalavra.replace(/([r|s|c|p|t|b|d|f|g|k|m|n|v|x|z])\1/g, '$1-$1');
         
-        // 2. Separate consonant clusters (VC-CV pattern) - Simplified to handle internal breaks like N-T
-        // Example: Ca-ne-ta should be ca-ne-ta (not ca-n-e-ta). This pattern is complex in Portuguese,
-        // but we'll use a broad VCV->V-CV rule, which is simpler and more reliable than VCCV->VC-CV here.
+        // 2. Separate consonant clusters (VC-CV pattern)
+        processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bdfghjklmnpqrstvwxyzç])([bcdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1$2-$3$4');
         
         // 3. Separate consonant that must break between vowels (V-CV rule)
         processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bcdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1-$2$3'); 
         
         // 4. Handle common consonant blends (TR, BR, PL, etc.) - keep them together
-        processedPalavra = processedPalavra.replace(/([bcdfghjklmnpqrstvwxyzç])([l|r])/g, '$1$2'); // Example: BRa-sil
+        processedPalavra = processedPalavra.replace(/([bcdfghjklmnpqrstvwxyzç])([l|r])/g, '$1$2'); 
         
         // 5. Handle QU and GU
         processedPalavra = processedPalavra.replace(/([qg]u)([aeiou])/g, '$1$2'); 
@@ -656,7 +656,7 @@
     // NEW FIXED TOTALS
     const MAX_N1_COMPLETIONS = DADOS_LETRAS.length; // 4
     const MAX_N2_COMPLETIONS = 10; // Anagramas (Words 1-10)
-    const MAX_N3_COMPLETIONS = 29; // Sílabas (Total unique syllables: 29)
+    const MAX_N3_COMPLETIONS = 20; // Sílabas (Goal is 20 completed words)
     const MAX_N4_COMPLETIONS = 20; // NEW: Identification (Words 31-50)
     const MAX_N5_COMPLETIONS = 10; // Palavras Áudio (Words 51-60)
 
@@ -677,19 +677,19 @@
         selecaoN2: [], 
         
         progressoNivel3: 0, 
-        syllabesCompletes: {}, // Now tracks completion of SILABAS_ALVO items
-
-        progressoNível4: 0, 
+        syllabesCompletasPorPalavra: {}, // Tracks solved syllables per word (e.g., {'caneta': ['ca', 'ne']})
+        
+        progressoN4: 0, // NEW: Identification
         palavrasCompletasN4: {}, 
         
-        progressoNivel5: 0, 
+        progressoN5: 0, 
         palavrasCompletasN5: {}, 
     };
 
     let estadoJogo = {...INITIAL_GAME_STATE};
     let nivelSendoResetado = null; 
 
-    let palavraAtual = '';
+    let palavraAtual = ''; 
     let silabaAnteriorN3 = null; 
     let palavraAnteriorN5 = null; 
 
@@ -699,6 +699,10 @@
         const estadoSalvo = localStorage.getItem('aprendendoAleitura');
         if (estadoSalvo) {
             estadoJogo = JSON.parse(estadoSalvo);
+            // Handle legacy state: Initialize new trackers if missing
+            if (!estadoJogo.palavrasCompletasN4) estadoJogo.palavrasCompletasN4 = {};
+            if (!estadoJogo.palavrasCompletasN5) estadoJogo.palavrasCompletasN5 = {};
+            if (!estadoJogo.syllabesCompletasPorPalavra) estadoJogo.syllabesCompletasPorPalavra = {};
         } else {
             estadoJogo = {...INITIAL_GAME_STATE};
         }
@@ -713,12 +717,26 @@
     function mostrarModalRecomeco(nivel) {
         const modalText = document.getElementById('modal-reset-text');
         nivelSendoResetado = nivel;
+        let nivelNome = '';
+
+        if (nivel === 'level') {
+            // Find the highest incomplete level to target the reset
+            nivel = getHighestIncompleteLevel();
+        }
+
+        switch(nivel) {
+            case 1: nivelNome = 'Letras (Pares)'; break;
+            case 2: nivelNome = 'Letras de Palavras'; break;
+            case 3: nivelNome = 'Sílabas'; break;
+            case 4: nivelNome = 'Identificação'; break;
+            case 5: nivelNome = 'Palavras (Áudio)'; break;
+        }
 
         if (nivel === 'global') {
             modalText.textContent = "Você vai perder TODOS os pontos e todo o progresso. Quer mesmo recomeçar de zero?";
             document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(true);
         } else {
-            modalText.textContent = `Você vai perder todos os pontos do Nível ${nivel}. Quer mesmo recomeçar?`;
+            modalText.textContent = `Você vai perder todos os pontos do Nível ${nivel} (${nivelNome}). Quer mesmo recomeçar?`;
             document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(false);
         }
 
@@ -732,16 +750,27 @@
         nivelSendoResetado = null;
     }
 
+    function getHighestIncompleteLevel() {
+        if (estadoJogo.progressoNivel1.filter(c => c >= 2).length < MAX_N1_COMPLETIONS) return 1;
+        if (estadoJogo.progressoNivel2 < MAX_N2_COMPLETIONS) return 2;
+        if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) return 3;
+        if (estadoJogo.progressoNivel4 < MAX_N4_COMPLETIONS) return 4;
+        if (estadoJogo.progressoNivel5 < MAX_N5_COMPLETIONS) return 5;
+        return 5; 
+    }
+
     function confirmaRecomeco(resetGlobal) {
         cancelaRecomeco();
-        const nivel = nivelSendoResetado;
+        let nivel = nivelSendoResetado;
         
+        if (nivel === 'level') {
+            nivel = getHighestIncompleteLevel();
+        }
+
         if (resetGlobal) {
-            // Global Reset
             estadoJogo = {...INITIAL_GAME_STATE};
             localStorage.removeItem('aprendendoAleitura');
         } else {
-            // Level-Specific Reset
             switch (nivel) {
                 case 1:
                     estadoJogo.progressoNivel1 = [0, 0, 0, 0];
@@ -755,7 +784,7 @@
                     break;
                 case 3:
                     estadoJogo.progressoNivel3 = 0;
-                    estadoJogo.syllabesCompletes = {};
+                    estadoJogo.syllabesCompletasPorPalavra = {};
                     silabaAnteriorN3 = null;
                     break;
                 case 4:
@@ -770,14 +799,16 @@
             }
         }
 
-        // Reinitialize and redirect
         atualizarInterfaceHome();
         
         if (resetGlobal) {
             mostrarTela('home');
         } else if (nivel >= 1 && nivel <= 5) {
-            // Restart the current level
-            iniciarNivel(nivel);
+            if (document.getElementById(`tela-nivel-${nivel}`)) {
+                iniciarNivel(nivel);
+            } else {
+                 mostrarTela('home');
+            }
         } else {
             mostrarTela('home');
         }
@@ -786,17 +817,15 @@
 
     function mostrarTela(nivelId) {
         document.querySelectorAll('.tela-jogo').forEach(tela => tela.style.display = 'none');
-        // Show the level screen
         document.getElementById(`tela-${nivelId}`).style.display = 'block';
         
-        // Hide the global reset button and show the local reset button (if applicable)
+        // Update home page buttons visibility logic
         document.getElementById('btn-reset-global').style.display = 'none';
-        if (document.getElementById(`tela-${nivelId}`).querySelector('#btn-reset')) {
-            document.getElementById(`tela-${nivelId}`).querySelector('#btn-reset').style.display = 'flex';
-        }
+        document.getElementById('btn-reset-level').style.display = 'none';
         
         if (nivelId === 'home') {
             document.getElementById('btn-reset-global').style.display = 'flex';
+            document.getElementById('btn-reset-level').style.display = 'flex';
             atualizarInterfaceHome();
         }
     }
@@ -850,26 +879,31 @@
         const n1Completed = damierComplet === MAX_N1_COMPLETIONS;
         document.getElementById('count-n1').textContent = `(${damierComplet}/${MAX_N1_COMPLETIONS})`;
         btnN1.disabled = n1Completed;
+        if (n1Completed) btnN1.classList.add('completed'); else btnN1.classList.remove('completed');
         
         // --- NIVEAU 2 (Anagramas) ---
         const n2Completed = estadoJogo.progressoNivel2 >= MAX_N2_COMPLETIONS;
         btnN2.disabled = !n1Completed || n2Completed;
         document.getElementById('count-n2').textContent = `(${estadoJogo.progressoNivel2}/${MAX_N2_COMPLETIONS})`;
+        if (n2Completed) btnN2.classList.add('completed'); else btnN2.classList.remove('completed');
 
         // --- NIVEAU 3 (Sílabas) ---
         const n3Completed = estadoJogo.progressoNivel3 >= MAX_N3_COMPLETIONS;
         btnN3.disabled = !n2Completed || n3Completed;
         btnN3.querySelector('.contador-progresso').textContent = `(${Math.min(estadoJogo.progressoNivel3, MAX_N3_COMPLETIONS)}/${MAX_N3_COMPLETIONS})`;
+        if (n3Completed) btnN3.classList.add('completed'); else btnN3.classList.remove('completed');
         
         // --- NIVEAU 4 (Identificação) ---
         const n4Completed = estadoJogo.progressoNivel4 >= MAX_N4_COMPLETIONS;
         btnN4.disabled = !n3Completed || n4Completed;
         btnN4.querySelector('.contador-progresso').textContent = `(${Math.min(estadoJogo.progressoNivel4, MAX_N4_COMPLETIONS)}/${MAX_N4_COMPLETIONS})`;
+        if (n4Completed) btnN4.classList.add('completed'); else btnN4.classList.remove('completed');
         
         // --- NIVEAU 5 (Palavras Áudio) ---
         const n5Completed = estadoJogo.progressoNivel5 >= MAX_N5_COMPLETIONS;
         btnN5.disabled = !n4Completed || n5Completed;
         btnN5.querySelector('.contador-progresso').textContent = `(${Math.min(estadoJogo.progressoNivel5, MAX_N5_COMPLETIONS)}/${MAX_N5_COMPLETIONS})`;
+        if (n5Completed) btnN5.classList.add('completed'); else btnN5.classList.remove('completed');
     }
 
 
@@ -878,17 +912,18 @@
         const ratio = score / totalMaximo;
         let message = "";
 
-        if (ratio >= 0.8) {
-            message = "Você está arrasando !";
+        if (ratio >= 0.9) {
+            message = "Você é um mestre da leitura! Woohoo! 🥳";
+        } else if (ratio >= 0.7) {
+            message = "Você está arrasando! Continue assim, Campeão! 🚀";
         } else if (ratio >= 0.5) {
-            message = "Você está ótimo !";
+            message = "Muito bem! Sua leitura está voando alto! 🎈";
         } else if (ratio >= 0.3) {
-            message = "Você está indo muito bem !";
+            message = "Opa! Estamos no caminho certo! Vamos lá! 👍";
+        } else {
+            message = "Continue praticando! Você vai pegar o jeito! 💪";
         }
-
-        if (score >= totalMaximo) {
-            message = "Parabéns, você é top !";
-        }
+        
         document.getElementById('progresso-msg').textContent = message;
     }
 
@@ -1167,24 +1202,59 @@
             return;
         }
 
-        // --- Select from HARDCODED SILABAS_ALVO ---
-        const silabasNaoCompletas = SILABAS_ALVO.filter(s => (estadoJogo.syllabesCompletes[s] || 0) < 1);
-
-        const silabasSource = silabasNaoCompletas.length > 0 ? silabasNaoCompletas : SILABAS_ALVO;
+        // Pool of words for Level 3 (Indices 11-30)
+        const PALAVRAS_PARA_N3 = PALAVRAS.slice(10, 30); 
+        if (PALAVRAS_PARA_N3.length === 0) {
+            console.error("Nível 3: Palavras do índice 11 ao 30 não encontradas.");
+            mostrarTela('home');
+            return;
+        }
         
-        // LOGIC FIX: Prevent consecutive repetition
-        let silabasCandidatas = [...silabasSource];
+        // 1. Find a word where not all syllables have been completed
+        let palavrasNaoCompletas = PALAVRAS_PARA_N3.filter(p => {
+            const wordKey = p.toLowerCase();
+            const allSyllables = getSilabas(p);
+            const solvedSyllables = estadoJogo.syllabesCompletasPorPalavra[wordKey] || [];
+            
+            // Check if every syllable in the word is present in the solved list
+            return allSyllables.some(syllable => !solvedSyllables.includes(syllable));
+        });
+
+        // If all words are syllable-complete, filter down to words not yet counted (max 20)
+        if (palavrasNaoCompletas.length === 0) {
+            palavrasNaoCompletas = PALAVRAS_PARA_N3.filter(p => (estadoJogo.palavrasCompletasN3[p.toLowerCase()] || 0) < 1);
+            if (palavrasNaoCompletas.length === 0) {
+                 mostrarTela('home');
+                 return;
+            }
+        }
+        
+        const motChoisi = palavrasNaoCompletas[Math.floor(Math.random() * palavrasNaoCompletas.length)];
+        const wordKey = motChoisi.toLowerCase();
+        
+        // 2. Select a target syllable that hasn't been solved for this word yet
+        const allSyllables = getSilabas(motChoisi);
+        const solvedSyllables = estadoJogo.syllabesCompletasPorPalavra[wordKey] || [];
+        
+        let silabasCandidatas = allSyllables.filter(syllable => !solvedSyllables.includes(syllable));
+
+        // If all syllables for this specific word are done, select a random one (Fallback, unlikely due to filter)
+        if (silabasCandidatas.length === 0) {
+             silabasCandidatas = allSyllables;
+        }
+
+        // LOGIC FIX: Prevent consecutive repetition of the *syllable*
         if (silabasCandidatas.length > 1 && silabaAnteriorN3) {
              silabasCandidatas = silabasCandidatas.filter(s => s !== silabaAnteriorN3);
              if (silabasCandidatas.length === 0) {
-                 silabasCandidatas = silabasSource;
+                 silabasCandidatas = allSyllables; // Fallback
              }
         }
         
         silabaAtual = silabasCandidatas[Math.floor(Math.random() * silabasCandidatas.length)];
-
-        // Update the previous syllable tracker
         silabaAnteriorN3 = silabaAtual; 
+        palavraAtual = motChoisi; // Set current word for score check
+
         
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
 
@@ -1205,25 +1275,35 @@
 
     function verificarSilaba(selection) {
         if (selection === silabaAtual) {
-            const key = silabaAtual;
-            const currentCount = estadoJogo.syllabesCompletes[key] || 0;
+            const wordKey = palavraAtual.toLowerCase();
             
-            if (currentCount === 0) {
-                estadoJogo.syllabesCompletes[key] = currentCount + 1;
+            // 1. Mark syllable as completed for this word (if not already done)
+            if (!estadoJogo.syllabesCompletasPorPalavra[wordKey]) {
+                estadoJogo.syllabesCompletasPorPalavra[wordKey] = [];
+            }
+            if (!estadoJogo.syllabesCompletasPorPalavra[wordKey].includes(silabaAtual)) {
+                estadoJogo.syllabesCompletasPorPalavra[wordKey].push(silabaAtual);
             }
 
-            if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) {
+            // 2. Check if the entire word is now complete (all its syllables solved)
+            const allSyllables = getSilabas(palavraAtual);
+            const solvedSyllables = estadoJogo.syllabesCompletasPorPalavra[wordKey];
+            const wordIsComplete = allSyllables.every(syllable => solvedSyllables.includes(syllable));
+            
+            // 3. If the word is COMPLETE AND it hasn't been counted yet (progressoN3 < 20)
+            if (wordIsComplete && (estadoJogo.palavrasCompletasN3[wordKey] || 0) === 0) {
                 estadoJogo.progressoNivel3++;
+                estadoJogo.palavrasCompletasN3[wordKey] = 1; // Mark word as counted
                 adicionarPonto();
-                
-                if (estadoJogo.progressoNivel3 === MAX_N3_COMPLETIONS) {
-                    // SUCCESS: Show Bravo, then go home
+
+                if (estadoJogo.progressoNivel3 >= MAX_N3_COMPLETIONS) {
+                    // LEVEL COMPLETION: Show Bravo, then go home
                     exibirMensagemBravo(() => mostrarTela('home'));
                     return;
                 }
             }
             
-            // PARTIAL SUCCESS: Just advance
+            // PARTIAL SUCCESS (Syallble solved or Word solved but point already counted): Just advance
             iniciarNivel3();
 
         } else {
