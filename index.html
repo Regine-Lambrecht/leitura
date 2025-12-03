@@ -669,7 +669,7 @@
         const distractors = [];
 
         while (distractors.length < 2 && candidates.length > 0) {
-            const index = Math.floor(Math.random() * candidates.length);
+            const index = Math.floor(ńst.random() * candidates.length);
             const candidate = candidates[index].word;
 
             if (!distractors.includes(candidate)) {
@@ -792,6 +792,54 @@
         return 5; 
     }
 
+    // --- NOVO CÓDIGO AQUI: Subtrai pontos e reseta o estado local do nível ---
+    function subtrairPontosDoNivel(nivelAlvo) {
+        let pontosASubtrair = 0;
+        
+        switch (nivelAlvo) {
+            case 1:
+                // Cada damier completo (2/2) vale 1 ponto
+                pontosASubtrair = estadoJogo.progressoNivel1.filter(c => c >= 2).length;
+                estadoJogo.progressoNivel1 = [0, 0, 0, 0]; // Reset do progresso local
+                estadoJogo.damierAtual = 0;
+                estadoJogo.selecaoN1 = [];
+                break;
+            case 2:
+                // Cada palavra completa vale 1 ponto
+                pontosASubtrair = estadoJogo.progressoNivel2;
+                estadoJogo.progressoNivel2 = 0; // Reset do progresso local
+                estadoJogo.palavraAtualN2 = null;
+                estadoJogo.selecaoN2 = [];
+                break;
+            case 3:
+                // Cada silaba certa (até 20) vale 1 ponto
+                pontosASubtrair = estadoJogo.progressoNivel3;
+                estadoJogo.progressoNivel3 = 0; // Reset do progresso local
+                estadoJogo.syllabesCompletasPorPalavra = {};
+                silabaAnteriorN3 = null;
+                break;
+            case 4:
+                // Cada palavra identificada (até 20) vale 1 ponto
+                pontosASubtrair = estadoJogo.progressoN4;
+                estadoJogo.progressoN4 = 0; // Reset do progresso local
+                estadoJogo.palavrasCompletasN4 = {};
+                break;
+            case 5:
+                // Cada palavra escutada (até 10) vale 1 ponto
+                pontosASubtrair = estadoJogo.progressoN5;
+                estadoJogo.progressoN5 = 0; // Reset do progresso local
+                estadoJogo.palavrasCompletasN5 = {};
+                palavraAnteriorN5 = null;
+                break;
+        }
+
+        // Subtrair do score global e garantir que não seja negativo
+        estadoJogo.scoreGlobal = Math.max(0, estadoJogo.scoreGlobal - pontosASubtrair);
+        
+        return nivelAlvo;
+    }
+    // --- FIM NOVO CÓDIGO ---
+
     function confirmaRecomeco(resetGlobal) {
         cancelaRecomeco();
         let nivel = nivelSendoResetado;
@@ -804,32 +852,8 @@
             estadoJogo = {...INITIAL_GAME_STATE};
             localStorage.removeItem('aprendendoAleitura');
         } else {
-            switch (nivel) {
-                case 1:
-                    estadoJogo.progressoNivel1 = [0, 0, 0, 0];
-                    estadoJogo.damierAtual = 0;
-                    estadoJogo.selecaoN1 = [];
-                    break;
-                case 2:
-                    estadoJogo.progressoNivel2 = 0;
-                    estadoJogo.palavraAtualN2 = null;
-                    estadoJogo.selecaoN2 = [];
-                    break;
-                case 3:
-                    estadoJogo.progressoNivel3 = 0;
-                    estadoJogo.syllabesCompletasPorPalavra = {}; // Reset syllable tracker
-                    silabaAnteriorN3 = null;
-                    break;
-                case 4:
-                    estadoJogo.progressoN4 = 0;
-                    estadoJogo.palavrasCompletasN4 = {};
-                    break;
-                case 5:
-                    estadoJogo.progressoN5 = 0;
-                    estadoJogo.palavrasCompletasN5 = {};
-                    palavraAnteriorN5 = null;
-                    break;
-            }
+            // Chamada à nova função para subtrair pontos e resetar o progresso local
+            nivel = subtrairPontosDoNivel(nivel);
         }
 
         atualizarInterfaceHome();
@@ -1488,7 +1512,6 @@
     // --- INITIALISATION ---
     document.addEventListener('DOMContentLoaded', inicializarJogo);
 </script>
-
 
 
 <div id="browser-voice-control"></div></body>
