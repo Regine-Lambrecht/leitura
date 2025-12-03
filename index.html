@@ -251,6 +251,12 @@
             user-select: none;
             transition: background-color 0.2s, opacity 0.2s;
         }
+
+        /* CORREÇÃO: Garante que as letras invisíveis/selecionadas sejam desabilitadas */
+        .anagrama-letra.invisivel {
+            opacity: 0.3;
+            pointer-events: none; 
+        }
         
         /* Nível 3 (Sílabas) */
         #opcoes-silabas {
@@ -1042,7 +1048,7 @@
         if (estadoJogo.selecaoN2.length >= targetLength) return;
 
         estadoJogo.selecaoN2.push({ element: element, letter: letter });
-        element.classList.add('invisivel');
+        element.classList.add('invisivel'); // <--- Re-enforced that 'invisivel' is added
 
         // Update selection display
         const selectedWordSoFar = estadoJogo.selecaoN2.map(item => item.letter.toUpperCase()).join('');
