@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -88,7 +87,7 @@
             width: 100%;
             padding: 15px;
             margin: 10px 0;
-            font-size: 1.2em; /* Tamanho base (desktop) */
+            font-size: 1.2em;
             color: #fff;
             background-color: var(--cor-principal);
             border: none;
@@ -132,13 +131,48 @@
             color: #7f8c8d;
         }
         
-        /* Garante que o verde prevaleça sobre o cinza do :disabled */
+        /* **CORREÇÃO CRÍTICA**: Garante que o verde prevaleça sobre o cinza do :disabled */
         .nivel-btn.completed:disabled {
             background-color: var(--cor-sucesso);
             color: white; /* Garante que o texto fique branco */
         }
 
-        /* Botão de reset global (Home Screen) */
+
+        /* Conteneur pour les icônes à direita do termo */
+        .icon-container {
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .icon-container i {
+            margin-right: 2px;
+            font-size: 1.5em;
+        }
+
+        .contador-progresso {
+            font-size: 0.8em;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 5px;
+        }
+
+        /* Bouton Recomeçar (on home screen) */
+        #btn-reset-level {
+            background-color: #f39c12; 
+            color: white;
+            margin: 10px auto; /* Centered margin */
+            padding: 10px;
+            font-size: 1em;
+            font-family: 'Times New Roman', Times, serif;
+            justify-content: center;
+            display: flex; 
+            width: 70%; /* Reduced width */
+            max-width: 300px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+        }
+
         #btn-reset-global {
             background-color: var(--cor-reset);
             color: white;
@@ -281,7 +315,7 @@
 
         /* Nível 4 (Identificação) */
         #identificacao-alvo {
-            font-size: 2.5em; /* Tamanho base (desktop) */
+            font-size: 2.5em;
             font-weight: bold;
             color: var(--cor-principal);
             margin-bottom: 25px;
@@ -353,7 +387,38 @@
             font-size: 1.4em;
         }
 
-        /* Modal de Confirmação (Mantido para Recomeçar Tudo) */
+        /* Message Bravo et Overlay */
+        #overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: #333;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            width: 80%;
+            max-width: 350px;
+        }
+
+        #mensagem-bravo {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--cor-sucesso);
+            color: white;
+            padding: 30px 50px;
+            border-radius: 20px;
+            border: 5px solid white;
+            font-size: 2em;
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        /* Modal de Confirmação */
         #modal-confirmacao {
             position: fixed;
             top: 50%;
@@ -364,10 +429,9 @@
             padding: 25px;
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            z-index: 1000; 
+            z-index: 1001;
             width: 80%;
             max-width: 350px;
-            border: 1px solid #ccc;
         }
 
         #modal-confirmacao p {
@@ -379,6 +443,16 @@
             display: flex;
             justify-content: space-between;
             gap: 10px;
+        }
+
+        .botoes-modal button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 50%;
+            font-family: 'Times New Roman', Times, serif;
         }
 
         #btn-sim-reset-global {
@@ -396,130 +470,11 @@
             from { opacity: 0; }
             to { opacity: 1; }
         }
-        
-        /* --- ESTILOS DE RESPONSIVIDADE (MOBILE-FIRST) --- */
-
-        /* 1. Redução geral de padding e margem para telas pequenas */
-        body {
-            padding: 10px;
-        }
-
-        .container {
-            padding: 15px;
-            /* Garante que o contêiner principal se ajuste perfeitamente à largura do dispositivo */
-            max-width: 100%; 
-        }
-
-        /* 2. Redução do tamanho da fonte e espaçamento para todos os textos */
-        :root {
-            --tamanho-letra: 20px; /* Reduz o tamanho padrão da letra */
-        }
-
-        h1 {
-            font-size: 1.5em;
-        }
-        
-        /* 3. Ajustes específicos para a área de Score */
-        #score-container {
-            flex-direction: column; /* Empilha a imagem e o texto verticalmente */
-            text-align: center;
-            gap: 10px;
-            font-size: 0.9em;
-        }
-        
-        #pedro-image {
-            width: 100px; /* Reduz o tamanho da imagem de Pedro */
-            height: 100px;
-        }
-
-        #score-text-content {
-            text-align: center;
-        }
-
-        /* 4. Ajustes específicos para as grids de letras (Nível 1 e 2) */
-        #letras-grid {
-            gap: 5px;
-            /* Garante que o grid de letras ainda pareça bom em telas muito estreitas */
-            grid-template-columns: repeat(4, 1fr); 
-        }
-        
-        .letra-quadro {
-            height: 50px;
-            font-size: 1.2em;
-        }
-        
-        /* CORREÇÃO DE RESPONSIVIDADE PARA TELAS PEQUENAS (Max 600px) */
-        @media (max-width: 600px) {
-            /* **CORREÇÃO**: Reduz o tamanho da fonte principal dos botões da Home */
-            .nivel-btn {
-                 font-size: 0.9em; /* Redução para 0.9em */
-            }
-        
-            /* **CORREÇÃO**: Reduz o tamanho da palavra alvo de identificação (N4) */
-            #identificacao-alvo {
-                font-size: 2em; 
-            }
-
-            /* Reduz o tamanho da palavra alvo e da seleção atual (N2) */
-            #palavra-alvo-container,
-            #selecao-atual {
-                font-size: 2em; 
-                letter-spacing: 3px; 
-            }
-
-            /* **CORREÇÃO**: Aumenta o tamanho dos blocos de letras do anagrama para serem fáceis de tocar (N2) */
-            .anagrama-letra {
-                width: 45px; 
-                height: 45px; 
-                font-size: 1.5em; 
-            }
-        }
-
-        /* 6. Breakpoint principal para telas muito pequenas (ex: 400px ou menos) */
-        @media (max-width: 400px) {
-            /* **CORREÇÃO**: Ajuste extra para botões da Home em telas muito pequenas */
-             .nivel-btn {
-                 font-size: 0.8em; /* Redução para 0.8em */
-            }
-
-            /* **CORREÇÃO**: Reduz ainda mais a palavra alvo de identificação (N4) */
-            #identificacao-alvo {
-                font-size: 1.8em; 
-            }
-        
-            /* Nível 2: Ajuste extra para telas ultra-estreitas */
-            #palavra-alvo-container,
-            #selecao-atual {
-                font-size: 1.5em; 
-            }
-            
-            .anagrama-letra {
-                width: 35px; 
-                height: 35px;
-                font-size: 1.3em;
-            }
-            
-            #letras-grid {
-                 /* Em telas ultra-estreitas, forçamos 3 colunas para Nível 1 */
-                grid-template-columns: repeat(3, 1fr);
-            }
-            .letra-quadro {
-                height: 60px;
-                font-size: 1.5em;
-            }
-            #opcoes-silabas,
-            #opcoes-identificacao,
-            #opcoes-palavras {
-                /* Em telas muito estreitas, empilha as opções verticalmente */
-                flex-direction: column; 
-            }
-            #silaba-container {
-                font-size: 2.5em;
-            }
-        }
     </style>
 </head>
 <body>
+
+<div id="overlay" style="display: none;"></div>
 
 <div id="modal-confirmacao" style="display: none;">
     <p id="modal-reset-text">Você vai perder todos os pontos do Nível 3 (Sílabas). Quer mesmo recomeçar?</p>
@@ -567,6 +522,10 @@
             <span class="contador-progresso" id="count-n5">(0/10)</span>
         </button>
 
+
+        <button id="btn-reset-level" onclick="mostrarModalRecomeco('level')" style="display: flex;">
+            <i class="fa-solid fa-undo"></i> RECOMEÇAR O NÍVEL
+        </button>
 
         <button id="btn-reset-global" onclick="mostrarModalRecomeco('global')" style="display: flex;">
             <i class="fa-solid fa-sync-alt"></i> RECOMEÇAR TUDO DE ZERO
@@ -626,10 +585,10 @@
         <div id="opcoes-palavras"></div>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
     </div>
+
+    <div id="mensagem-bravo" style="display: none;">BRAVO PEDRO!</div>
+
 </div>
-
-
-<div id="browser-voice-control"></div>
 
 <script>
     // Configuração das vozes TTS
@@ -680,38 +639,41 @@
     ];
     let PALAVRAS = PALAVRAS_BASE.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
-    // --- NÍVEL 3: DADOS HARD-CODED E PONTUAÇÃO SEQUENCIAL ---
-    
-    // Lista Sequencial de Sílabas (54 elementos) - Gerada da separação das 20 palavras (11 a 30)
-    const DESAFIO_SILABAS_SEQUENCIAL = [
-        "a", "be", "lha", "a", "ra", "nha", "a", "ra", "ra", "ba", "lei", "a", "ba", "na", "na", 
-        "bo", "la", "cha", "bo", "li", "che", "bra", "sil", "ca", "bi", "de", "ca", "bi", "ne", 
-        "ca", "cho", "rro", "ca", "ne", "ta", "ca", "sa", "da", "cha", "péu", "cha", "ve", 
-        "chu", "pe", "ta", "chu", "va", "co", "bra", "co", "e", "lho", "co", "fre"
+    // --- HARDCODED SYLLABLE LIST FOR LEVEL 3 (29 Total) ---
+    const SILABAS_ALVO = [
+        'a', 'be', 'lha', 'ra', 'nha', 'ba', 'lei', 'bo', 'la', 'cha', 
+        'li', 'che', 'bra', 'sil', 'ca', 'bi', 'de', 'ne', 'ta', 'sa', 
+        've', 'chu', 'pe', 'co', 'bra', 'e', 'lho', 'fre', 'páu' 
     ];
+
     
-    // IDs (ÍNDICES 1-BASED) que concedem PONTO (Fim da palavra)
-    // Total de 20 pontos
-    const PONTOS_IDS_N3 = [3, 6, 9, 12, 15, 18, 21, 23, 26, 29, 32, 35, 38, 40, 42, 45, 47, 49, 52, 54];
-    
-    const MAX_SILABAS_LOOP_N3 = DESAFIO_SILABAS_SEQUENCIAL.length; // 54 sílabas no ditado
-    const MAX_N3_COMPLETIONS = PONTOS_IDS_N3.length; // 20 pontos a serem alcançados
-    
-    // --- FUNÇÃO getSilabas() mantida para Nível 4/5 (Geração de distratores) ---
     function getSilabas(palavra) {
-        // Esta função ainda é necessária para gerar distratores nos Níveis 4 e 5.
-        let processedPalavra = palavra.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        processedPalavra = processedPalavra.replace(/rr|ss|ch|lh|nh|qu|gu/gi, (match) => match.toUpperCase());
-        processedPalavra = processedPalavra.replace(/([aeiouy])([bcdfghjklmnpqrstvwxyzç])([aeiouy])/gi, '$1-$2$3');
-        processed processedPalavra.replace(/([aeiouy])([aeiouy])/gi, '$1-$2');
-        processedPalavra = processedPalavra.replace(/([aeiouy])(m|n)([bcdfghjklmnpqrstvwxyzç])/gi, '$1$2-$3'); 
+        // This function is still needed for Level 4 and 5 distractors (for word size comparison)
+
+        let processedPalavra = palavra.toLowerCase();
         
+        // 1. Split double consonants (RR, SS, etc.)
+        processedPalavra = processedPalavra.replace(/([r|s|c|p|t|b|d|f|g|k|m|n|v|x|z])\1/g, '$1-$1');
+        
+        // 2. Separate consonant clusters (VC-CV pattern)
+        processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bdfghjklmnpqrstvwxyzç])([bcdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1$2-$3$4');
+        
+        // 3. Separate consonant that must break between vowels (V-CV rule)
+        processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bcdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1-$2$3'); 
+        
+        // 4. Handle common consonant blends (TR, BR, PL, etc.) - keep them together
+        processedPalavra = processedPalavra.replace(/([bcdfghjklmnpqrstvwxyzç])([l|r])/g, '$1$2'); 
+        
+        // 5. Handle QU and GU
+        processedPalavra = processedPalavra.replace(/([qg]u)([aeiou])/g, '$1$2'); 
+
         let silabas = processedPalavra.split('-');
-        return silabas.map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
+        
+        silabas = silabas.map(s => s.trim()).filter(s => s.length > 0);
+        
+        return silabas;
     }
-    // --- FIM NÍVEL 3 DADOS E LÓGICA ---
-
-
+    
     function shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -752,13 +714,15 @@
         return distractors.slice(0, 2);
     }
 
-    // Total de todos os pontos
+    // NEW FIXED TOTALS
     const MAX_N1_COMPLETIONS = DADOS_LETRAS.length; // 4
     const MAX_N2_COMPLETIONS = 10; // Anagramas (Words 1-10)
+    const MAX_N3_COMPLETIONS = 20; // Sílabas (Goal is 20 completed words)
     const MAX_N4_COMPLETIONS = 20; // NEW: Identification (Words 31-50)
     const MAX_N5_COMPLETIONS = 10; // Palavras Áudio (Words 51-60)
 
     function calcularTotalMaximo() {
+        // 4 + 10 + 20 + 20 + 10 = 64
         return MAX_N1_COMPLETIONS + MAX_N2_COMPLETIONS + MAX_N3_COMPLETIONS + MAX_N4_COMPLETIONS + MAX_N5_COMPLETIONS;
     }
 
@@ -775,8 +739,7 @@
         selecaoN2: [], 
         
         progressoNivel3: 0, 
-        syllabesCompletasPorPalavra: {}, 
-        indiceSilabaAtual: 0, // NOVO: Rastreia a posição no DESAFIO_SILABAS_SEQUENCIAL (índice 0-based)
+        syllabesCompletasPorPalavra: {}, // Tracks solved syllables (Key: syllable, Value: 1 if solved)
         
         progressoN4: 0, // NEW: Identification
         palavrasCompletasN4: {}, 
@@ -789,6 +752,7 @@
     let nivelSendoResetado = null; 
 
     let palavraAtual = ''; 
+    let silabaAnteriorN3 = null; 
     let palavraAnteriorN5 = null; 
 
     // --- FUNÇÕES DE UTILIDADE ET PERSISTENCE ---
@@ -797,9 +761,7 @@
         const estadoSalvo = localStorage.getItem('aprendendoAleitura');
         if (estadoSalvo) {
             estadoJogo = JSON.parse(estadoSalvo);
-            // Garante que os novos estados estejam presentes
-            if (estadoJogo.indiceSilabaAtual === undefined) estadoJogo.indiceSilabaAtual = 0; 
-            if (estadoJogo.progressoNivel3 === undefined) estadoJogo.progressoNivel3 = 0;
+            // Handle legacy state: Initialize new trackers if missing
             if (!estadoJogo.palavrasCompletasN4) estadoJogo.palavrasCompletasN4 = {};
             if (!estadoJogo.palavrasCompletasN5) estadoJogo.palavrasCompletasN5 = {};
             if (!estadoJogo.syllabesCompletasPorPalavra) estadoJogo.syllabesCompletasPorPalavra = {};
@@ -817,22 +779,41 @@
     function mostrarModalRecomeco(nivel) {
         const modalText = document.getElementById('modal-reset-text');
         
-        let nivelParaResetar = nivel; 
+        let nivelParaResetar;
+
+        if (nivel === 'level') {
+            // Garante que o nível real a ser resetado/iniciado seja identificado
+            nivelParaResetar = getHighestIncompleteLevel(); 
+        } else {
+            nivelParaResetar = nivel; // 'global'
+        }
+        
+        // Armazena o nível real a ser resetado globalmente
         nivelSendoResetado = nivelParaResetar; 
+
+        let nivelNome = '';
+        switch(nivelParaResetar) {
+            case 1: nivelNome = 'Letras (Pares)'; break;
+            case 2: nivelNome = 'Letras de Palavras'; break;
+            case 3: nivelNome = 'Sílabas'; break;
+            case 4: nivelNome = 'Identificação'; break;
+            case 5: nivelNome = 'Palavras (Áudio)'; break;
+        }
 
         if (nivel === 'global') {
             modalText.textContent = "Você vai perder TODOS os pontos e todo o progresso. Quer mesmo recomeçar de zero?";
             document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(true);
         } else {
-            // Este caminho não deve ser alcançado
-            modalText.textContent = `Ação não suportada. Quer recomeçar tudo?`;
-            document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(true);
+            modalText.textContent = `Você vai perder todos os pontos do Nível ${nivelParaResetar} (${nivelNome}). Quer mesmo recomeçar?`;
+            document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(false);
         }
 
+        document.getElementById('overlay').style.display = 'block';
         document.getElementById('modal-confirmacao').style.display = 'block';
     }
 
     function cancelaRecomeco() {
+        document.getElementById('overlay').style.display = 'none';
         document.getElementById('modal-confirmacao').style.display = 'none';
         nivelSendoResetado = null;
     }
@@ -843,7 +824,41 @@
         if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) return 3;
         if (estadoJogo.progressoN4 < MAX_N4_COMPLETIONS) return 4;
         if (estadoJogo.progressoN5 < MAX_N5_COMPLETIONS) return 5;
+        // Se tudo completo, reseta o último para dar o que fazer.
         return 5; 
+    }
+
+    // --- FUNÇÃO: Reseta o nível localmente (coloca 0) ---
+    function resetarNivelAlvo(nivelAlvo) {
+        console.log(`[RESET] Zerando progresso local do Nível ${nivelAlvo}...`);
+        switch (nivelAlvo) {
+            case 1:
+                estadoJogo.progressoNivel1 = [0, 0, 0, 0];
+                estadoJogo.damierAtual = 0;
+                estadoJogo.selecaoN1 = [];
+                break;
+            case 2:
+                estadoJogo.progressoNivel2 = 0;
+                estadoJogo.palavraAtualN2 = null;
+                estadoJogo.selecaoN2 = [];
+                break;
+            case 3:
+                estadoJogo.progressoNivel3 = 0;
+                estadoJogo.syllabesCompletasPorPalavra = {};
+                silabaAnteriorN3 = null;
+                break;
+            case 4:
+                estadoJogo.progressoN4 = 0;
+                estadoJogo.palavrasCompletasN4 = {};
+                break;
+            case 5:
+                estadoJogo.progressoN5 = 0;
+                estadoJogo.palavrasCompletasN5 = {};
+                palavraAnteriorN5 = null;
+                break;
+        }
+        console.log(`[RESET] Nível ${nivelAlvo} zerado. Progresso atual: N4=${estadoJogo.progressoN4}`);
+        return nivelAlvo;
     }
 
     // --- FUNÇÃO: Recalcula o score global somando todos os progressos ---
@@ -855,24 +870,35 @@
         const n5Score = estadoJogo.progressoN5;
         
         estadoJogo.scoreGlobal = n1Score + n2Score + n3Score + n4Score + n5Score;
+        console.log(`[SCORE] Score Global recalculado: ${estadoJogo.scoreGlobal}`);
     }
-    // --- FIM FUNÇÕES DE RECALCULO ---
+    // --- FIM FUNÇÕES DE RESET/RECALCULO ---
 
     function confirmaRecomeco(resetGlobal) {
+        console.log(`[CONFIRM] Confirmação de recomeço: Global=${resetGlobal}, Nível Alvo=${nivelSendoResetado}`);
         cancelaRecomeco();
+        const nivel = nivelSendoResetado; 
         
         if (resetGlobal) {
             estadoJogo = {...INITIAL_GAME_STATE};
             localStorage.removeItem('aprendendoAleitura');
-            estadoJogo.indiceSilabaAtual = 0; // Zera o índice de ditado ao fazer reset global
         } else {
-            // Ação de reset de nível removida
-            mostrarTela('home');
-            return;
+            // PASSO 1: Reseta o nível alvo para 0
+            resetarNivelAlvo(nivel); 
+            // PASSO 2: Recalcula o score global somando os contadores
+            recalcularScoreGlobal();
         }
 
         atualizarInterfaceHome();
-        mostrarTela('home');
+        
+        // CORREÇÃO CRÍTICA: INICIA O NÍVEL CORRETO APÓS O RESET
+        if (!resetGlobal && nivel >= 1 && nivel <= 5) {
+            console.log(`[INIT] Iniciando Nível ${nivel}...`);
+            iniciarNivel(nivel);
+        } else {
+            console.log('[INIT] Voltando para a Home.');
+            mostrarTela('home');
+        }
     }
 
 
@@ -885,19 +911,31 @@
              console.error(`Elemento com ID 'tela-${nivelId}' não encontrado.`);
         }
         
-        // Esconde o botão global na tela de jogo, mostra na Home
-        document.getElementById('btn-reset-global').style.display = (nivelId === 'home') ? 'flex' : 'none';
-
+        // Update home page buttons visibility logic
+        document.getElementById('btn-reset-global').style.display = 'none';
+        document.getElementById('btn-reset-level').style.display = 'none';
+        
         if (nivelId === 'home') {
+            document.getElementById('btn-reset-global').style.display = 'flex';
+            document.getElementById('btn-reset-level').style.display = 'flex';
             atualizarInterfaceHome();
         }
     }
 
-    // A função exibirMensagemBravo foi completamente removida
     function exibirMensagemBravo(callback) {
-        if (callback) {
-             setTimeout(callback, 100); 
-        }
+        const msgElement = document.getElementById('mensagem-bravo');
+        const overlayElement = document.getElementById('overlay');
+
+        document.getElementById('modal-confirmacao').style.display = 'none';
+
+        overlayElement.style.display = 'block';
+        msgElement.style.display = 'block';
+
+        setTimeout(() => {
+            msgElement.style.display = 'none';
+            overlayElement.style.display = 'none';
+            if (callback) callback();
+        }, 1500);
     }
 
     // --- LÓGICA DU SCORE ET PROGRESSÃO ---
@@ -909,20 +947,17 @@
               return;
         }
         
+        // Recalcula o score global sempre que a interface é atualizada, garantindo consistência.
         recalcularScoreGlobal();
 
-        // **CORREÇÃO NA EXIBIÇÃO DO SCORE GLOBAL**: Garante que o score é sempre um número
-        const scoreVal = isNaN(estadoJogo.scoreGlobal) ? 0 : estadoJogo.scoreGlobal;
-        
-        // A barra e o total (/ 64 PONTOS!) já estão no HTML.
-        document.getElementById('score-valor').textContent = scoreVal; 
-        
+        document.getElementById('score-valor').textContent = estadoJogo.scoreGlobal;
         verificarMensagemProgresso(estadoJogo.scoreGlobal);
         atualizarBotoesNivel();
         salvarEstado();
     }
 
     function adicionarPonto() {
+        // A pontuação global agora é atualizada APENAS via recalcularScoreGlobal.
         atualizarInterfaceHome(); 
     }
 
@@ -981,7 +1016,6 @@
         } else if (ratio >= 0.3) {
             message = "Opa! Estamos no caminho certo! Vamos lá! 👍";
         } else {
-            // Caso score 0 ou baixo
             message = "Continue praticando! Você vai pegar o jeito! 💪";
         }
         
@@ -1123,7 +1157,7 @@
         estadoJogo.damierAtual = (currentDamierIndex + 1) % DADOS_LETRAS.length;
 
         if (estadoJogo.progressoNivel1.filter(c => c >= 2).length === DADOS_LETRAS.length) {
-            mostrarTela('home'); 
+            exibirMensagemBravo(() => mostrarTela('home')); 
         } else {
             iniciarNivel1();
         }
@@ -1218,10 +1252,11 @@
             estadoJogo.progressoNivel2++;
             
             if (estadoJogo.progressoNivel2 >= MAX_N2_COMPLETIONS) {
-                mostrarTela('home');
+                // SUCCESS: Show Bravo, then go home
+                exibirMensagemBravo(() => mostrarTela('home'));
             } else {
-                // PARTIAL SUCCESS: Use setTimeout para garantir a estabilidade
-                setTimeout(iniciarNivel2, 100);
+                // PARTIAL SUCCESS: Just advance
+                iniciarNivel2();
             }
         } else {
             setTimeout(() => {
@@ -1273,10 +1308,35 @@
             return;
         }
 
-        // --- STEP 1: Determine the target syllable using the sequential index (Ditado) ---
-        // Puxa a sílaba da lista sequencial baseada no índice 0-based
-        const currentIndex = estadoJogo.indiceSilabaAtual % MAX_SILABAS_LOOP_N3;
-        silabaAtual = DESAFIO_SILABAS_SEQUENCIAL[currentIndex];
+        // Pool of words for Level 3 (Indices 11-30)
+        const PALAVRAS_PARA_N3 = PALAVRAS.slice(10, 30); 
+        if (PALAVRAS_PARA_N3.length === 0) {
+            console.error("Nível 3: Palavras do índice 11 ao 30 não encontradas.");
+            mostrarTela('home');
+            return;
+        }
+        
+        // --- STEP 1: Determine the target syllable (must be one that hasn't been completed yet) ---
+        
+        let silabasNaoCompletas = SILABAS_ALVO.filter(s => (estadoJogo.syllabesCompletasPorPalavra[s] || 0) < 1);
+        
+        // If all 29 unique syllables are solved, loop the list for the remaining challenges (up to 20 total)
+        const silabasSource = silabasNaoCompletas.length > 0 ? silabasNaoCompletas : SILABAS_ALVO;
+        
+        // LOGIC FIX: Prevent consecutive repetition of the *syllable*
+        let silabasCandidatas = [...silabasSource];
+        if (silabasCandidatas.length > 1 && silabaAnteriorN3) {
+             silabasCandidatas = silabasCandidatas.filter(s => s !== silabaAnteriorN3);
+             if (silabasCandidatas.length === 0) {
+                 silabasCandidatas = silabasSource; // Fallback
+             }
+        }
+        
+        silabaAtual = silabasCandidatas[Math.floor(Math.random() * silabasCandidatas.length)];
+        silabaAnteriorN3 = silabaAtual; 
+        
+        // Note: For Level 3, the target word is no longer relevant for the challenge, only the syllable.
+
         
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
 
@@ -1297,31 +1357,30 @@
 
     function verificarSilaba(selection) {
         if (selection === silabaAtual) {
+            const syllableKey = silabaAtual;
             
-            // Verifica se o ID (índice 1-based) deve conceder um ponto
-            // PONTOS_IDS_N3 é 1-based, então usamos (indiceSilabaAtual + 1)
-            const currentId = estadoJogo.indiceSilabaAtual + 1; 
-
-            if (PONTOS_IDS_N3.includes(currentId)) {
-                if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) {
-                    estadoJogo.progressoNivel3++;
-                }
+            // 1. Check if this specific syllable has been solved once
+            if ((estadoJogo.syllabesCompletasPorPalavra[syllableKey] || 0) === 0) {
+                estadoJogo.syllabesCompletasPorPalavra[syllableKey] = 1;
             }
 
-            // 1. Incrementa o índice sequencial para avançar para a PRÓXIMA sílaba
-            estadoJogo.indiceSilabaAtual = (estadoJogo.indiceSilabaAtual + 1) % MAX_SILABAS_LOOP_N3;
+            // 2. Count toward the MAX_N3_COMPLETIONS goal (20 points total)
+            if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) {
+                estadoJogo.progressoNivel3++;
+            }
             
             if (estadoJogo.progressoNivel3 === MAX_N3_COMPLETIONS) {
-                mostrarTela('home');
+                // LEVEL COMPLETION: Show Bravo, then go home
+                exibirMensagemBravo(() => mostrarTela('home'));
                 return;
             }
             
-            // PARTIAL SUCCESS: AVANÇO SEGURO
-            setTimeout(iniciarNivel3, 100);
+            // PARTIAL SUCCESS: Just advance
+            iniciarNivel3();
 
         } else {
-            // FAILURE: AVANÇO SEGURO (Repete a sílaba atual, índice não muda)
-            setTimeout(iniciarNivel3, 100);
+            // FAILURE: Just advance
+            iniciarNivel3();
         }
         salvarEstado();
         atualizarInterfaceHome(); 
@@ -1338,6 +1397,7 @@
         // Filter words to indices 31 through 50 (20 words total)
         const PALAVRAS_PARA_N4 = PALAVRAS.slice(30, 50); 
         if (PALAVRAS_PARA_N4.length === 0) {
+            console.error("Nível 4: Palavras do índice 31 ao 50 não encontradas.");
             mostrarTela('home');
             return;
         }
@@ -1388,15 +1448,16 @@
             }
             
             if (estadoJogo.progressoN4 === MAX_N4_COMPLETIONS) {
-                mostrarTela('home');
+                // SUCCESS: Show Bravo, then go home
+                exibirMensagemBravo(() => mostrarTela('home'));
                 return;
             }
             
-            // PARTIAL SUCCESS: Use setTimeout para garantir a estabilidade
-            setTimeout(iniciarNivel4, 100);
+            // PARTIAL SUCCESS: Just advance
+            iniciarNivel4();
         } else {
-            // FAILURE: Use setTimeout para garantir a estabilidade
-            setTimeout(iniciarNivel4, 100);
+            // FAILURE: Just advance
+            iniciarNivel4();
         }
         salvarEstado();
         atualizarInterfaceHome(); 
@@ -1414,6 +1475,7 @@
         // Filter words to indices 51 through 60 (10 words total)
         const PALAVRAS_PARA_N5 = PALAVRAS.slice(50, 60); 
         if (PALAVRAS_PARA_N5.length === 0) {
+            console.error("Nível 5: Palavras do índice 51 ao 60 não encontradas.");
             mostrarTela('home');
             return;
         }
@@ -1476,16 +1538,17 @@
             }
             
             if (estadoJogo.progressoN5 === MAX_N5_COMPLETIONS) {
-                mostrarTela('home');
+                // SUCCESS: Show Bravo, then go home
+                exibirMensagemBravo(() => mostrarTela('home'));
                 return;
             }
 
-            // PARTIAL SUCCESS: Use setTimeout para garantir a estabilidade
-            setTimeout(iniciarNivel5, 100);
+            // PARTIAL SUCCESS: Just advance
+            iniciarNivel5();
 
         } else {
-            // FAILURE: Use setTimeout para garantir a estabilidade
-            setTimeout(iniciarNivel5, 100);
+            // FAILURE: Just advance
+            iniciarNivel5();
         }
         salvarEstado();
         atualizarInterfaceHome(); 
@@ -1502,5 +1565,5 @@
 </script>
 
 
-</body>
+<div id="browser-voice-control"></div></body>
 </html>
