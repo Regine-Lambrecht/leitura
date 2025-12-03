@@ -440,9 +440,9 @@
             <span class="contador-progresso" id="count-n2">(10/10)</span>
         </button>
 
-        <button class="nivel-btn completed" id="btn-nivel-3" onclick="iniciarNivel(3)" disabled="">
+        <button class="nivel-btn" id="btn-nivel-3" onclick="iniciarNivel(3)">
             <span class="content-left-group">Sílabas <span class="icon-container"><i class="fa-solid fa-eye"></i></span></span>
-            <span class="contador-progresso" id="count-n3">(20/20)</span>
+            <span class="contador-progresso" id="count-n3">(0/20)</span>
         </button>
 
         <button class="nivel-btn" id="btn-nivel-4" onclick="iniciarNivel(4)">
@@ -818,7 +818,8 @@
 
         // --- NIVEAU 3 (Sílabas) ---
         const n3Completed = estadoJogo.progressoNivel3 >= MAX_N3_COMPLETIONS;
-        btnN3.disabled = !n2Completed || n3Completed;
+        // CORREÇÃO: Habilita o Nível 3 se N2 estiver completo.
+        btnN3.disabled = !n2Completed || n3Completed; 
         btnN3.querySelector('.contador-progresso').textContent = `(${Math.min(estadoJogo.progressoNivel3, MAX_N3_COMPLETIONS)}/${MAX_N3_COMPLETIONS})`;
         if (n3Completed) btnN3.classList.add('completed'); else btnN3.classList.remove('completed');
 
@@ -857,6 +858,7 @@
     }
 
     // --- NÍVEL 1: LETRAS (DAMIER) ---
+    const PALAVRAS_N2 = PALAVRAS.slice(0, MAX_N2_COMPLETIONS); 
 
     function iniciarNivel(nivel) {
         if (PALAVRAS.length === 0) {
@@ -865,8 +867,15 @@
               return;
         }
 
-        // Sequential check (verificação de níveis anteriores)
-        if (nivel > 1) {
+        const btnId = `btn-nivel-${nivel}`;
+        const btn = document.getElementById(btnId);
+
+        // **FINAL FIX**: Only run the sequential check IF the button is currently disabled.
+        // If it's blue (active) or green (completed), we proceed or return to home 
+        // based on the intended behavior for an enabled button.
+
+        if (nivel > 1 && btn && btn.disabled) {
+            // If the button is disabled, the system MUST check if the previous level is complete.
             const nivelAnterior = nivel - 1;
             const progressos = [
                 estadoJogo.progressoNivel1.filter(c => c >= 2).length,
@@ -877,19 +886,19 @@
             ];
             const maximos = [MAX_N1_COMPLETIONS, MAX_N2_COMPLETIONS, MAX_N3_COMPLETIONS, MAX_N4_COMPLETIONS, MAX_N5_COMPLETIONS];
 
+            // If the preceding level's score is less than maximum, return to home.
             if (progressos[nivelAnterior - 1] < maximos[nivelAnterior - 1]) {
-                // Se o nível anterior ainda não estiver completo, impede a entrada.
                 mostrarTela('home');
                 return;
             }
         }
-
-        // Troca a tela e inicia o nível específico
+        
+        // If the button is blue (active) or the lock check passed, proceed to start the game.
         mostrarTela(`nivel-${nivel}`);
         switch (nivel) {
             case 1: iniciarNivel1(); break;
             case 2: iniciarNivel2(); break;
-            case 3: iniciarNivel3(); break;
+            case 3: iniciarNivel3(); break; 
             case 4: iniciarNivel4(); break;
             case 5: iniciarNivel5(); break;
         }
@@ -1001,7 +1010,6 @@
     }
     
     // --- NÍVEL 2: LETRAS DE PALAVRAS (ANAGRAMAS) ---
-    const PALAVRAS_N2 = PALAVRAS.slice(0, MAX_N2_COMPLETIONS);
 
     function iniciarNivel2() {
         if (estadoJogo.progressoNivel2 >= MAX_N2_COMPLETIONS) {
@@ -1048,7 +1056,7 @@
         if (estadoJogo.selecaoN2.length >= targetLength) return;
 
         estadoJogo.selecaoN2.push({ element: element, letter: letter });
-        element.classList.add('invisivel'); // <--- Re-enforced that 'invisivel' is added
+        element.classList.add('invisivel'); 
 
         // Update selection display
         const selectedWordSoFar = estadoJogo.selecaoN2.map(item => item.letter.toUpperCase()).join('');
@@ -1135,6 +1143,7 @@
 
     function iniciarNivel3() {
         if (estadoJogo.progressoNivel3 >= MAX_N3_COMPLETIONS) {
+            // Se o Level 3 está completo (20/20), ele retorna à home.
             mostrarTela('home');
             return;
         }
@@ -1192,7 +1201,6 @@
         salvarEstado();
         atualizarInterfaceHome();
     }
-    
     // --- NÍVEL 4: IDENTIFICAÇÃO DE PALAVRAS ---
     function iniciarNivel4() {
         if (estadoJogo.progressoN4 >= MAX_N4_COMPLETIONS) {
@@ -1356,6 +1364,19 @@
 
     async function inicializarJogo() {
         carregarEstado();
+        
+        // --- PATCH FORCED UNLOCK/RESET for Level 3 ---
+        const n1Completed = estadoJogo.progressoNivel1.filter(c => c >= 2).length === MAX_N1_COMPLETIONS;
+        const n2Completed = estadoJogo.progressoNivel2 === MAX_N2_COMPLETIONS;
+        
+        // If Levels 1 and 2 are complete, but Level 3 shows 0/20, ensure its score is exactly 0 
+        // to prevent silent bounce-back from the iniciarNivel3 function.
+        if (n1Completed && n2Completed && estadoJogo.progressoNivel3 === 0) {
+            estadoJogo.indiceSilabaAtual = 0; // Ensures the first syllable challenge is ready.
+            salvarEstado();
+        }
+        // --- END PATCH ---
+
         atualizarInterfaceHome();
     }
 
