@@ -621,18 +621,18 @@
     ];
     
     // Syllable Indices where a word ends (and a point should be awarded):
-    // 3, 6, 9, 12, 15, 18, 21, 23, 26, 29, 32, 35, 38, 40, 42, 45, 47, 49, 52, 54
+    // NOTE: Indices are 1-based to align with the length/count (3, 6, 9... 54)
     const N3_POINT_INDICES = [3, 6, 9, 12, 15, 18, 21, 23, 26, 29, 32, 35, 38, 40, 42, 45, 47, 49, 52, 54];
     
     // Recalculating totals based on actual sequence length:
     const MAX_N3_COMPLETIONS = N3_SYLLABLE_SEQUENCE.length; // 54
-    const MAX_N3_POINTS = 20; // The max number of points awarded in this sequential challenge
+    const MAX_N3_POINTS = 20; // Max points awarded (one point per word)
 
     const MAX_N4_COMPLETIONS_ADJUSTED = 20; 
     const MAX_N5_COMPLETIONS_ADJUSTED = 10; 
 
     function calcularTotalMaximo() {
-        return 4 + 10 + MAX_N3_POINTS + MAX_N4_COMPLETIONS_ADJUSTED + MAX_N5_COMPLETIONS_ADJUSTED; // 4 + 10 + 20 + 20 + 10 = 64
+        return 4 + 10 + MAX_N3_POINTS + MAX_N4_COMPLETIONS_ADJUSTED + MAX_N5_COMPLETIONS_ADJUSTED; // 64
     }
 
     // --- Variables d'État Global ---
@@ -647,7 +647,7 @@
         palavraAtualN2: null,
         selecaoN2: [], 
         
-        progressoNivel3: 0, // TRACKS THE CURRENT INDEX IN N3_SYLLABLE_SEQUENCE (0 to 53)
+        progressoNivel3: 0, // TRACKS THE CURRENT CHALLENGE INDEX (0 to 53)
         progressoN3Pontos: 0, // TRACKS POINTS WON (0 to 20)
         
         progressoN4: 0, 
@@ -673,7 +673,7 @@
             // Initialize new trackers if missing
             if (!estadoJogo.palavrasCompletasN4) estadoJogo.palavrasCompletasN4 = {};
             if (!estadoJogo.palavrasCompletasN5) estadoJogo.palavrasCompletasN5 = {};
-            if (!estadoJogo.progressoN3Pontos) estadoJogo.progressoN3Pontos = 0; // Initialize new point tracker
+            if (!estadoJogo.progressoN3Pontos) estadoJogo.progressoN3Pontos = 0;
         } else {
             estadoJogo = {...INITIAL_GAME_STATE};
         }
@@ -774,11 +774,8 @@
         if (resetGlobal) {
             mostrarTela('home');
         } else if (nivel >= 1 && nivel <= 5) {
-            if (document.getElementById(`tela-nivel-${nivel}`)) {
-                iniciarNivel(nivel);
-            } else {
-                 mostrarTela('home');
-            }
+            // CRITICAL FIX: Ensure iniciarNivel is called to restart the game flow
+            iniciarNivel(nivel);
         } else {
             mostrarTela('home');
         }
@@ -858,7 +855,7 @@
         if (n2Completed) btnN2.classList.add('completed'); else btnN2.classList.remove('completed');
 
         // --- NIVEAU 3 (Sílabas) ---
-        const n3Completed = estadoJogo.progressoNivel3 >= MAX_N3_COMPLETIONS;
+        const n3Completed = estadoJogo.progressoN3Pontos >= MAX_N3_POINTS;
         btnN3.disabled = !n2Completed || n3Completed;
         // COUNTER NOW SHOWS POINT PROGRESS (0-20)
         btnN3.querySelector('.contador-progresso').textContent = `(${Math.min(estadoJogo.progressoN3Pontos, MAX_N3_POINTS)}/${MAX_N3_POINTS})`;
@@ -1168,7 +1165,7 @@
     let silabaAtual = '';
 
     function iniciarNivel3() {
-        // Check if all 54 challenges have been presented (regardless of the 20 point goal)
+        // Check for full level completion (54 total syllables solved)
         if (estadoJogo.progressoNivel3 >= MAX_N3_COMPLETIONS) {
             mostrarTela('home');
             return;
@@ -1177,9 +1174,11 @@
         // --- STEP 1: Get the current syllable in the master sequence ---
         // progressoNivel3 is used as the current index (0 to 53)
         silabaAtual = N3_SYLLABLE_SEQUENCE[estadoJogo.progressoNivel3];
-        silabaAnteriorN3 = silabaAtual; // Keep track for distractor uniqueness
+        silabaAnteriorN3 = silabaAtual; 
+        
+        palavraAtual = silabaAtual; 
 
-        // Display challenge
+        
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
 
         const optionsDiv = document.getElementById('opcoes-silabas');
