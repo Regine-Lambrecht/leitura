@@ -294,7 +294,7 @@
             margin-bottom: 20px;
         }
         
-        /* Styles pour les boutons de réponse dans les niveaux 3, 4 et 5 */
+        /* Styles pour les boutons de réponse dans les niveaux 3, 4 e 5 */
         .opcao-btn, .btn-verdadeiro-falso {
             padding: 15px;
             margin: 10px 0;
@@ -689,37 +689,34 @@
     ];
     let PALAVRAS = PALAVRAS_BASE.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
-    // --- HARDCODED SYLLABLE LIST FOR LEVEL 3 (29 Total) ---
-    const SILABAS_ALVO = [
-        'a', 'be', 'lha', 'ra', 'nha', 'ba', 'lei', 'bo', 'la', 'cha', 
-        'li', 'che', 'bra', 'sil', 'ca', 'bi', 'de', 'ne', 'ta', 'sa', 
-        've', 'chu', 'pe', 'co', 'bra', 'e', 'lho', 'fre', 'páu' 
-    ];
-
-    
+    // --- NOVO: Lógica de separação silábica (Melhorada para o PT-BR) ---
     function getSilabas(palavra) {
-        // This function is still needed for Level 4 and 5 distractors (for word size comparison)
-
-        let processedPalavra = palavra.toLowerCase();
+        let processedPalavra = palavra.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove accents for internal processing
         
-        // 1. Split double consonants (RR, SS, etc.)
+        // 1. Split double consonants (RR, SS, CC, NN, etc.)
         processedPalavra = processedPalavra.replace(/([r|s|c|p|t|b|d|f|g|k|m|n|v|x|z])\1/g, '$1-$1');
         
-        // 2. Separate consonant clusters (VC-CV pattern)
-        processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bdfghjklmnpqrstvwxyzç])([bcdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1$2-$3$4');
+        // 2. Handle common consonant blends (TR, BR, PL, etc.) - keep them together:
+        // C - L/R, P - L/R, B - L/R, G - L/R, T - R, D - R, V - R, F - L/R
+        const blends = /(c[lr]|p[lr]|b[lr]|g[lr]|t[r]|d[r]|v[r]|f[lr])/g;
         
-        // 3. Separate consonant that must break between vowels (V-CV rule)
-        processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bcdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1-$2$3'); 
+        // 3. Separate Vowel-Consonant-Consonant-Vowel (VCCV) only if not a blend (simplified V-CV or VC-CV)
+        // This is complex. We'll stick to a simplified rule: isolate the single consonant when possible (V-CV)
+        processedPalavra = processedPalavra.replace(/([aeiouy])([bcdfghjklmnpqrstvwxyzç])([aeiouy])/gi, '$1-$2$3');
         
-        // 4. Handle common consonant blends (TR, BR, PL, etc.) - keep them together
-        processedPalavra = processedPalavra.replace(/([bcdfghjklmnpqrstvwxyzç])([l|r])/g, '$1$2'); 
-        
-        // 5. Handle QU and GU
-        processedPalavra = processedPalavra.replace(/([qg]u)([aeiou])/g, '$1$2'); 
+        // 4. Separate vowel-vowel (simple hiatus)
+        processedPalavra = processedPalavra.replace(/([aeiouy])([aeiouy])/gi, '$1-$2');
 
+        // 5. Separate final M/N and other complex cases (adjusting common errors)
+        processedPalavra = processedPalavra.replace(/([aeiouy])(m|n)([bcdfghjklmnpqrstvwxyzç])/gi, '$1$2-$3'); 
+        
+        // 6. Handle Ch, Lh, Nh, Gu, Qu (keep together)
+        processedPalavra = processedPalavra.replace(/(c|l|n)h|qu|gu/gi, (match) => match.toUpperCase());
+        
         let silabas = processedPalavra.split('-');
         
-        silabas = silabas.map(s => s.trim()).filter(s => s.length > 0);
+        // Clean up and re-apply original capitalization (first letter only) if needed
+        silabas = silabas.map(s => s.trim()).filter(s => s.length > 0).map(s => s.toLowerCase());
         
         return silabas;
     }
@@ -764,15 +761,31 @@
         return distractors.slice(0, 2);
     }
 
-    // NEW FIXED TOTALS
+    // --- NÍVEL 3: Configuração de Ditado Sequencial e Pontuação ---
+    
+    const PALAVRAS_PARA_N3 = PALAVRAS.slice(10, 30); // Palavras 11 a 30 (20 palavras)
+    let DESAFIO_SILABAS_SEQUENCIAL = [];
+    
+    PALAVRAS_PARA_N3.forEach(palavra => {
+        const silabasDaPalavra = getSilabas(palavra);
+        DESAFIO_SILABAS_SEQUENCIAL.push(...silabasDaPalavra);
+    });
+    
+    // Lista de IDs (ÍNDICES BASE 1) que concedem PONTO (Fim de cada palavra)
+    // IDs 3, 6, 9, 12, 15, 18, 21, 23, 26, 29, 32, 35, 38, 40, 42, 45, 47, 49, 52, 54
+    const PONTOS_IDS_N3 = [3, 6, 9, 12, 15, 18, 21, 23, 26, 29, 32, 35, 38, 40, 42, 45, 47, 49, 52, 54];
+    const MAX_N3_COMPLETIONS = PONTOS_IDS_N3.length; // 20 pontos totais
+
+    // Novo cálculo do total máximo de sílabas para o loop
+    const MAX_SILABAS_LOOP_N3 = DESAFIO_SILABAS_SEQUENCIAL.length; 
+
+    // Total de todos os pontos
     const MAX_N1_COMPLETIONS = DADOS_LETRAS.length; // 4
     const MAX_N2_COMPLETIONS = 10; // Anagramas (Words 1-10)
-    const MAX_N3_COMPLETIONS = 20; // Sílabas (Goal is 20 completed words)
     const MAX_N4_COMPLETIONS = 20; // NEW: Identification (Words 31-50)
     const MAX_N5_COMPLETIONS = 10; // Palavras Áudio (Words 51-60)
 
     function calcularTotalMaximo() {
-        // 4 + 10 + 20 + 20 + 10 = 64
         return MAX_N1_COMPLETIONS + MAX_N2_COMPLETIONS + MAX_N3_COMPLETIONS + MAX_N4_COMPLETIONS + MAX_N5_COMPLETIONS;
     }
 
@@ -789,7 +802,7 @@
         selecaoN2: [], 
         
         progressoNivel3: 0, 
-        syllabesCompletasPorPalavra: {}, // Tracks solved syllables (Key: syllable, Value: 1 if solved)
+        indiceSilabaAtual: 0, // NOVO: Rastreia a posição no DESAFIO_SILABAS_SEQUENCIAL (índice 0-based)
         
         progressoN4: 0, // NEW: Identification
         palavrasCompletasN4: {}, 
@@ -802,7 +815,6 @@
     let nivelSendoResetado = null; 
 
     let palavraAtual = ''; 
-    let silabaAnteriorN3 = null; 
     let palavraAnteriorN5 = null; 
 
     // --- FUNÇÕES DE UTILIDADE ET PERSISTENCE ---
@@ -814,7 +826,9 @@
             // Handle legacy state: Initialize new trackers if missing
             if (!estadoJogo.palavrasCompletasN4) estadoJogo.palavrasCompletasN4 = {};
             if (!estadoJogo.palavrasCompletasN5) estadoJogo.palavrasCompletasN5 = {};
-            if (!estadoJogo.syllabesCompletasPorPalavra) estadoJogo.syllabesCompletasPorPalavra = {};
+            // O estado de progressoNivel3 era diferente, o progresso agora é rastreado por indiceSilabaAtual
+            if (estadoJogo.indiceSilabaAtual === undefined) estadoJogo.indiceSilabaAtual = 0; 
+            if (estadoJogo.progressoNivel3 === undefined) estadoJogo.progressoNivel3 = 0;
         } else {
             estadoJogo = {...INITIAL_GAME_STATE};
         }
@@ -876,6 +890,7 @@
         if (resetGlobal) {
             estadoJogo = {...INITIAL_GAME_STATE};
             localStorage.removeItem('aprendendoAleitura');
+            estadoJogo.indiceSilabaAtual = 0; // Zera o índice de ditado ao fazer reset global
         } else {
             // Ação de reset de nível removida
             mostrarTela('home');
@@ -1231,8 +1246,8 @@
             if (estadoJogo.progressoNivel2 >= MAX_N2_COMPLETIONS) {
                 mostrarTela('home');
             } else {
-                // PARTIAL SUCCESS: Just advance
-                iniciarNivel2();
+                // PARTIAL SUCCESS: Use setTimeout para garantir a estabilidade
+                setTimeout(iniciarNivel2, 100);
             }
         } else {
             setTimeout(() => {
@@ -1284,28 +1299,10 @@
             return;
         }
 
-        // Pool of words for Level 3 (Indices 11-30)
-        const PALAVRAS_PARA_N3 = PALAVRAS.slice(10, 30); 
-        if (PALAVRAS_PARA_N3.length === 0) {
-            mostrarTela('home');
-            return;
-        }
-        
-        // --- STEP 1: Determine the target syllable (must be one that hasn't been completed yet) ---
-        
-        let silabasNaoCompletas = SILABAS_ALVO.filter(s => (estadoJogo.syllabesCompletasPorPalavra[s] || 0) < 1);
-        
-        // Se todas as sílabas únicas foram resolvidas (29), ele repete a lista inteira (SILABAS_ALVO)
-        const silabasSource = silabasNaoCompletas.length > 0 ? silabasNaoCompletas : SILABAS_ALVO;
-        
-        // ESTABILIZAÇÃO CRÍTICA: Simplesmente usa a lista completa ou restante para seleção.
-        // A lógica de evitar repetição consecutiva (silabaAnteriorN3) foi removida para evitar o loop.
-        let silabasCandidatas = silabasSource; 
-
-        // Seleciona aleatoriamente a sílaba
-        silabaAtual = silabasCandidatas[Math.floor(Math.random() * silabasCandidatas.length)];
-        silabaAnteriorN3 = silabaAtual; // Apenas armazena, sem usar para filtro (estabilidade)
-
+        // --- STEP 1: Determine the target syllable using the sequential index (Ditado) ---
+        // Garante que o índice atual esteja dentro dos limites da lista sequencial
+        const currentIndex = estadoJogo.indiceSilabaAtual % MAX_SILABAS_LOOP_N3;
+        silabaAtual = DESAFIO_SILABAS_SEQUENCIAL[currentIndex];
         
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
 
@@ -1326,29 +1323,31 @@
 
     function verificarSilaba(selection) {
         if (selection === silabaAtual) {
-            const syllableKey = silabaAtual;
             
-            // 1. Check if this specific syllable has been solved once
-            if ((estadoJogo.syllabesCompletasPorPalavra[syllableKey] || 0) === 0) {
-                estadoJogo.syllabesCompletasPorPalavra[syllableKey] = 1;
+            // Verifica se o ID (índice 1-based) deve conceder um ponto
+            // Adicionamos +1 pois PONTOS_IDS_N3 é 1-based, e indiceSilabaAtual é 0-based.
+            const currentId = estadoJogo.indiceSilabaAtual + 1; 
+
+            if (PONTOS_IDS_N3.includes(currentId)) {
+                if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) {
+                    estadoJogo.progressoNivel3++;
+                }
             }
 
-            // 2. Count toward the MAX_N3_COMPLETIONS goal (20 points total)
-            if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) {
-                estadoJogo.progressoNivel3++;
-            }
+            // 1. Incrementa o índice sequencial para avançar para a PRÓXIMA sílaba
+            estadoJogo.indiceSilabaAtual = (estadoJogo.indiceSilabaAtual + 1) % MAX_SILABAS_LOOP_N3;
             
             if (estadoJogo.progressoNivel3 === MAX_N3_COMPLETIONS) {
                 mostrarTela('home');
                 return;
             }
             
-            // PARTIAL SUCCESS: Just advance
-            iniciarNivel3();
+            // PARTIAL SUCCESS: AVANÇO SEGURO
+            setTimeout(iniciarNivel3, 100);
 
         } else {
-            // FAILURE: Just advance
-            iniciarNivel3();
+            // FAILURE: AVANÇO SEGURO (Repete a sílaba atual, índice não muda)
+            setTimeout(iniciarNivel3, 100);
         }
         salvarEstado();
         atualizarInterfaceHome(); 
@@ -1419,11 +1418,11 @@
                 return;
             }
             
-            // PARTIAL SUCCESS: Just advance
-            iniciarNivel4();
+            // PARTIAL SUCCESS: Use setTimeout para garantir a estabilidade
+            setTimeout(iniciarNivel4, 100);
         } else {
-            // FAILURE: Just advance
-            iniciarNivel4();
+            // FAILURE: Use setTimeout para garantir a estabilidade
+            setTimeout(iniciarNivel4, 100);
         }
         salvarEstado();
         atualizarInterfaceHome(); 
@@ -1507,12 +1506,12 @@
                 return;
             }
 
-            // PARTIAL SUCCESS: Just advance
-            iniciarNivel5();
+            // PARTIAL SUCCESS: Use setTimeout para garantir a estabilidade
+            setTimeout(iniciarNivel5, 100);
 
         } else {
-            // FAILURE: Just advance
-            iniciarNivel5();
+            // FAILURE: Use setTimeout para garantir a estabilidade
+            setTimeout(iniciarNivel5, 100);
         }
         salvarEstado();
         atualizarInterfaceHome(); 
