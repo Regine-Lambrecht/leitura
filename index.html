@@ -130,6 +130,13 @@
             cursor: not-allowed;
             color: #7f8c8d;
         }
+        
+        /* **CORREÇÃO CRÍTICA**: Garante que o verde prevaleça sobre o cinza do :disabled */
+        .nivel-btn.completed:disabled {
+            background-color: var(--cor-sucesso);
+            color: white; /* Garante que o texto fique branco */
+        }
+
 
         /* Conteneur pour les icônes à direita do termo */
         .icon-container {
@@ -314,6 +321,14 @@
             margin-bottom: 25px;
         }
 
+        /* CORREÇÃO: Faz os botões do Nível 4 ficarem lado a lado (NEXT TO THE OTHER) */
+        #opcoes-identificacao {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
         /* Styles pour les boutons de réponse dans les niveaux 3, 4 et 5 */
         .opcao-btn, .btn-verdadeiro-falso {
             padding: 15px;
@@ -325,13 +340,27 @@
             cursor: pointer;
             transition: background-color 0.3s;
             font-family: 'Times New Roman', Times, serif;
-            display: block; /* Ensure full width for options */
+            display: block; /* Default to block, adjust below if inside flex container */
         }
         
         #opcoes-silabas .opcao-btn {
             flex-grow: 1;
             display: inline-block;
             width: auto;
+        }
+
+        /* Ajuste para botões do Nível 4 e 5 ficarem inline-block dentro do flex container */
+        #opcoes-identificacao .opcao-btn, #opcoes-palavras .opcao-btn {
+            display: inline-block;
+            flex-grow: 1; /* Permite que cresçam para preencher o espaço */
+        }
+        
+        /* Contêiner para Nível 5 (Áudio) - Também usando flex para alinhamento horizontal */
+        #opcoes-palavras {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
         .opcao-btn:hover, .btn-verdadeiro-falso:hover {
@@ -669,7 +698,7 @@
         const distractors = [];
 
         while (distractors.length < 2 && candidates.length > 0) {
-            const index = Math.floor(ńst.random() * candidates.length);
+            const index = Math.floor(Math.random() * candidates.length);
             const candidate = candidates[index].word;
 
             if (!distractors.includes(candidate)) {
@@ -792,53 +821,48 @@
         return 5; 
     }
 
-    // --- NOVO CÓDIGO AQUI: Subtrai pontos e reseta o estado local do nível ---
-    function subtrairPontosDoNivel(nivelAlvo) {
-        let pontosASubtrair = 0;
-        
+    // --- NOVA FUNÇÃO: Reseta o nível localmente (coloca 0) ---
+    function resetarNivelAlvo(nivelAlvo) {
         switch (nivelAlvo) {
             case 1:
-                // Cada damier completo (2/2) vale 1 ponto
-                pontosASubtrair = estadoJogo.progressoNivel1.filter(c => c >= 2).length;
-                estadoJogo.progressoNivel1 = [0, 0, 0, 0]; // Reset do progresso local
+                estadoJogo.progressoNivel1 = [0, 0, 0, 0];
                 estadoJogo.damierAtual = 0;
                 estadoJogo.selecaoN1 = [];
                 break;
             case 2:
-                // Cada palavra completa vale 1 ponto
-                pontosASubtrair = estadoJogo.progressoNivel2;
-                estadoJogo.progressoNivel2 = 0; // Reset do progresso local
+                estadoJogo.progressoNivel2 = 0;
                 estadoJogo.palavraAtualN2 = null;
                 estadoJogo.selecaoN2 = [];
                 break;
             case 3:
-                // Cada silaba certa (até 20) vale 1 ponto
-                pontosASubtrair = estadoJogo.progressoNivel3;
-                estadoJogo.progressoNivel3 = 0; // Reset do progresso local
+                estadoJogo.progressoNivel3 = 0;
                 estadoJogo.syllabesCompletasPorPalavra = {};
                 silabaAnteriorN3 = null;
                 break;
             case 4:
-                // Cada palavra identificada (até 20) vale 1 ponto
-                pontosASubtrair = estadoJogo.progressoN4;
-                estadoJogo.progressoN4 = 0; // Reset do progresso local
+                estadoJogo.progressoN4 = 0;
                 estadoJogo.palavrasCompletasN4 = {};
                 break;
             case 5:
-                // Cada palavra escutada (até 10) vale 1 ponto
-                pontosASubtrair = estadoJogo.progressoN5;
-                estadoJogo.progressoN5 = 0; // Reset do progresso local
+                estadoJogo.progressoN5 = 0;
                 estadoJogo.palavrasCompletasN5 = {};
                 palavraAnteriorN5 = null;
                 break;
         }
-
-        // Subtrair do score global e garantir que não seja negativo
-        estadoJogo.scoreGlobal = Math.max(0, estadoJogo.scoreGlobal - pontosASubtrair);
-        
         return nivelAlvo;
     }
-    // --- FIM NOVO CÓDIGO ---
+
+    // --- NOVA FUNÇÃO: Recalcula o score global somando todos os progressos ---
+    function recalcularScoreGlobal() {
+        const n1Score = estadoJogo.progressoNivel1.filter(c => c >= 2).length;
+        const n2Score = estadoJogo.progressoNivel2;
+        const n3Score = estadoJogo.progressoNivel3;
+        const n4Score = estadoJogo.progressoN4;
+        const n5Score = estadoJogo.progressoN5;
+        
+        estadoJogo.scoreGlobal = n1Score + n2Score + n3Score + n4Score + n5Score;
+    }
+    // --- FIM NOVAS FUNÇÕES ---
 
     function confirmaRecomeco(resetGlobal) {
         cancelaRecomeco();
@@ -852,8 +876,10 @@
             estadoJogo = {...INITIAL_GAME_STATE};
             localStorage.removeItem('aprendendoAleitura');
         } else {
-            // Chamada à nova função para subtrair pontos e resetar o progresso local
-            nivel = subtrairPontosDoNivel(nivel);
+            // PASSO 1: Reseta o nível alvo para 0
+            nivel = resetarNivelAlvo(nivel); 
+            // PASSO 2: Recalcula o score global somando os contadores (o do alvo agora é 0)
+            recalcularScoreGlobal();
         }
 
         atualizarInterfaceHome();
@@ -903,7 +929,7 @@
         }, 1500);
     }
 
-    // --- LÓGICA DU SCORE ET PROGRESSION ---
+    // --- LÓGICA DU SCORE ET PROGRESSÃO ---
 
     function atualizarInterfaceHome() {
         if (PALAVRAS.length === 0) {
@@ -911,6 +937,9 @@
                 "<h1>Erro de Carregamento</h1><p>Não foi possível carregar as palavras. O jogo não pode iniciar.</p>";
               return;
         }
+        
+        // Recalcula o score global sempre que a interface é atualizada, garantindo consistência.
+        recalcularScoreGlobal();
 
         document.getElementById('score-valor').textContent = estadoJogo.scoreGlobal;
         verificarMensagemProgresso(estadoJogo.scoreGlobal);
@@ -919,8 +948,13 @@
     }
 
     function adicionarPonto() {
-        estadoJogo.scoreGlobal += 1;
-        atualizarInterfaceHome();
+        // Incrementa o contador do nível local (este passo ocorre em verificarPares, verificarAnagrama, etc.)
+        // E depois chama a atualização da interface, que fará o Recálculo total.
+        
+        // Nota: Onde você estava chamando 'adicionarPonto()', a pontuação local (progressoNivelX) 
+        // já deve ter sido incrementada. A função abaixo apenas garante que o score global reflita isso.
+        
+        atualizarInterfaceHome(); 
     }
 
     function atualizarBotoesNivel() {
@@ -1105,7 +1139,7 @@
         estadoJogo.damierAtual = (currentDamierIndex + 1) % DADOS_LETRAS.length;
 
         if (didJustCompleteTwice) {
-            adicionarPonto();
+            // Se o progresso local foi feito, a função atualizarInterfaceHome fará o recálculo do score global
         } 
         
         if (estadoJogo.progressoNivel1.filter(c => c >= 2).length === DADOS_LETRAS.length) {
@@ -1115,6 +1149,7 @@
         }
         
         salvarEstado();
+        atualizarInterfaceHome(); // Novo ponto de chamada
     }
 
     // --- NÍVEL 2: LETRAS DE PALAVRAS (ANAGRAMAS) ---
@@ -1200,7 +1235,6 @@
         const targetWord = estadoJogo.palavraAtualN2.toLowerCase();
 
         if (selectedWord === targetWord) {
-            adicionarPonto();
             estadoJogo.progressoNivel2++;
             
             if (estadoJogo.progressoNivel2 >= MAX_N2_COMPLETIONS) {
@@ -1219,6 +1253,7 @@
             }, 1000);
         }
         salvarEstado();
+        atualizarInterfaceHome(); // Novo ponto de chamada
     }
 
 
@@ -1318,13 +1353,12 @@
             // 2. Count toward the MAX_N3_COMPLETIONS goal (20 points total)
             if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) {
                 estadoJogo.progressoNivel3++;
-                adicionarPonto();
-
-                if (estadoJogo.progressoNivel3 === MAX_N3_COMPLETIONS) {
-                    // LEVEL COMPLETION: Show Bravo, then go home
-                    exibirMensagemBravo(() => mostrarTela('home'));
-                    return;
-                }
+            }
+            
+            if (estadoJogo.progressoNivel3 === MAX_N3_COMPLETIONS) {
+                // LEVEL COMPLETION: Show Bravo, then go home
+                exibirMensagemBravo(() => mostrarTela('home'));
+                return;
             }
             
             // PARTIAL SUCCESS: Just advance
@@ -1335,6 +1369,7 @@
             iniciarNivel3();
         }
         salvarEstado();
+        atualizarInterfaceHome(); // Novo ponto de chamada
     }
 
     // --- NÍVEL 4: IDENTIFICAÇÃO DE PALAVRAS ---
@@ -1395,21 +1430,23 @@
 
                 if (estadoJogo.progressoN4 < MAX_N4_COMPLETIONS) {
                     estadoJogo.progressoN4++;
-                    adicionarPonto();
-
-                    if (estadoJogo.progressoN4 === MAX_N4_COMPLETIONS) {
-                        // SUCCESS: Show Bravo, then go home
-                        exibirMensagemBravo(() => mostrarTela('home'));
-                        return;
-                    }
                 }
             }
+            
+            if (estadoJogo.progressoN4 === MAX_N4_COMPLETIONS) {
+                // SUCCESS: Show Bravo, then go home
+                exibirMensagemBravo(() => mostrarTela('home'));
+                return;
+            }
+            
             // PARTIAL SUCCESS: Just advance
             iniciarNivel4();
         } else {
             // FAILURE: Just advance
             iniciarNivel4();
         }
+        salvarEstado();
+        atualizarInterfaceHome(); // Novo ponto de chamada
     }
 
 
@@ -1483,14 +1520,13 @@
 
                 if (estadoJogo.progressoN5 < MAX_N5_COMPLETIONS) {
                     estadoJogo.progressoN5++;
-                    adicionarPonto();
-
-                    if (estadoJogo.progressoN5 === MAX_N5_COMPLETIONS) {
-                        // SUCCESS: Show Bravo, then go home
-                        exibirMensagemBravo(() => mostrarTela('home'));
-                        return;
-                    }
                 }
+            }
+            
+            if (estadoJogo.progressoN5 === MAX_N5_COMPLETIONS) {
+                // SUCCESS: Show Bravo, then go home
+                exibirMensagemBravo(() => mostrarTela('home'));
+                return;
             }
 
             // PARTIAL SUCCESS: Just advance
@@ -1501,6 +1537,7 @@
             iniciarNivel5();
         }
         salvarEstado();
+        atualizarInterfaceHome(); // Novo ponto de chamada
     }
 
 
