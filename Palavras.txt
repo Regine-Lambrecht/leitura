@@ -1,78 +1,60 @@
-Abelha
-Arara
-Baleia
-Baleia
-Banana
-Barata
-Barata
-Boca
-Bola
-Bolacha
-Boliche
-Bolo
-Braço
-Brasil
-Cabide
-Cabine
-Cachorro
-Cama
-Caneta
-Casa
-Casada
-Chapéu
-Chave
-Chiclete
-Chupeta
-Chuva
-Cobra
-Cobra
-Coelho
-Cofre
-Diploma
-Domingão,
-Festejar
-Faca
-Fica
-Fita
-Foca
-Foguete
-Galinha
-Gato
-Golfinho
-Invejar
-Jabuti
-Lábio
-Lápis
-Leão
-Letra
-Lixo
-Livro
-Maçã
-Macaco
-Neto
-Onça
-Pato
-Peito
-Peixe
-Peteca
-Planejar
-Planilha
-Porco
-Porco
-Porta
-Prato
-Professor
-Sacada
-Salada
-Sapato
-Sapo
-Sorriso
-Sorvete
-sorvete
-Tapete
-Tato
-Tatu
-Telhado
-Teto
-Tomada
-Urubu
+Professor (Pro-fes-sor)
+Jabuti (Ja-bu-ti)
+Galinha (Ga-li-nha)
+Diploma (Di-plo-ma)
+Chiclete (Chi-cle-te)
+Peixe (Pei-xe)
+Quatro (Qua-tro)
+Foguete (Fo-gue-te)
+Barata (Ba-ra-ta)
+Quadro (Qua-dro)
+Cachorro (Ca-cho-rro)
+Cobra (Co-bra)
+Domingão (Do-min-gão)
+Festejar (Fes-te-jar)
+Golfinho (Gol-fi-nho)
+Invejar (In-ve-jar)
+Planejar (Pla-ne-jar)
+Planilha (Pla-ni-lha)
+Sorriso (Sor-ri-so)
+Chupeta (Chu-pe-ta)
+Bolacha (Bo-la-cha)
+Macaco (Ma-ca-co)
+Peteca (Pe-te-ca)
+Urubu (U-ru-bu)
+Salada (Sa-la-da)
+Abelha (A-be-lha)
+Aranha (A-ra-nha)
+Telhado (Te-lha-do)
+Sapato (Sa-pa-to)
+Arara (A-ra-ra)
+Cabine (Ca-bi-ne)
+Lábio (Lá-bio)
+Porco (Por-co)
+Boliche (Bo-li-che)
+Sacada (Sa-ca-da)
+Caneta (Ca-ne-ta)
+Chapéu (Cha-péu)
+Chave (Cha-ve)
+Baleia (Ba-lei-a)
+Lápis (Lá-pis)
+Casada (Ca-sa-da)
+Navio (Na-vi-o)
+Chuva (Chu-va)
+Cofre (Co-fre)
+Prato (Pra-to)
+Coelho (Co-e-lho)
+Livro (Li-vro)
+Leão (Le-ão)
+Cabide (Ca-bi-de)
+Sorvete (Sor-ve-te)
+Porta (Por-ta)
+Tapete (Ta-pe-te)
+Onça (On-ça)
+Peito (Pei-to)
+Maçã (Ma-çã)
+Letra (Le-tra)
+Brasil (Bra-sil)
+Tomada (To-ma-da)
+Banana (Ba-na-na)
+Vaca (Va-ca)
