@@ -782,8 +782,8 @@
         let nivelParaResetar;
 
         if (nivel === 'level') {
-            // Encontra o nível mais alto incompleto (ou o mais alto se tudo completo)
-            nivelParaResetar = getHighestIncompleteLevel();
+            // Garante que o nível real a ser resetado/iniciado seja identificado
+            nivelParaResetar = getHighestIncompleteLevel(); 
         } else {
             nivelParaResetar = nivel; // 'global'
         }
@@ -830,6 +830,7 @@
 
     // --- FUNÇÃO: Reseta o nível localmente (coloca 0) ---
     function resetarNivelAlvo(nivelAlvo) {
+        console.log(`[RESET] Zerando progresso local do Nível ${nivelAlvo}...`);
         switch (nivelAlvo) {
             case 1:
                 estadoJogo.progressoNivel1 = [0, 0, 0, 0];
@@ -856,6 +857,7 @@
                 palavraAnteriorN5 = null;
                 break;
         }
+        console.log(`[RESET] Nível ${nivelAlvo} zerado. Progresso atual: N4=${estadoJogo.progressoN4}`);
         return nivelAlvo;
     }
 
@@ -868,12 +870,14 @@
         const n5Score = estadoJogo.progressoN5;
         
         estadoJogo.scoreGlobal = n1Score + n2Score + n3Score + n4Score + n5Score;
+        console.log(`[SCORE] Score Global recalculado: ${estadoJogo.scoreGlobal}`);
     }
     // --- FIM FUNÇÕES DE RESET/RECALCULO ---
 
     function confirmaRecomeco(resetGlobal) {
+        console.log(`[CONFIRM] Confirmação de recomeço: Global=${resetGlobal}, Nível Alvo=${nivelSendoResetado}`);
         cancelaRecomeco();
-        const nivel = nivelSendoResetado; // Usa o nível já determinado em mostrarModalRecomeco
+        const nivel = nivelSendoResetado; 
         
         if (resetGlobal) {
             estadoJogo = {...INITIAL_GAME_STATE};
@@ -885,15 +889,14 @@
             recalcularScoreGlobal();
         }
 
-        // Importante: Atualiza a interface e salva o estado antes de iniciar o novo nível
         atualizarInterfaceHome();
         
-        // INICIA O NÍVEL CORRETO APÓS O RESET
+        // CORREÇÃO CRÍTICA: INICIA O NÍVEL CORRETO APÓS O RESET
         if (!resetGlobal && nivel >= 1 && nivel <= 5) {
-            // Troca a tela E inicia o nível
+            console.log(`[INIT] Iniciando Nível ${nivel}...`);
             iniciarNivel(nivel);
         } else {
-            // Se for reset global ou o nível for inválido, volta para a home
+            console.log('[INIT] Voltando para a Home.');
             mostrarTela('home');
         }
     }
@@ -901,7 +904,12 @@
 
     function mostrarTela(nivelId) {
         document.querySelectorAll('.tela-jogo').forEach(tela => tela.style.display = 'none');
-        document.getElementById(`tela-${nivelId}`).style.display = 'block';
+        const targetElement = document.getElementById(`tela-${nivelId}`);
+        if (targetElement) {
+             targetElement.style.display = 'block';
+        } else {
+             console.error(`Elemento com ID 'tela-${nivelId}' não encontrado.`);
+        }
         
         // Update home page buttons visibility logic
         document.getElementById('btn-reset-global').style.display = 'none';
@@ -1023,8 +1031,7 @@
               return;
         }
 
-        // Sequential check
-        // Se o nível for maior que 1 e o nível anterior não estiver completo, retorna para home
+        // Sequential check (verificação de níveis anteriores)
         if (nivel > 1) {
             const nivelAnterior = nivel - 1;
             const progressos = [
@@ -1037,7 +1044,7 @@
             const maximos = [MAX_N1_COMPLETIONS, MAX_N2_COMPLETIONS, MAX_N3_COMPLETIONS, MAX_N4_COMPLETIONS, MAX_N5_COMPLETIONS];
 
             if (progressos[nivelAnterior - 1] < maximos[nivelAnterior - 1]) {
-                // Se o nível anterior ainda não estiver completo
+                // Se o nível anterior ainda não estiver completo, impede a entrada.
                 mostrarTela('home');
                 return;
             }
@@ -1054,7 +1061,7 @@
         }
     }
     
-    // NÍVEL 1 LOGIC (Untouched)
+    // NÍVEL 1 LOGIC
     function iniciarNivel1() {
         paresCorretosN1 = 0;
         estadoJogo.selecaoN1 = [];
@@ -1156,7 +1163,7 @@
         }
         
         salvarEstado();
-        atualizarInterfaceHome(); // Novo ponto de chamada
+        atualizarInterfaceHome(); 
     }
 
     // --- NÍVEL 2: LETRAS DE PALAVRAS (ANAGRAMAS) ---
@@ -1260,7 +1267,7 @@
             }, 1000);
         }
         salvarEstado();
-        atualizarInterfaceHome(); // Novo ponto de chamada
+        atualizarInterfaceHome(); 
     }
 
 
@@ -1376,7 +1383,7 @@
             iniciarNivel3();
         }
         salvarEstado();
-        atualizarInterfaceHome(); // Novo ponto de chamada
+        atualizarInterfaceHome(); 
     }
 
     // --- NÍVEL 4: IDENTIFICAÇÃO DE PALAVRAS ---
@@ -1453,7 +1460,7 @@
             iniciarNivel4();
         }
         salvarEstado();
-        atualizarInterfaceHome(); // Novo ponto de chamada
+        atualizarInterfaceHome(); 
     }
 
 
@@ -1544,7 +1551,7 @@
             iniciarNivel5();
         }
         salvarEstado();
-        atualizarInterfaceHome(); // Novo ponto de chamada
+        atualizarInterfaceHome(); 
     }
 
 
