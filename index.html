@@ -36,7 +36,7 @@
             position: relative;
         }
 
-        h1, h2 {
+        h1, h2, h3 {
             font-family: 'Times New Roman', Times, serif;
             color: var(--cor-principal);
             margin-bottom: 20px;
@@ -138,7 +138,7 @@
             padding-top: 20px;
         }
 
-        /* Nível 1: Damier */
+        /* Nível 1: Letras (Damier) */
         #letras-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -181,15 +181,57 @@
             cursor: pointer;
         }
 
-        /* Nível 2: Opções de Sílabas (horizontal) */
+        /* Nível 2: Anagramas */
+        #palavra-alvo-container {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--cor-principal);
+            min-height: 50px;
+            border-bottom: 2px solid #ccc;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            letter-spacing: 5px;
+            display: flex;
+            justify-content: center;
+        }
+
+        #anagrama-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .anagrama-letra {
+            width: 45px;
+            height: 45px;
+            background-color: #f1c40f;
+            color: #333;
+            font-size: 1.5em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s, opacity 0.2s;
+        }
+
+        .anagrama-letra.invisivel {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        
+        /* Nível 3 (Sílabas) */
         #opcoes-silabas {
             display: flex;
             justify-content: space-around;
-            gap: 20px; /* Increased space between options */
+            gap: 20px;
             margin-bottom: 20px;
         }
         
-        /* New style for the syllable box */
         #silaba-container {
             background-color: var(--cor-principal);
             color: white;
@@ -202,7 +244,15 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        /* Styles pour les boutons de réponse dans les niveaux 2 et 3 */
+        /* Nível 4 (Identificação) */
+        #identificacao-alvo {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--cor-principal);
+            margin-bottom: 25px;
+        }
+
+        /* Styles pour les boutons de réponse dans les niveaux 3, 4 et 5 */
         .opcao-btn, .btn-verdadeiro-falso {
             padding: 15px;
             margin: 10px 0;
@@ -213,23 +263,20 @@
             cursor: pointer;
             transition: background-color 0.3s;
             font-family: 'Times New Roman', Times, serif;
+            display: block; /* Ensure full width for options */
         }
-
-        /* Nível 3: Options de réponse (plus d'espace) */
-        #opcoes-palavras .opcao-btn {
-            margin: 15px 0;
-        }
-
+        
         #opcoes-silabas .opcao-btn {
             flex-grow: 1;
-            font-size: 1.5em;
+            display: inline-block;
+            width: auto;
         }
 
         .opcao-btn:hover, .btn-verdadeiro-falso:hover {
             background-color: #eee;
         }
 
-        /* Nível 3: Bouton Escutar (plus petit, aligné) */
+        /* Nível 5 (Áudio) */
         .btn-audio {
             width: auto;
             padding: 10px 20px;
@@ -357,13 +404,25 @@
         </button>
         
         <button class="nivel-btn" id="btn-nivel-2" onclick="iniciarNivel(2)" disabled>
-            <span class="content-left-group">Sílabas <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span></span>
+            <span class="content-left-group">Letras de Palavras <span class="icon-container"><i class="fa-solid fa-graduation-cap"></i></span></span>
             <span class="contador-progresso" id="count-n2"></span>
         </button>
+
         <button class="nivel-btn" id="btn-nivel-3" onclick="iniciarNivel(3)" disabled>
-            <span class="content-left-group">Palavras <span class="icon-container"><i class="fa-solid fa-medal"></i></span></span>
+            <span class="content-left-group">Sílabas <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span></span>
             <span class="contador-progresso" id="count-n3"></span>
         </button>
+
+        <button class="nivel-btn" id="btn-nivel-4" onclick="iniciarNivel(4)" disabled>
+            <span class="content-left-group">Identificação <span class="icon-container"><i class="fa-solid fa-eye"></i></span></span>
+            <span class="contador-progresso" id="count-n4"></span>
+        </button>
+
+        <button class="nivel-btn" id="btn-nivel-5" onclick="iniciarNivel(5)" disabled>
+            <span class="content-left-group">Palavras (Áudio) <span class="icon-container"><i class="fa-solid fa-medal"></i></span></span>
+            <span class="contador-progresso" id="count-n5"></span>
+        </button>
+
 
         <button class="nivel-btn" id="btn-reset" onclick="recomecarDeZero()">
             <i class="fa-solid fa-sync-alt"></i> Recomeçar de zero
@@ -378,8 +437,18 @@
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
     </div>
 
-
     <div id="tela-nivel-2" class="tela-jogo">
+        <h2>Letras de Palavras</h2>
+        <p>Monte a palavra em MAIÚSCULAS na ordem correta.</p>
+        
+        <div id="palavra-alvo-container"></div>
+        <div id="anagrama-grid"></div>
+        
+        <button class="btn-cancelar" id="btn-cancelar-anagrama" onclick="cancelarSelecaoNivel2()">Cancelar</button>
+        <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
+    </div>
+
+    <div id="tela-nivel-3" class="tela-jogo">
         <h2>Sílabas</h2>
         
         <h3>Qual é a silaba em minusculas?</h3>
@@ -392,8 +461,18 @@
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
     </div>
 
-    <div id="tela-nivel-3" class="tela-jogo">
-        <h2>Palavras</h2>
+    <div id="tela-nivel-4" class="tela-jogo">
+        <h2>Identificação de Palavras</h2>
+        <p>Encontre a palavra em minúsculas que corresponde à palavra MAIÚSCULA.</p>
+        
+        <div id="identificacao-alvo"></div>
+        <div id="opcoes-identificacao"></div>
+
+        <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
+    </div>
+
+    <div id="tela-nivel-5" class="tela-jogo">
+        <h2>Palavras (Áudio)</h2>
         <p>Escute a palavra e a encontre entre les options.</p>
         <button class="btn-audio" onclick="falarPalavraAtual()"><i class="fa-solid fa-volume-up"></i></button>
         <div id="opcoes-palavras"></div>
@@ -442,7 +521,7 @@
         ['K', 'k', 'L', 'l', 'M', 'm', 'N', 'n', 'S', 's', 'X', 'x']
     ];
 
-    // Final list of 60 words for Level 2 and Level 3
+    // Final list of 60 words for all levels
     let PALAVRAS_BASE = [
         "Professor", "Jabuti", "Galinha", "Diploma", "Chiclete", "Peixe", "Quatro", "Foguete", "Barata", "Quadro",
         "Abelha", "Aranha", "Arara", "Baleia", "Banana", "Bolacha", "Boliche", "Brasil", "Cabide", "Cabine",
@@ -451,26 +530,20 @@
         "Macaco", "Navio", "Onça", "Peito", "Peteca", "Planejar", "Planilha", "Porco", "Porta", "Prato",
         "Sacada", "Salada", "Sapato", "Sorriso", "Sorvete", "Tapete", "Vaca", "Telhado", "Tomada", "Urubu"
     ];
-    // Ensure all words are Title Case as expected by game logic
     let PALAVRAS = PALAVRAS_BASE.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
     
-    // Simplified Syllabification (original code was retained)
     function getSilabas(palavra) {
         switch(palavra.toLowerCase()) {
             case 'chupeta': return ['chu', 'pe', 'ta'];
             case 'carro': return ['car', 'ro']; 
             case 'tomate': return ['to', 'ma', 'te'];
-            // Added hardcoded rule for Quatro/Quadro
             case 'quatro': return ['qua', 'tro'];
             case 'quadro': return ['qua', 'dro'];
         }
         
         let processedPalavra = palavra.toLowerCase();
         
-        // Handling digraphs that MUST NOT split (ch, lh, nh, rr, ss)
-        // These rules are complex and can be simplified for this specific word list if needed,
-        // but keeping the core logic from the original game:
         processedPalavra = processedPalavra.replace(/([r|s|c|p|t])\1/g, '$1-$1');
         processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1-$2$3'); 
         processedPalavra = processedPalavra.replace(/([bcdfghjklmnpqrstvwxyzç])([c|t|p|g|f|v])([l|r])/g, '$1-$2$3'); 
@@ -483,37 +556,85 @@
         
         return silabas;
     }
+    
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+    
+    function generateSimilarWords(correctWord, allWords) {
+        const correctLower = correctWord.toLowerCase();
+        const correctSyllabeCount = getSilabas(correctWord).length;
+
+        let candidates = allWords.filter(w => w.toLowerCase() !== correctLower).map(w => ({
+            word: w,
+            syllableCount: getSilabas(w).length
+        }));
+
+        candidates.sort((a, b) =>
+            Math.abs(a.syllableCount - correctSyllabeCount) - Math.abs(b.syllableCount - correctSyllabeCount)
+        );
+
+        const distractors = [];
+
+        while (distractors.length < 2 && candidates.length > 0) {
+            const index = Math.floor(Math.random() * candidates.length);
+            const candidate = candidates[index].word;
+
+            if (!distractors.includes(candidate)) {
+                distractors.push(candidate);
+            }
+            candidates.splice(index, 1);
+        }
+
+        while (distractors.length < 2) {
+             distractors.push(correctWord.length > 3 ? correctWord.substring(0, correctWord.length-1) + 'o' : 'palavra');
+        }
+
+        return distractors.slice(0, 2);
+    }
 
     // NEW FIXED TOTALS
-    const MAX_NIVEIS = 3;
     const MAX_N1_COMPLETIONS = DADOS_LETRAS.length; // 4
-    const MAX_N2_COMPLETIONS = 10; 
-    const MAX_N3_COMPLETIONS = 20;
+    const MAX_N2_COMPLETIONS = 10; // Anagrams (Words 1-10)
+    const MAX_N3_COMPLETIONS = 10; // Sílabas (Words 11-30 pool)
+    const MAX_N4_COMPLETIONS = 20; // NEW: Identification (Words 31-50)
+    const MAX_N5_COMPLETIONS = 10; // Palavras Áudio (Words 51-60)
 
     function calcularTotalMaximo() {
-        return MAX_N1_COMPLETIONS + MAX_N2_COMPLETIONS + MAX_N3_COMPLETIONS;
+        return MAX_N1_COMPLETIONS + MAX_N2_COMPLETIONS + MAX_N3_COMPLETIONS + MAX_N4_COMPLETIONS + MAX_N5_COMPLETIONS;
     }
 
     // --- Variables d'État Global ---
 
     const INITIAL_GAME_STATE = {
         scoreGlobal: 0,
-        progressoNivel1: [0, 0, 0, 0], // 0-4 sets, needs 2 completions each
+        progressoNivel1: [0, 0, 0, 0], 
         damierAtual: 0,
         selecaoN1: [],
         
-        progressoNivel2: 0, // Counts successful N2 attempts (max 10)
-        syllabesCompletes: {}, // Tracks unique syllables completed once for N2 word selection
+        progressoNivel2: 0, 
+        palavraAtualN2: null,
+        selecaoN2: [], 
+        
+        progressoNivel3: 0, 
+        syllabesCompletes: {},
 
-        progressoNivel3: 0, // Counts successful N3 attempts (max 20)
-        palavrasCompletasN3: {}, // Tracks word completion count (max 1)
+        progressoNivel4: 0, // NEW: Identification
+        palavrasCompletasN4: {}, 
+        
+        progressoNivel5: 0, // OLD N4: Palavras Audio
+        palavrasCompletasN5: {}, 
     };
 
     let estadoJogo = {...INITIAL_GAME_STATE};
 
     let palavraAtual = '';
-    let silabaAnteriorN2 = null; 
-    let palavraAnteriorN3 = null; 
+    let silabaAnteriorN3 = null; 
+    let palavraAnteriorN5 = null; 
 
     // --- FUNÇÕES DE UTILIDADE ET PERSISTENCE ---
 
@@ -544,8 +665,8 @@
         cancelaRecomeco();
 
         estadoJogo = {...INITIAL_GAME_STATE};
-        silabaAnteriorN2 = null; 
-        palavraAnteriorN3 = null; 
+        silabaAnteriorN3 = null; 
+        palavraAnteriorN5 = null; 
         localStorage.removeItem('aprendendoAleitura');
 
         atualizarInterfaceHome();
@@ -553,10 +674,10 @@
     }
 
 
-    function mostrarTela(id) {
+    function mostrarTela(nivelId) {
         document.querySelectorAll('.tela-jogo').forEach(tela => tela.style.display = 'none');
-        document.getElementById(`tela-${id}`).style.display = 'block';
-        if (id === 'home') {
+        document.getElementById(`tela-${nivelId}`).style.display = 'block';
+        if (nivelId === 'home') {
             atualizarInterfaceHome();
         }
     }
@@ -574,7 +695,7 @@
             msgElement.style.display = 'none';
             overlayElement.style.display = 'none';
             if (callback) callback();
-        }, 1500); // Reduced delay for faster flow
+        }, 1500);
     }
 
     // --- LÓGICA DU SCORE ET PROGRESSION ---
@@ -603,21 +724,33 @@
         const btnN1 = document.getElementById('btn-nivel-1');
         const btnN2 = document.getElementById('btn-nivel-2');
         const btnN3 = document.getElementById('btn-nivel-3');
+        const btnN4 = document.getElementById('btn-nivel-4');
+        const btnN5 = document.getElementById('btn-nivel-5');
 
         // --- NIVEAU 1 (Letras) ---
         const n1Completed = damierComplet === MAX_N1_COMPLETIONS;
         document.getElementById('count-n1').textContent = `(${damierComplet}/${MAX_N1_COMPLETIONS})`;
         btnN1.disabled = n1Completed;
         
-        // --- NIVEAU 2 (Sílabas) ---
+        // --- NIVEAU 2 (Anagramas) ---
         const n2Completed = estadoJogo.progressoNivel2 >= MAX_N2_COMPLETIONS;
         btnN2.disabled = !n1Completed || n2Completed;
-        btnN2.querySelector('.contador-progresso').textContent = `(${Math.min(estadoJogo.progressoNivel2, MAX_N2_COMPLETIONS)}/${MAX_N2_COMPLETIONS})`;
-        
-        // --- NIVEAU 3 (Palavras) ---
+        document.getElementById('count-n2').textContent = `(${estadoJogo.progressoNivel2}/${MAX_N2_COMPLETIONS})`;
+
+        // --- NIVEAU 3 (Sílabas) ---
         const n3Completed = estadoJogo.progressoNivel3 >= MAX_N3_COMPLETIONS;
         btnN3.disabled = !n2Completed || n3Completed;
         btnN3.querySelector('.contador-progresso').textContent = `(${Math.min(estadoJogo.progressoNivel3, MAX_N3_COMPLETIONS)}/${MAX_N3_COMPLETIONS})`;
+        
+        // --- NIVEAU 4 (Identificação) ---
+        const n4Completed = estadoJogo.progressoNivel4 >= MAX_N4_COMPLETIONS;
+        btnN4.disabled = !n3Completed || n4Completed;
+        btnN4.querySelector('.contador-progresso').textContent = `(${Math.min(estadoJogo.progressoNivel4, MAX_N4_COMPLETIONS)}/${MAX_N4_COMPLETIONS})`;
+        
+        // --- NIVEAU 5 (Palavras Áudio) ---
+        const n5Completed = estadoJogo.progressoNivel5 >= MAX_N5_COMPLETIONS;
+        btnN5.disabled = !n4Completed || n5Completed;
+        btnN5.querySelector('.contador-progresso').textContent = `(${Math.min(estadoJogo.progressoNivel5, MAX_N5_COMPLETIONS)}/${MAX_N5_COMPLETIONS})`;
     }
 
 
@@ -649,35 +782,33 @@
               return;
         }
 
-        // Sequential check (Point 3)
-        if (nivel === 2 && estadoJogo.progressoNivel1.filter(c => c >= 2).length < MAX_N1_COMPLETIONS) {
-             mostrarTela('home'); return;
-        }
-        if (nivel === 3 && estadoJogo.progressoNivel2 < MAX_N2_COMPLETIONS) {
-             mostrarTela('home'); return;
-        }
+        // Sequential check
+        if (nivel === 2 && estadoJogo.progressoNivel1.filter(c => c >= 2).length < MAX_N1_COMPLETIONS) { mostrarTela('home'); return; }
+        if (nivel === 3 && estadoJogo.progressoNivel2 < MAX_N2_COMPLETIONS) { mostrarTela('home'); return; }
+        if (nivel === 4 && estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) { mostrarTela('home'); return; }
+        if (nivel === 5 && estadoJogo.progressoNivel4 < MAX_N4_COMPLETIONS) { mostrarTela('home'); return; }
 
         mostrarTela(`nivel-${nivel}`);
         switch (nivel) {
             case 1: iniciarNivel1(); break;
-            case 2: iniciarNivel2(); break;
-            case 3: iniciarNivel3(); break;
+            case 2: iniciarNivel2(); break; 
+            case 3: iniciarNivel3(); break; 
+            case 4: iniciarNivel4(); break; // NEW LEVEL 4
+            case 5: iniciarNivel5(); break; // OLD LEVEL 4 (Palavras Áudio)
         }
     }
-
-    // NÍVEL 1: RETAINED LOGIC (2 completions required per set)
+    
+    // NÍVEL 1 LOGIC (Untouched)
     function iniciarNivel1() {
         paresCorretosN1 = 0;
         estadoJogo.selecaoN1 = [];
 
         if (estadoJogo.progressoNivel1.filter(c => c >= 2).length === DADOS_LETRAS.length) {
-            mostrarTela('home');
-            return;
+            mostrarTela('home'); return;
         }
         
         let indexToLoad = estadoJogo.damierAtual % DADOS_LETRAS.length;
         
-        // Failsafe: find the next sequential incomplete one.
         let startCheck = indexToLoad;
         while (estadoJogo.progressoNivel1[indexToLoad] >= 2) {
             indexToLoad = (indexToLoad + 1) % DADOS_LETRAS.length;
@@ -757,20 +888,15 @@
         const currentCount = estadoJogo.progressoNivel1[estadoJogo.damierAtual];
         const currentDamierIndex = estadoJogo.damierAtual;
 
-        // 1. Increment the count for the current damier (needs 2 completions)
         estadoJogo.progressoNivel1[currentDamierIndex]++;
-
-        // 2. Check if this was the SECOND completion (to award the point)
         const didJustCompleteTwice = (currentCount === 1) && (estadoJogo.progressoNivel1[currentDamierIndex] === 2);
         
-        // 3. Advance the pointer to the NEXT SEQUENTIAL damier
         estadoJogo.damierAtual = (currentDamierIndex + 1) % DADOS_LETRAS.length;
 
         if (didJustCompleteTwice) {
             adicionarPonto();
         } 
         
-        // Immediately load the next challenge, or go home if complete.
         if (estadoJogo.progressoNivel1.filter(c => c >= 2).length === DADOS_LETRAS.length) {
             exibirMensagemBravo(() => mostrarTela('home')); 
         } else {
@@ -780,9 +906,109 @@
         salvarEstado();
     }
 
-    // --- NÍVEL 2: SÍLABAS ---
+    // --- NÍVEL 2: LETRAS DE PALAVRAS (ANAGRAMAS) ---
 
-    function generateDistractors(correct) {
+    const PALAVRAS_N2 = PALAVRAS.slice(0, MAX_N2_COMPLETIONS); 
+
+    function iniciarNivel2() {
+        if (estadoJogo.progressoNivel2 >= MAX_N2_COMPLETIONS) {
+            mostrarTela('home');
+            return;
+        }
+
+        const wordIndex = estadoJogo.progressoNivel2 % MAX_N2_COMPLETIONS; 
+        const targetWord = PALAVRAS_N2[wordIndex];
+        
+        estadoJogo.palavraAtualN2 = targetWord;
+        estadoJogo.selecaoN2 = [];
+
+        document.getElementById('palavra-alvo-container').textContent = targetWord.toUpperCase();
+
+        const letters = targetWord.toLowerCase().split('');
+        const shuffledLetters = shuffleArray(letters);
+
+        const grid = document.getElementById('anagrama-grid');
+        grid.innerHTML = '';
+        
+        shuffledLetters.forEach((letter, index) => {
+            const letterElement = document.createElement('div');
+            letterElement.textContent = letter;
+            letterElement.className = 'anagrama-letra';
+            letterElement.dataset.originalIndex = index;
+            letterElement.onclick = () => selecionarLetraNova(letterElement, letter);
+            grid.appendChild(letterElement);
+        });
+
+        document.getElementById('btn-cancelar-anagrama').disabled = true;
+    }
+    
+    function selecionarLetraNova(element, letter) {
+        const targetContainer = document.getElementById('palavra-alvo-container');
+        const targetWord = estadoJogo.palavraAtualN2.toLowerCase();
+        const selectionLength = estadoJogo.selecaoN2.length;
+        const targetLength = targetWord.length;
+
+        if (selectionLength >= targetLength) return;
+
+        estadoJogo.selecaoN2.push({ element: element, letter: letter });
+        element.classList.add('invisivel'); 
+        
+        // Update display: show the selected letter appended to the target word structure
+        targetContainer.textContent = targetWord.toUpperCase().slice(0, selectionLength) + letter.toUpperCase() + targetWord.toUpperCase().slice(selectionLength + 1).replace(/./g, ' ');
+        
+        document.getElementById('btn-cancelar-anagrama').disabled = false;
+
+        if (estadoJogo.selecaoN2.length === targetLength) {
+            verificarAnagrama();
+        }
+    }
+    
+    function cancelarSelecaoNivel2() {
+        const lastSelection = estadoJogo.selecaoN2.pop();
+        if (lastSelection) {
+            lastSelection.element.classList.remove('invisivel');
+            
+            const targetContainer = document.getElementById('palavra-alvo-container');
+            const targetWord = estadoJogo.palavraAtualN2.toUpperCase();
+            
+            // Redraw target word with missing letters represented by spaces
+            const partialWord = targetWord.slice(0, estadoJogo.selecaoN2.length);
+            targetContainer.textContent = partialWord + targetWord.slice(estadoJogo.selecaoN2.length).replace(/./g, ' ');
+
+            if (estadoJogo.selecaoN2.length === 0) {
+                 document.getElementById('btn-cancelar-anagrama').disabled = true;
+            }
+        }
+    }
+
+    function verificarAnagrama() {
+        const selectedWord = estadoJogo.selecaoN2.map(item => item.letter).join('');
+        const targetWord = estadoJogo.palavraAtualN2.toLowerCase();
+
+        if (selectedWord === targetWord) {
+            adicionarPonto();
+            estadoJogo.progressoNivel2++;
+            
+            if (estadoJogo.progressoNivel2 >= MAX_N2_COMPLETIONS) {
+                exibirMensagemBravo(() => mostrarTela('home'));
+            } else {
+                exibirMensagemBravo(() => iniciarNivel2());
+            }
+        } else {
+            setTimeout(() => {
+                estadoJogo.selecaoN2.forEach(item => item.element.classList.remove('invisivel'));
+                estadoJogo.selecaoN2 = [];
+                document.getElementById('palavra-alvo-container').textContent = targetWord.toUpperCase(); // Reset display
+                document.getElementById('btn-cancelar-anagrama').disabled = true;
+            }, 1000);
+        }
+        salvarEstado();
+    }
+
+
+    // --- NÍVEL 3: SÍLABAS ---
+    
+    function generateDistractorsSilabas(correct) {
         const correctLower = correct.toLowerCase();
         let distractors = [];
         const alphabet = 'bcdefghijklmnpqrstvwxyz';
@@ -811,26 +1037,22 @@
 
     let silabaAtual = '';
 
-    function iniciarNivel2() {
-        if (estadoJogo.progressoNivel2 >= MAX_N2_COMPLETIONS) {
+    function iniciarNivel3() {
+        if (estadoJogo.progressoNivel3 >= MAX_N3_COMPLETIONS) {
             mostrarTela('home');
             return;
         }
 
-        // Filter words to indices 20 through 40 (Inclusive: 21 words total)
-        const PALAVRAS_PARA_N2 = PALAVRAS.slice(20, 41); 
-        if (PALAVRAS_PARA_N2.length === 0) {
-            console.error("Nível 2: Palavras do índice 20 ao 40 não encontradas.");
+        // Filter words to indices 11 through 30 (20 words total)
+        const PALAVRAS_PARA_N3 = PALAVRAS.slice(10, 30); 
+        if (PALAVRAS_PARA_N3.length === 0) {
+            console.error("Nível 3: Palavras do índice 11 ao 30 não encontradas.");
             mostrarTela('home');
             return;
         }
         
-        // --- DEBUG OUTPUT REMOVED: No full word display in console ---
-        // -----------------------------------------------------------
-
-
-        // 1. Filter words whose syllables have NOT been completed once yet (for N2 diversity)
-        const motsParaSilabas = PALAVRAS_PARA_N2.filter(p => {
+        // 1. Filter words whose syllables have NOT been completed once yet
+        const motsParaSilabas = PALAVRAS_PARA_N3.filter(p => {
              return getSilabas(p).some(s => (estadoJogo.syllabesCompletes[s.toLowerCase()] || 0) < 1);
         });
         
@@ -839,7 +1061,7 @@
              Object.keys(estadoJogo.syllabesCompletes).forEach(s => estadoJogo.syllabesCompletes[s] = 0);
         }
 
-        const motsSource = motsParaSilabas.length > 0 ? motsParaSilabas : PALAVRAS_PARA_N2;
+        const motsSource = motsParaSilabas.length > 0 ? motsParaSilabas : PALAVRAS_PARA_N3;
         const motChoisi = motsSource[Math.floor(Math.random() * motsSource.length)];
 
         // 2. Select a target syllable from the chosen word
@@ -847,13 +1069,12 @@
         let silabasCandidatas = silabasDoMot.filter(s => (estadoJogo.syllabesCompletes[s.toLowerCase()] || 0) < 1);
         
         if (silabasCandidatas.length === 0) {
-             // If all syllables of this word are done once, use all of them for variety
              silabasCandidatas = silabasDoMot;
         }
 
         // LOGIC FIX: Prevent consecutive repetition
-        if (silabasCandidatas.length > 1 && silabaAnteriorN2 && silabasCandidatas.map(s => s.toLowerCase()).includes(silabaAnteriorN2)) {
-             silabasCandidatas = silabasCandidatas.filter(s => s.toLowerCase() !== silabaAnteriorN2);
+        if (silabasCandidatas.length > 1 && silabaAnteriorN3 && silabasCandidatas.map(s => s.toLowerCase()).includes(silabaAnteriorN3)) {
+             silabasCandidatas = silabasCandidatas.filter(s => s.toLowerCase() !== silabaAnteriorN3);
              if (silabasCandidatas.length === 0) {
                  silabasCandidatas = silabasDoMot;
              }
@@ -862,15 +1083,14 @@
         silabaAtual = silabasCandidatas[Math.floor(Math.random() * silabasCandidatas.length)].toLowerCase();
 
         // Update the previous syllable tracker
-        silabaAnteriorN2 = silabaAtual; 
+        silabaAnteriorN3 = silabaAtual; 
         
-        // Update the new "tale" container
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
 
         const optionsDiv = document.getElementById('opcoes-silabas');
         optionsDiv.innerHTML = '';
 
-        const options = [silabaAtual, ...generateDistractors(silabaAtual)];
+        const options = [silabaAtual, ...generateDistractorsSilabas(silabaAtual)];
         options.sort(() => Math.random() - 0.5);
 
         options.forEach(opt => {
@@ -882,118 +1102,142 @@
         });
     }
 
-    // MODIFIED: Only one success needed for N2 progression
     function verificarSilaba(selection) {
         if (selection === silabaAtual) {
             const key = silabaAtual;
             const currentCount = estadoJogo.syllabesCompletes[key] || 0;
             
-            // Only update if it's the first time
             if (currentCount === 0) {
                 estadoJogo.syllabesCompletes[key] = currentCount + 1;
             }
 
-            // Global level progress check
-            if (estadoJogo.progressoNivel2 < MAX_N2_COMPLETIONS) {
-                estadoJogo.progressoNivel2++;
+            if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) {
+                estadoJogo.progressoNivel3++;
                 adicionarPonto();
                 
-                if (estadoJogo.progressoNivel2 === MAX_N2_COMPLETIONS) {
+                if (estadoJogo.progressoNivel3 === MAX_N3_COMPLETIONS) {
                     exibirMensagemBravo(() => mostrarTela('home'));
                     return;
                 }
             }
             
-            // Load next question
-            iniciarNivel2();
+            iniciarNivel3();
 
         } else {
-            // Incorrect: retry immediately
-            iniciarNivel2();
+            iniciarNivel3();
         }
         salvarEstado();
     }
 
-    // --- NÍVEL 3: PALAVRAS ---
-
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    }
-
-    function generateSimilarWords(correctWord, allWords) {
-        const correctLower = correctWord.toLowerCase();
-        const correctSyllabeCount = getSilabas(correctWord).length;
-
-        let candidates = allWords.filter(w => w.toLowerCase() !== correctLower).map(w => ({
-            word: w,
-            syllableCount: getSilabas(w).length
-        }));
-
-        candidates.sort((a, b) =>
-            Math.abs(a.syllableCount - correctSyllabeCount) - Math.abs(b.syllableCount - correctSyllabeCount)
-        );
-
-        const distractors = [];
-
-        while (distractors.length < 2 && candidates.length > 0) {
-            const index = Math.floor(Math.random() * candidates.length);
-            const candidate = candidates[index].word;
-
-            if (!distractors.includes(candidate)) {
-                distractors.push(candidate);
-            }
-            candidates.splice(index, 1);
-        }
-
-        while (distractors.length < 2) {
-             distractors.push(correctWord.length > 3 ? correctWord.substring(0, correctWord.length-1) + 'o' : 'palavra');
-        }
-
-        return distractors.slice(0, 2);
-    }
-
-    function iniciarNivel3() {
-        if (estadoJogo.progressoNivel3 >= MAX_N3_COMPLETIONS) {
+    // --- NOVO NÍVEL 4: IDENTIFICAÇÃO DE PALAVRAS ---
+    
+    function iniciarNivel4() {
+        if (estadoJogo.progressoNivel4 >= MAX_N4_COMPLETIONS) {
             mostrarTela('home');
             return;
         }
-
-        // --- NEW LOGIC: Filter words to indices 41 through 60 ---
-        const PALAVRAS_PARA_N3 = PALAVRAS.slice(40, 60); // Indices 40 to 59 inclusive (slice 40, end index 60)
-        if (PALAVRAS_PARA_N3.length === 0) {
-            console.error("Nível 3: Palavras do índice 41 ao 60 não encontradas.");
+        
+        // Filter words to indices 31 through 50 (20 words total)
+        const PALAVRAS_PARA_N4 = PALAVRAS.slice(30, 50); 
+        if (PALAVRAS_PARA_N4.length === 0) {
+            console.error("Nível 4: Palavras do índice 31 ao 50 não encontradas.");
             mostrarTela('home');
             return;
         }
-        // -----------------------------------------------------------
 
         // Filter words that have NOT been completed once yet
-        const palavrasDisponiveisN3 = PALAVRAS_PARA_N3.filter(p => {
-             return (estadoJogo.palavrasCompletasN3[p.toLowerCase()] || 0) < 1;
+        const palavrasDisponiveisN4 = PALAVRAS_PARA_N4.filter(p => {
+             return (estadoJogo.palavrasCompletasN4[p.toLowerCase()] || 0) < 1;
         });
 
-        // Loop available words if all have been seen once
-        const palavrasCandidatasSource = palavrasDisponiveisN3.length > 0 ? palavrasDisponiveisN3 : PALAVRAS_PARA_N3;
+        const palavrasCandidatasSource = palavrasDisponiveisN4.length > 0 ? palavrasDisponiveisN4 : PALAVRAS_PARA_N4;
         
-        // Generate distractors using the full list to increase variety,
-        // but the correct word selection is limited to PALAVRAS_PARA_N3.
+        const targetWord = palavrasCandidatasSource[Math.floor(Math.random() * palavrasCandidatasSource.length)];
+        palavraAtual = targetWord; // Set global word for scoring
+
+        // 1. Set the target word in UPPERCASE
+        document.getElementById('identificacao-alvo').textContent = targetWord.toUpperCase();
+        
+        // 2. Generate options (1 correct, 2 distractors)
+        // Distractors are drawn from the full PALAVRAS list for variety
+        const distractors = generateSimilarWords(targetWord, PALAVRAS);
+        let options = [targetWord, ...distractors];
+        options = shuffleArray(options);
+
+        const optionsDiv = document.getElementById('opcoes-identificacao');
+        optionsDiv.innerHTML = '';
+
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'opcao-btn';
+            btn.textContent = opt.toLowerCase(); // Options in lowercase
+            btn.onclick = () => verificarPalavraVisual(opt);
+            optionsDiv.appendChild(btn);
+        });
+        
+        salvarEstado();
+    }
+
+    function verificarPalavraVisual(selection) {
+        if (selection.toLowerCase() === palavraAtual.toLowerCase()) {
+            const key = palavraAtual.toLowerCase();
+            
+            if ((estadoJogo.palavrasCompletasN4[key] || 0) === 0) {
+                estadoJogo.palavrasCompletasN4[key] = 1;
+
+                if (estadoJogo.progressoNivel4 < MAX_N4_COMPLETIONS) {
+                    estadoJogo.progressoNivel4++;
+                    adicionarPonto();
+
+                    if (estadoJogo.progressoNivel4 === MAX_N4_COMPLETIONS) {
+                        exibirMensagemBravo(() => mostrarTela('home'));
+                        return;
+                    }
+                }
+            }
+            exibirMensagemBravo(() => iniciarNivel4());
+        } else {
+            iniciarNivel4();
+        }
+    }
+
+
+    // --- NÍVEL 5 (Antigo 4): PALAVRAS (ÁUDIO) ---
+
+    function iniciarNivel5() {
+        if (estadoJogo.progressoNivel5 >= MAX_N5_COMPLETIONS) {
+            mostrarTela('home');
+            return;
+        }
+
+        // Filter words to indices 51 through 60 (10 words total)
+        const PALAVRAS_PARA_N5 = PALAVRAS.slice(50, 60); 
+        if (PALAVRAS_PARA_N5.length === 0) {
+            console.error("Nível 5: Palavras do índice 51 ao 60 não encontradas.");
+            mostrarTela('home');
+            return;
+        }
+
+        // Filter words that have NOT been completed once yet
+        const palavrasDisponiveisN5 = PALAVRAS_PARA_N5.filter(p => {
+             return (estadoJogo.palavrasCompletasN5[p.toLowerCase()] || 0) < 1;
+        });
+
+        const palavrasCandidatasSource = palavrasDisponiveisN5.length > 0 ? palavrasDisponiveisN5 : PALAVRAS_PARA_N5;
+        
         const distractorsSource = PALAVRAS;
 
         // LOGIC FIX: Prevent consecutive repetition
         let palavrasCandidatas = [...palavrasCandidatasSource];
-        if (palavrasCandidatas.length > 1 && palavraAnteriorN3) {
-             palavrasCandidatas = palavrasCandidatas.filter(p => p.toLowerCase() !== palavraAnteriorN3);
+        if (palavrasCandidatas.length > 1 && palavraAnteriorN5) {
+             palavrasCandidatas = palavrasCandidatas.filter(p => p.toLowerCase() !== palavraAnteriorN5);
              if (palavrasCandidatas.length === 0) {
                  palavrasCandidatas = palavrasCandidatasSource;
              }
         }
 
         palavraAtual = palavrasCandidatas[Math.floor(Math.random() * palavrasCandidatas.length)];
-        palavraAnteriorN3 = palavraAtual.toLowerCase();
+        palavraAnteriorN5 = palavraAtual.toLowerCase();
         
         const distractors = generateSimilarWords(palavraAtual, distractorsSource);
         let options = [palavraAtual, ...distractors];
@@ -1006,7 +1250,7 @@
             const btn = document.createElement('button');
             btn.className = 'opcao-btn';
             btn.textContent = opt.charAt(0).toUpperCase() + opt.slice(1).toLowerCase();
-            btn.onclick = () => verificarPalavra(opt);
+            btn.onclick = () => verificarPalavraAudio(opt);
             optionsDiv.appendChild(btn);
         });
 
@@ -1019,36 +1263,32 @@
         }
     }
 
-    // MODIFIED: Only one success needed for N3 progression
-    function verificarPalavra(selection) {
+    function verificarPalavraAudio(selection) {
         if (selection.toLowerCase() === palavraAtual.toLowerCase()) {
             const key = palavraAtual.toLowerCase();
-            const currentCount = estadoJogo.palavrasCompletasN3[key] || 0;
+            
+            if ((estadoJogo.palavrasCompletasN5[key] || 0) === 0) {
+                estadoJogo.palavrasCompletasN5[key] = 1;
 
-            if (currentCount === 0) {
-                // Mark as completed once
-                estadoJogo.palavrasCompletasN3[key] = 1;
-
-                // Global level progress check
-                if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) {
-                    estadoJogo.progressoNivel3++;
+                if (estadoJogo.progressoNivel5 < MAX_N5_COMPLETIONS) {
+                    estadoJogo.progressoNivel5++;
                     adicionarPonto();
 
-                    if (estadoJogo.progressoNivel3 === MAX_N3_COMPLETIONS) {
+                    if (estadoJogo.progressoNivel5 === MAX_N5_COMPLETIONS) {
                         exibirMensagemBravo(() => mostrarTela('home'));
                         return;
                     }
                 }
             }
 
-            // If a point was just awarded or the word was already seen, show bravo and continue
-            exibirMensagemBravo(() => iniciarNivel3());
+            exibirMensagemBravo(() => iniciarNivel5());
 
         } else {
-            iniciarNivel3();
+            iniciarNivel5();
         }
         salvarEstado();
     }
+
 
     async function inicializarJogo() {
         carregarEstado();
