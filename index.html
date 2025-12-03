@@ -352,24 +352,6 @@
             font-size: 1.4em;
         }
 
-        /* Message Bravo (Simplificado) */
-        #mensagem-bravo {
-            /* Posição da mensagem (agora sem o overlay atrás) */
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: var(--cor-sucesso);
-            color: white;
-            padding: 30px 50px;
-            border-radius: 20px;
-            border: 5px solid white;
-            font-size: 2em;
-            display: none;
-            animation: fadeIn 0.3s;
-            z-index: 1000; 
-        }
-
         /* Modal de Confirmação (Mantido para Recomeçar Tudo) */
         #modal-confirmacao {
             position: fixed;
@@ -422,6 +404,100 @@
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
+        }
+        
+        /* --- ESTILOS DE RESPONSIVIDADE (MOBILE-FIRST) --- */
+
+        /* 1. Redução geral de padding e margem para telas pequenas */
+        body {
+            padding: 10px;
+        }
+
+        .container {
+            padding: 15px;
+            /* Garante que o contêiner principal se ajuste perfeitamente à largura do dispositivo */
+            max-width: 100%; 
+        }
+
+        /* 2. Redução do tamanho da fonte e espaçamento para todos os textos */
+        :root {
+            --tamanho-letra: 20px; /* Reduz o tamanho padrão da letra */
+        }
+
+        h1 {
+            font-size: 1.5em;
+        }
+        
+        /* 3. Ajustes específicos para a área de Score */
+        #score-container {
+            flex-direction: column; /* Empilha a imagem e o texto verticalmente */
+            text-align: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+        
+        #pedro-image {
+            width: 100px; /* Reduz o tamanho da imagem de Pedro */
+            height: 100px;
+        }
+
+        #score-text-content {
+            text-align: center;
+        }
+
+        /* 4. Ajustes específicos para as grids de letras (Nível 1 e 2) */
+        #letras-grid {
+            gap: 5px;
+            /* Garante que o grid de letras ainda pareça bom em telas muito estreitas */
+            grid-template-columns: repeat(4, 1fr); 
+        }
+        
+        .letra-quadro {
+            height: 50px;
+            font-size: 1.2em;
+        }
+
+        /* Ajusta o grid de anagrama para telas pequenas */
+        .anagrama-letra {
+            width: 35px;
+            height: 35px;
+            font-size: 1.2em;
+        }
+        
+        /* 5. Ajustes para as opções de resposta (Níveis 3, 4, 5) */
+        
+        /* Garante que as opções continuem lado a lado no celular, mas mais juntas */
+        #opcoes-silabas,
+        #opcoes-identificacao,
+        #opcoes-palavras {
+            gap: 5px;
+        }
+        
+        /* Reduz o tamanho do texto dentro dos botões de opção */
+        .opcao-btn {
+            padding: 10px;
+            font-size: 1em;
+        }
+
+        /* 6. Breakpoint principal para telas muito pequenas (ex: 400px ou menos) */
+        @media (max-width: 400px) {
+            #letras-grid {
+                 /* Em telas ultra-estreitas, forçamos 3 colunas para Nível 1 */
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .letra-quadro {
+                height: 60px;
+                font-size: 1.5em;
+            }
+            #opcoes-silabas,
+            #opcoes-identificacao,
+            #opcoes-palavras {
+                /* Em telas muito estreitas, empilha as opções verticalmente para garantir a legibilidade */
+                flex-direction: column; 
+            }
+            #silaba-container {
+                font-size: 2.5em;
+            }
         }
     </style>
 </head>
@@ -532,9 +608,6 @@
         <div id="opcoes-palavras"></div>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
     </div>
-
-    <div id="mensagem-bravo" style="display: none;">BRAVO PEDRO!</div>
-
 </div>
 
 
@@ -763,8 +836,8 @@
         const n1Score = estadoJogo.progressoNivel1.filter(c => c >= 2).length;
         const n2Score = estadoJogo.progressoNivel2;
         const n3Score = estadoJogo.progressoNivel3;
-        const n4Score = estadoJogo.progressoNivel4;
-        const n5Score = estadoJogo.progressoNivel5;
+        const n4Score = estadoJogo.progressoN4;
+        const n5Score = estadoJogo.progressoN5;
         
         estadoJogo.scoreGlobal = n1Score + n2Score + n3Score + n4Score + n5Score;
     }
@@ -804,11 +877,10 @@
         }
     }
 
-    // A função exibirMensagemBravo foi desativada/removida
+    // A função exibirMensagemBravo foi completamente removida
     function exibirMensagemBravo(callback) {
-        // Não faz nada, apenas executa o callback
         if (callback) {
-             setTimeout(callback, 100); // Pequeno delay para simular a conclusão
+             setTimeout(callback, 100); 
         }
     }
 
@@ -823,7 +895,13 @@
         
         recalcularScoreGlobal();
 
-        document.getElementById('score-valor').textContent = estadoJogo.scoreGlobal;
+        // **CORREÇÃO NA EXIBIÇÃO DO SCORE GLOBAL**
+        const scoreVal = estadoJogo.scoreGlobal;
+        const totalMax = calcularTotalMaximo();
+        
+        // Garante que se o score for 0, ele exibe '0 / 64', evitando NaN/
+        document.getElementById('score-valor').textContent = scoreVal; // A barra e o total já estão no HTML
+        
         verificarMensagemProgresso(estadoJogo.scoreGlobal);
         atualizarBotoesNivel();
         salvarEstado();
@@ -888,6 +966,7 @@
         } else if (ratio >= 0.3) {
             message = "Opa! Estamos no caminho certo! Vamos lá! 👍";
         } else {
+            // Caso score 0 ou baixo
             message = "Continue praticando! Você vai pegar o jeito! 💪";
         }
         
@@ -1029,7 +1108,6 @@
         estadoJogo.damierAtual = (currentDamierIndex + 1) % DADOS_LETRAS.length;
 
         if (estadoJogo.progressoNivel1.filter(c => c >= 2).length === DADOS_LETRAS.length) {
-            // Em vez de exibir Bravo, vamos direto para a Home
             mostrarTela('home'); 
         } else {
             iniciarNivel1();
@@ -1125,7 +1203,6 @@
             estadoJogo.progressoNivel2++;
             
             if (estadoJogo.progressoNivel2 >= MAX_N2_COMPLETIONS) {
-                // Em vez de exibir Bravo, vamos direto para a Home
                 mostrarTela('home');
             } else {
                 // PARTIAL SUCCESS: Just advance
@@ -1184,7 +1261,6 @@
         // Pool of words for Level 3 (Indices 11-30)
         const PALAVRAS_PARA_N3 = PALAVRAS.slice(10, 30); 
         if (PALAVRAS_PARA_N3.length === 0) {
-            console.error("Nível 3: Palavras do índice 11 ao 30 não encontradas.");
             mostrarTela('home');
             return;
         }
@@ -1243,7 +1319,6 @@
             }
             
             if (estadoJogo.progressoNivel3 === MAX_N3_COMPLETIONS) {
-                // Em vez de exibir Bravo, vamos direto para a Home
                 mostrarTela('home');
                 return;
             }
@@ -1270,7 +1345,6 @@
         // Filter words to indices 31 through 50 (20 words total)
         const PALAVRAS_PARA_N4 = PALAVRAS.slice(30, 50); 
         if (PALAVRAS_PARA_N4.length === 0) {
-            console.error("Nível 4: Palavras do índice 31 ao 50 não encontradas.");
             mostrarTela('home');
             return;
         }
@@ -1321,7 +1395,6 @@
             }
             
             if (estadoJogo.progressoN4 === MAX_N4_COMPLETIONS) {
-                // Em vez de exibir Bravo, vamos direto para a Home
                 mostrarTela('home');
                 return;
             }
@@ -1410,7 +1483,6 @@
             }
             
             if (estadoJogo.progressoN5 === MAX_N5_COMPLETIONS) {
-                // Em vez de exibir Bravo, vamos direto para a Home
                 mostrarTela('home');
                 return;
             }
