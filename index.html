@@ -137,42 +137,8 @@
             color: white; /* Garante que o texto fique branco */
         }
 
-
-        /* Conteneur pour les icônes à direita do termo */
-        .icon-container {
-            margin-left: 10px;
-            display: flex;
-            align-items: center;
-        }
-        .icon-container i {
-            margin-right: 2px;
-            font-size: 1.5em;
-        }
-
-        .contador-progresso {
-            font-size: 0.8em;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 2px 8px;
-            border-radius: 5px;
-        }
-
-        /* Bouton Recomeçar NOVO (in game) */
-        #btn-reset-level-in-game {
-            background-color: #f39c12; 
-            color: white;
-            margin: 10px 0;
-            padding: 15px;
-            font-size: 1em;
-            font-family: 'Times New Roman', Times, serif;
-            justify-content: center;
-            display: flex; 
-            width: 100%;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            text-align: center;
-        }
-
+        /* Removido #btn-reset-level-in-game style */
+        
         /* Botão de reset global (Home Screen) */
         #btn-reset-global {
             background-color: var(--cor-reset);
@@ -535,9 +501,6 @@
         <div id="letras-grid"></div>
         <button class="btn-cancelar" onclick="cancelarSelecaoNivel1()">Cancelar</button>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
-        <button id="btn-reset-level-in-game" onclick="mostrarModalRecomeco(1)">
-            <i class="fa-solid fa-undo"></i> RECOMEÇAR O NÍVEL 1
-        </button>
     </div>
 
     <div id="tela-nivel-2" class="tela-jogo" style="display: none;">
@@ -552,9 +515,6 @@
         
         <button class="btn-cancelar" id="btn-cancelar-anagrama" onclick="cancelarSelecaoNivel2()">Cancelar</button>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
-        <button id="btn-reset-level-in-game" onclick="mostrarModalRecomeco(2)">
-            <i class="fa-solid fa-undo"></i> RECOMEÇAR O NÍVEL 2
-        </button>
     </div>
 
     <div id="tela-nivel-3" class="tela-jogo" style="display: none;">
@@ -568,9 +528,6 @@
         
         <div id="opcoes-silabas"><button class="opcao-btn">pm</button><button class="opcao-btn">le</button><button class="opcao-btn">pe</button></div>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
-        <button id="btn-reset-level-in-game" onclick="mostrarModalRecomeco(3)">
-            <i class="fa-solid fa-undo"></i> RECOMEÇAR O NÍVEL 3
-        </button>
     </div>
 
     <div id="tela-nivel-4" class="tela-jogo" style="display: none;">
@@ -582,9 +539,6 @@
         <div id="opcoes-identificacao"><button class="opcao-btn">lápis</button><button class="opcao-btn">peixe</button><button class="opcao-btn">urubu</button></div>
 
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
-        <button id="btn-reset-level-in-game" onclick="mostrarModalRecomeco(4)">
-            <i class="fa-solid fa-undo"></i> RECOMEÇAR O NÍVEL 4
-        </button>
     </div>
 
     <div id="tela-nivel-5" class="tela-jogo" style="display: none;">
@@ -593,9 +547,6 @@
         <button class="btn-audio" onclick="falarPalavraAtual()"><i class="fa-solid fa-volume-up"></i></button>
         <div id="opcoes-palavras"></div>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
-        <button id="btn-reset-level-in-game" onclick="mostrarModalRecomeco(5)">
-            <i class="fa-solid fa-undo"></i> RECOMEÇAR O NÍVEL 5
-        </button>
     </div>
 
     <div id="mensagem-bravo" style="display: none;">BRAVO PEDRO!</div>
@@ -794,10 +745,11 @@
         let nivelParaResetar;
 
         if (nivel === 'level') {
-            // Este caminho é apenas para a Home screen (que foi alterada)
+            // Este caminho não é mais chamado pela interface, mas é mantido por segurança.
             nivelParaResetar = getHighestIncompleteLevel(); 
         } else if (typeof nivel === 'number') {
-            nivelParaResetar = nivel; // Níveis 1, 2, 3, 4, 5 (chamado in-game)
+             // Este caminho (reset de nível individual) não é mais chamado pela interface, mas é mantido.
+            nivelParaResetar = nivel; 
         } else {
             nivelParaResetar = nivel; // 'global'
         }
@@ -818,7 +770,7 @@
             modalText.textContent = "Você vai perder TODOS os pontos e todo o progresso. Quer mesmo recomeçar de zero?";
             document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(true);
         } else {
-            // Caminho para reset de nível individual (usado dentro dos níveis)
+            // Este caminho NÃO DEVE ser atingido se você removeu o botão de nível
             modalText.textContent = `Você vai perder todos os pontos do Nível ${nivelParaResetar} (${nivelNome}). Quer mesmo recomeçar?`;
             document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(false);
         }
@@ -843,38 +795,10 @@
         return 5; 
     }
 
-    // --- FUNÇÃO: Reseta o nível localmente (coloca 0) ---
-    function resetarNivelAlvo(nivelAlvo) {
-        console.log(`[RESET] Zerando progresso local do Nível ${nivelAlvo}...`);
-        switch (nivelAlvo) {
-            case 1:
-                estadoJogo.progressoNivel1 = [0, 0, 0, 0];
-                estadoJogo.damierAtual = 0;
-                estadoJogo.selecaoN1 = [];
-                break;
-            case 2:
-                estadoJogo.progressoNivel2 = 0;
-                estadoJogo.palavraAtualN2 = null;
-                estadoJogo.selecaoN2 = [];
-                break;
-            case 3:
-                estadoJogo.progressoNivel3 = 0;
-                estadoJogo.syllabesCompletasPorPalavra = {};
-                silabaAnteriorN3 = null;
-                break;
-            case 4:
-                estadoJogo.progressoN4 = 0;
-                estadoJogo.palavrasCompletasN4 = {};
-                break;
-            case 5:
-                estadoJogo.progressoN5 = 0;
-                estadoJogo.palavrasCompletasN5 = {};
-                palavraAnteriorN5 = null;
-                break;
-        }
-        console.log(`[RESET] Nível ${nivelAlvo} zerado.`);
-        return nivelAlvo;
-    }
+    // --- FUNÇÃO: Reseta o nível localmente (REMOVIDA DE USO) ---
+    // function resetarNivelAlvo(nivelAlvo) {
+    //     // Lógica removida, mantendo apenas o fluxo de reset global.
+    // }
 
     // --- FUNÇÃO: Recalcula o score global somando todos os progressos ---
     function recalcularScoreGlobal() {
@@ -885,37 +809,27 @@
         const n5Score = estadoJogo.progressoN5;
         
         estadoJogo.scoreGlobal = n1Score + n2Score + n3Score + n4Score + n5Score;
-        console.log(`[SCORE] Score Global recalculado: ${estadoJogo.scoreGlobal}`);
     }
-    // --- FIM FUNÇÕES DE RESET/RECALCULO ---
+    // --- FIM FUNÇÕES DE RECALCULO ---
 
     function confirmaRecomeco(resetGlobal) {
-        console.log(`[CONFIRM] Confirmação de recomeço: Global=${resetGlobal}`);
         cancelaRecomeco();
         const nivel = nivelSendoResetado; 
         
         if (resetGlobal) {
             estadoJogo = {...INITIAL_GAME_STATE};
             localStorage.removeItem('aprendendoAleitura');
-            console.log('[RESET GLOBAL] Estado completamente zerado.');
         } else {
-            // Reset de Nível Individual
-            resetarNivelAlvo(nivel); 
-            recalcularScoreGlobal();
+            // Este bloco será executado apenas se o usuário tiver clicado em "Sim" 
+            // para um reset de nível individual, mas como o botão foi removido, 
+            // esta parte está tecnicamente desabilitada da interface.
+            // Para evitar erro, mantemos o fluxo simples:
+            mostrarTela('home');
+            return;
         }
 
-        // 1. Atualiza a interface e salva o estado
         atualizarInterfaceHome();
-        
-        // 2. CORREÇÃO CRÍTICA: Se não for reset global, inicia o nível resetado
-        if (!resetGlobal && nivel >= 1 && nivel <= 5) {
-            console.log(`[INIT] Iniciando Nível ${nivel}...`);
-            iniciarNivel(nivel);
-        } else {
-            // Se for reset global ou o nível for inválido, volta para a home
-            console.log('[INIT] Voltando para a Home.');
-            mostrarTela('home');
-        }
+        mostrarTela('home');
     }
 
 
@@ -930,12 +844,6 @@
         
         // Esconde o botão global na tela de jogo, mostra na Home
         document.getElementById('btn-reset-global').style.display = (nivelId === 'home') ? 'flex' : 'none';
-        
-        // Este botão está agora dentro das telas de nível, mas garantir que não apareça na home
-        // if (document.getElementById('btn-reset-level-in-game')) {
-        //     document.getElementById('btn-reset-level-in-game').style.display = (nivelId !== 'home') ? 'flex' : 'none';
-        // }
-
 
         if (nivelId === 'home') {
             atualizarInterfaceHome();
