@@ -1150,25 +1150,29 @@
         // 2. SET STARTING INDEX BASED ON CURRENT SCORE (WORD COUNT)
         const currentWordCount = estadoJogo.progressoNivel3;
 
+        // --- UNBREAKABLE START LOGIC ---
+        let startIndex;
         if (currentWordCount === 0) {
-            // Start at the very beginning of the sequence: index 0
-            estadoJogo.indiceSilabaAtual = 0;
+            // IF score is 0, start at index 0 (the first syllable: "a" from "abelha")
+            startIndex = 0;
         } else {
-            // If 2 words are complete (score=2), we look at PONTOS_IDS_N3[1] (which is 6, the end of the 2nd word). 
-            // The next syllable starts at index 6 (the original index 7)
-            // PONTOS_IDS_N3 is 1-based, array index is 0-based.
+            // IF score is > 0, calculate the index immediately after the last solved word.
+            // PONTOS_IDS_N3 is 1-based, we subtract 1 to get the array index of the last point.
+            // The value at that index is the syllable ID (1-based), which equals the next 0-based index.
             const lastCompletedIndex_1based = PONTOS_IDS_N3[currentWordCount - 1]; 
-            // The next syllable index (0-based) is equal to the last completed ID (1-based)
-            estadoJogo.indiceSilabaAtual = lastCompletedIndex_1based;
+            startIndex = lastCompletedIndex_1based;
         }
-
+        
+        estadoJogo.indiceSilabaAtual = startIndex;
         salvarEstado(); // Save the corrected starting index immediately
+        // --- END UNBREAKABLE START LOGIC ---
+
 
         // 3. --- CORE LOGIC ---
-        // Ensure index is safe (although the logic above ensures it's correct for the score)
+        // Ensure index is safe (this prevents the infinite loop/crash from bad data)
         let safeIndex = parseInt(estadoJogo.indiceSilabaAtual);
         if (isNaN(safeIndex) || safeIndex < 0 || safeIndex >= MAX_SILABAS_LOOP_N3) {
-            // This is the true emergency brake if the data is totally corrupt
+            // Emergency brake: reset to 0 if data is corrupt
             safeIndex = 0;
             estadoJogo.indiceSilabaAtual = 0;
             salvarEstado();
@@ -1205,8 +1209,6 @@
                 if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) {
                     estadoJogo.progressoNivel3++;
                 }
-                // NOTE: We don't need to manually update indiceSilabaAtual here; 
-                // it is done in the general advancement step below.
             }
 
             // ADVANCE TO THE NEXT SYLLABLE IN THE SEQUENCE
@@ -1394,7 +1396,7 @@
     async function inicializarJogo() {
         carregarEstado();
         
-        // --- PATCH FORCED UNLOCK/RESET for Level 2/3 (If necessary) ---
+        // --- PATCH: Ensure Level 2 completion so Level 3 unlocks. ---
         const MAX_N1_COMPLETIONS = DADOS_LETRAS.length;
         const n1Completed = estadoJogo.progressoNivel1.filter(c => c >= 2).length === MAX_N1_COMPLETIONS;
         
