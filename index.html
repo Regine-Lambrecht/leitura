@@ -461,18 +461,18 @@
         @media (max-width: 600px) {
             /* **CORREÇÃO**: Reduz o tamanho da fonte principal dos botões da Home */
             .nivel-btn {
-                 font-size: 1em; 
+                 font-size: 0.9em; /* Redução para 0.9em */
             }
         
             /* **CORREÇÃO**: Reduz o tamanho da palavra alvo de identificação (N4) */
             #identificacao-alvo {
-                font-size: 1em; 
+                font-size: 2em; 
             }
 
             /* Reduz o tamanho da palavra alvo e da seleção atual (N2) */
             #palavra-alvo-container,
             #selecao-atual {
-                font-size: 1em; 
+                font-size: 2em; 
                 letter-spacing: 3px; 
             }
 
@@ -488,7 +488,7 @@
         @media (max-width: 400px) {
             /* **CORREÇÃO**: Ajuste extra para botões da Home em telas muito pequenas */
              .nivel-btn {
-                 font-size: 1em;
+                 font-size: 0.8em; /* Redução para 0.8em */
             }
 
             /* **CORREÇÃO**: Reduz ainda mais a palavra alvo de identificação (N4) */
@@ -1295,22 +1295,16 @@
         
         let silabasNaoCompletas = SILABAS_ALVO.filter(s => (estadoJogo.syllabesCompletasPorPalavra[s] || 0) < 1);
         
-        // If all 29 unique syllables are solved, loop the list for the remaining challenges (up to 20 total)
+        // Se todas as sílabas únicas foram resolvidas (29), ele repete a lista inteira (SILABAS_ALVO)
         const silabasSource = silabasNaoCompletas.length > 0 ? silabasNaoCompletas : SILABAS_ALVO;
         
-        // LOGIC FIX: Prevent consecutive repetition of the *syllable*
-        let silabasCandidatas = [...silabasSource];
-        if (silabasCandidatas.length > 1 && silabaAnteriorN3) {
-             silabasCandidatas = silabasCandidatas.filter(s => s !== silabaAnteriorN3);
-             if (silabasCandidatas.length === 0) {
-                 silabasCandidatas = silabasSource; // Fallback
-             }
-        }
-        
+        // ESTABILIZAÇÃO CRÍTICA: Simplesmente usa a lista completa ou restante para seleção.
+        // A lógica de evitar repetição consecutiva (silabaAnteriorN3) foi removida para evitar o loop.
+        let silabasCandidatas = silabasSource; 
+
+        // Seleciona aleatoriamente a sílaba
         silabaAtual = silabasCandidatas[Math.floor(Math.random() * silabasCandidatas.length)];
-        silabaAnteriorN3 = silabaAtual; 
-        
-        // Note: For Level 3, the target word is no longer relevant for the challenge, only the syllable.
+        silabaAnteriorN3 = silabaAtual; // Apenas armazena, sem usar para filtro (estabilidade)
 
         
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
