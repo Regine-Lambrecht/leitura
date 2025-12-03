@@ -1547,7 +1547,11 @@
         }
 
         /* --- Reset Modal (Confirmação) --- */
-        /* O modal DEVE estar hidden por padrão */
+        /* CORRIGIDO: Certifica que .hidden desative o display */
+        .modal.hidden, #alert-modal.hidden {
+            display: none !important; 
+        }
+
         .modal {
             background-color: rgba(0, 0, 0, 0.6);
             transition: opacity 0.3s;
@@ -1762,7 +1766,7 @@
     </button>
 
     <!-- 8. MODAL DE CONFIRMAÇÃO DE RESET -->
-    <!-- CORRIGIDO: O modal DEVE ter a classe hidden no HTML para começar invisível -->
+    <!-- Adicionado 'hidden' e estilo ajustado no CSS -->
     <div id="reset-modal" class="modal hidden fixed inset-0 flex items-center justify-center z-50">
         <div class="modal-content text-center bg-white p-6 rounded-xl shadow-2xl">
             <h3 class="text-xl font-bold text-red-600 mb-4">Atenção!</h3>
@@ -1783,7 +1787,8 @@
     </div>
     
     <!-- 9. MODAL DE ALERTA CUSTOMIZADO (SUBSTITUI alert()) -->
-    <div id="alert-modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden">
+    <!-- CORRIGIDO: Adicionada classe 'modal' para usar a regra .modal.hidden -->
+    <div id="alert-modal" class="modal hidden fixed inset-0 flex items-center justify-center p-4 z-50">
         <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full transition-all duration-300 transform">
             <div class="flex items-center">
                 <i id="alert-icon" class="fas fa-info-circle text-blue-800 text-3xl mr-4"></i>
