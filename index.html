@@ -354,6 +354,7 @@
 
         /* Message Bravo (Simplificado) */
         #mensagem-bravo {
+            /* Posição da mensagem (agora sem o overlay atrás) */
             position: fixed;
             top: 50%;
             left: 50%;
@@ -366,10 +367,10 @@
             font-size: 2em;
             display: none;
             animation: fadeIn 0.3s;
-            z-index: 1000; /* Z-index simples, sem overlay complexo */
+            z-index: 1000; 
         }
 
-        /* Modal de Confirmação (Simplificado) */
+        /* Modal de Confirmação (Mantido para Recomeçar Tudo) */
         #modal-confirmacao {
             position: fixed;
             top: 50%;
@@ -728,7 +729,6 @@
     function mostrarModalRecomeco(nivel) {
         const modalText = document.getElementById('modal-reset-text');
         
-        // Apenas para Reset Global (reset de nível foi removido)
         let nivelParaResetar = nivel; 
         nivelSendoResetado = nivelParaResetar; 
 
@@ -763,8 +763,8 @@
         const n1Score = estadoJogo.progressoNivel1.filter(c => c >= 2).length;
         const n2Score = estadoJogo.progressoNivel2;
         const n3Score = estadoJogo.progressoNivel3;
-        const n4Score = estadoJogo.progressoN4;
-        const n5Score = estadoJogo.progressoN5;
+        const n4Score = estadoJogo.progressoNivel4;
+        const n5Score = estadoJogo.progressoNivel5;
         
         estadoJogo.scoreGlobal = n1Score + n2Score + n3Score + n4Score + n5Score;
     }
@@ -804,16 +804,12 @@
         }
     }
 
+    // A função exibirMensagemBravo foi desativada/removida
     function exibirMensagemBravo(callback) {
-        const msgElement = document.getElementById('mensagem-bravo');
-        
-        // Simplesmente exibe a mensagem de bravo no centro da tela, sem overlay/backdrop
-        msgElement.style.display = 'block';
-
-        setTimeout(() => {
-            msgElement.style.display = 'none';
-            if (callback) callback();
-        }, 1500);
+        // Não faz nada, apenas executa o callback
+        if (callback) {
+             setTimeout(callback, 100); // Pequeno delay para simular a conclusão
+        }
     }
 
     // --- LÓGICA DU SCORE ET PROGRESSÃO ---
@@ -1033,7 +1029,8 @@
         estadoJogo.damierAtual = (currentDamierIndex + 1) % DADOS_LETRAS.length;
 
         if (estadoJogo.progressoNivel1.filter(c => c >= 2).length === DADOS_LETRAS.length) {
-            exibirMensagemBravo(() => mostrarTela('home')); 
+            // Em vez de exibir Bravo, vamos direto para a Home
+            mostrarTela('home'); 
         } else {
             iniciarNivel1();
         }
@@ -1128,8 +1125,8 @@
             estadoJogo.progressoNivel2++;
             
             if (estadoJogo.progressoNivel2 >= MAX_N2_COMPLETIONS) {
-                // SUCCESS: Show Bravo, then go home
-                exibirMensagemBravo(() => mostrarTela('home'));
+                // Em vez de exibir Bravo, vamos direto para a Home
+                mostrarTela('home');
             } else {
                 // PARTIAL SUCCESS: Just advance
                 iniciarNivel2();
@@ -1246,8 +1243,8 @@
             }
             
             if (estadoJogo.progressoNivel3 === MAX_N3_COMPLETIONS) {
-                // LEVEL COMPLETION: Show Bravo, then go home
-                exibirMensagemBravo(() => mostrarTela('home'));
+                // Em vez de exibir Bravo, vamos direto para a Home
+                mostrarTela('home');
                 return;
             }
             
@@ -1324,8 +1321,8 @@
             }
             
             if (estadoJogo.progressoN4 === MAX_N4_COMPLETIONS) {
-                // SUCCESS: Show Bravo, then go home
-                exibirMensagemBravo(() => mostrarTela('home'));
+                // Em vez de exibir Bravo, vamos direto para a Home
+                mostrarTela('home');
                 return;
             }
             
@@ -1351,7 +1348,6 @@
         // Filter words to indices 51 through 60 (10 words total)
         const PALAVRAS_PARA_N5 = PALAVRAS.slice(50, 60); 
         if (PALAVRAS_PARA_N5.length === 0) {
-            console.error("Nível 5: Palavras do índice 51 ao 60 não encontradas.");
             mostrarTela('home');
             return;
         }
@@ -1414,8 +1410,8 @@
             }
             
             if (estadoJogo.progressoN5 === MAX_N5_COMPLETIONS) {
-                // SUCCESS: Show Bravo, then go home
-                exibirMensagemBravo(() => mostrarTela('home'));
+                // Em vez de exibir Bravo, vamos direto para a Home
+                mostrarTela('home');
                 return;
             }
 
