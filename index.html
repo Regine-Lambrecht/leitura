@@ -607,6 +607,7 @@
     let PALAVRAS = PALAVRAS_BASE.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
     // --- HARDCODED SYLLABLE LIST FOR LEVEL 3 (29 Total) ---
+    // This list will be used for both challenge selection and counting progress.
     const SILABAS_ALVO = [
         'a', 'be', 'lha', 'ra', 'nha', 'ba', 'lei', 'bo', 'la', 'cha', 
         'li', 'che', 'bra', 'sil', 'ca', 'bi', 'de', 'ne', 'ta', 'sa', 
@@ -615,7 +616,8 @@
 
     
     function getSilabas(palavra) {
-        // This function is still needed for Level 4 and 5 distractors (for word size comparison)
+        // This function is kept only for generating distractors/comparing word size in Levels 4/5.
+        // It is NOT used for Level 3 challenge generation anymore.
 
         let processedPalavra = palavra.toLowerCase();
         
@@ -684,7 +686,7 @@
     // NEW FIXED TOTALS
     const MAX_N1_COMPLETIONS = DADOS_LETRAS.length; // 4
     const MAX_N2_COMPLETIONS = 10; // Anagramas (Words 1-10)
-    const MAX_N3_COMPLETIONS = 20; // Sílabas (Goal is 20 completed words)
+    const MAX_N3_COMPLETIONS = 20; // Sílabas (Goal is 20 completed challenges)
     const MAX_N4_COMPLETIONS = 20; // NEW: Identification (Words 31-50)
     const MAX_N5_COMPLETIONS = 10; // Palavras Áudio (Words 51-60)
 
@@ -1231,27 +1233,20 @@
             return;
         }
 
-        // Pool of words for Level 3 (Indices 11-30)
-        const PALAVRAS_PARA_N3 = PALAVRAS.slice(10, 30); 
-        if (PALAVRAS_PARA_N3.length === 0) {
-            console.error("Nível 3: Palavras do índice 11 ao 30 não encontradas.");
-            mostrarTela('home');
-            return;
-        }
-        
-        // --- STEP 1: Determine the target syllable (must be one that hasn't been completed yet) ---
+        // --- Select from HARDCODED SILABAS_ALVO ---
         
         let silabasNaoCompletas = SILABAS_ALVO.filter(s => (estadoJogo.syllabesCompletasPorPalavra[s] || 0) < 1);
-        
-        // If all 29 unique syllables are solved, loop the list for the remaining challenges (up to 20 total)
+
         const silabasSource = silabasNaoCompletas.length > 0 ? silabasNaoCompletas : SILABAS_ALVO;
         
         // LOGIC FIX: Prevent consecutive repetition of the *syllable*
         let silabasCandidatas = [...silabasSource];
+        
+        // This is the CRITICAL stability check: always use the complete pool if removing the last candidate
         if (silabasCandidatas.length > 1 && silabaAnteriorN3) {
              silabasCandidatas = silabasCandidatas.filter(s => s !== silabaAnteriorN3);
              if (silabasCandidatas.length === 0) {
-                 silabasCandidatas = silabasSource; // Fallback
+                 silabasCandidatas = silabasSource; // FALLBACK: Use repeated syllable if no other choices
              }
         }
         
@@ -1259,6 +1254,7 @@
         silabaAnteriorN3 = silabaAtual; 
         
         // Note: For Level 3, the target word is no longer relevant for the challenge, only the syllable.
+        palavraAtual = silabaAtual; 
 
         
         document.getElementById('silaba-maiuscula').textContent = silabaAtual.toUpperCase();
@@ -1438,12 +1434,6 @@
         });
 
         setTimeout(falarPalavraAtual, 500);
-    }
-
-    function falarPalavraAtual() {
-        if (palavraAtual) {
-            falarTexto(palavraAtual);
-        }
     }
 
     function verificarPalavraAudio(selection) {
