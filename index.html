@@ -825,6 +825,12 @@
             return;
         }
         
+        // --- DEBUG OUTPUT: Syllables in brackets ---
+        const silabaDebug = PALAVRAS_PARA_N2.map(word => '[' + getSilabas(word).join('-') + ']').join(' ');
+        console.log("Nível 2 Palavras (Sílaba View):", silabaDebug);
+        // -------------------------------------------
+
+
         // 1. Filter words whose syllables have NOT been completed once yet (for N2 diversity)
         const motsParaSilabas = PALAVRAS_PARA_N2.filter(p => {
              return getSilabas(p).some(s => (estadoJogo.syllabesCompletes[s.toLowerCase()] || 0) < 1);
