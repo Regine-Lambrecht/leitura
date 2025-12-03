@@ -117,7 +117,7 @@
             border-radius: 5px;
         }
 
-        /* Bouton Recomeçar de zero */
+        /* Bouton Recomeçar */
         #btn-reset {
             background-color: var(--cor-reset);
             color: white;
@@ -127,9 +127,22 @@
             font-family: 'Times New Roman', Times, serif;
             justify-content: center;
         }
+        
+        .nivel-btn#btn-reset {
+            /* Ensures the reset button style is used on the "Recomeçar o nível" button */
+            display: none; /* Hidden by default on home screen */
+        }
+        
+        .tela-jogo #btn-reset {
+             /* Show the button only within a level screen */
+            display: flex; 
+            margin-top: 10px; 
+            background-color: #f39c12; /* Unique color for level reset */
+        }
+
 
         #btn-reset:hover {
-            background-color: #c0392b;
+            background-color: #e67e22;
         }
 
         /* Visibilidade des Telas */
@@ -183,9 +196,20 @@
 
         /* Nível 2: Anagramas */
         #palavra-alvo-container {
+            /* Target word - always visible in CAPS */
             font-size: 2.5em;
             font-weight: bold;
             color: var(--cor-principal);
+            margin-bottom: 15px;
+            letter-spacing: 5px;
+            min-height: 50px;
+        }
+        
+        #selecao-atual {
+            /* Space to show selected letters */
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #333;
             min-height: 50px;
             border-bottom: 2px solid #ccc;
             margin-bottom: 20px;
@@ -360,7 +384,7 @@
             font-family: 'Times New Roman', Times, serif;
         }
 
-        #btn-sim {
+        #btn-sim-reset-global {
             background-color: var(--cor-reset);
             color: white;
         }
@@ -382,9 +406,9 @@
 <div id="overlay"></div>
 
 <div id="modal-confirmacao" style="display: none;">
-    <p>Você vai perder todos os pontos. Quer mesmo recomeçar?</p>
+    <p id="modal-reset-text">Você vai perder todos os pontos. Quer mesmo recomeçar?</p>
     <div class="botoes-modal">
-        <button id="btn-sim" onclick="confirmaRecomeco()">Sim</button>
+        <button id="btn-sim-reset-global" onclick="confirmaRecomeco(true)">Sim</button>
         <button id="btn-nao" onclick="cancelaRecomeco()">Não</button>
     </div>
 </div>
@@ -404,28 +428,28 @@
         </button>
         
         <button class="nivel-btn" id="btn-nivel-2" onclick="iniciarNivel(2)" disabled>
-            <span class="content-left-group">Letras de Palavras <span class="icon-container"><i class="fa-solid fa-graduation-cap"></i></span></span>
+            <span class="content-left-group">Letras de Palavras <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span></span>
             <span class="contador-progresso" id="count-n2"></span>
         </button>
 
         <button class="nivel-btn" id="btn-nivel-3" onclick="iniciarNivel(3)" disabled>
-            <span class="content-left-group">Sílabas <span class="icon-container"><i class="fa-solid fa-trophy"></i><i class="fa-solid fa-trophy"></i></span></span>
+            <span class="content-left-group">Sílabas <span class="icon-container"><i class="fa-solid fa-eye"></i></span></span>
             <span class="contador-progresso" id="count-n3"></span>
         </button>
 
         <button class="nivel-btn" id="btn-nivel-4" onclick="iniciarNivel(4)" disabled>
-            <span class="content-left-group">Identificação <span class="icon-container"><i class="fa-solid fa-eye"></i></span></span>
+            <span class="content-left-group">Identificação <span class="icon-container"><i class="fa-solid fa-medal"></i></span></span>
             <span class="contador-progresso" id="count-n4"></span>
         </button>
 
         <button class="nivel-btn" id="btn-nivel-5" onclick="iniciarNivel(5)" disabled>
-            <span class="content-left-group">Palavras (Áudio) <span class="icon-container"><i class="fa-solid fa-medal"></i></span></span>
+            <span class="content-left-group">Palavras (Áudio) <span class="icon-container"><i class="fa-solid fa-graduation-cap"></i></span></span>
             <span class="contador-progresso" id="count-n5"></span>
         </button>
 
 
-        <button class="nivel-btn" id="btn-reset" onclick="recomecarDeZero()">
-            <i class="fa-solid fa-sync-alt"></i> Recomeçar de zero
+        <button class="nivel-btn" id="btn-reset-global" onclick="mostrarModalRecomeco('global')">
+            <i class="fa-solid fa-sync-alt"></i> Recomeçar TUDO de zero
         </button>
     </div>
 
@@ -435,6 +459,9 @@
         <div id="letras-grid"></div>
         <button class="btn-cancelar" onclick="cancelarSelecaoNivel1()">Cancelar</button>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
+        <button class="nivel-btn" id="btn-reset" onclick="mostrarModalRecomeco(1)">
+            <i class="fa-solid fa-sync-alt"></i> Recomeçar o nível
+        </button>
     </div>
 
     <div id="tela-nivel-2" class="tela-jogo">
@@ -442,10 +469,16 @@
         <p>Monte a palavra em MAIÚSCULAS na ordem correta.</p>
         
         <div id="palavra-alvo-container"></div>
+        
+        <div id="selecao-atual"></div>
+        
         <div id="anagrama-grid"></div>
         
         <button class="btn-cancelar" id="btn-cancelar-anagrama" onclick="cancelarSelecaoNivel2()">Cancelar</button>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
+        <button class="nivel-btn" id="btn-reset" onclick="mostrarModalRecomeco(2)">
+            <i class="fa-solid fa-sync-alt"></i> Recomeçar o nível
+        </button>
     </div>
 
     <div id="tela-nivel-3" class="tela-jogo">
@@ -459,6 +492,9 @@
         
         <div id="opcoes-silabas"></div>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
+        <button class="nivel-btn" id="btn-reset" onclick="mostrarModalRecomeco(3)">
+            <i class="fa-solid fa-sync-alt"></i> Recomeçar o nível
+        </button>
     </div>
 
     <div id="tela-nivel-4" class="tela-jogo">
@@ -469,6 +505,9 @@
         <div id="opcoes-identificacao"></div>
 
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
+        <button class="nivel-btn" id="btn-reset" onclick="mostrarModalRecomeco(4)">
+            <i class="fa-solid fa-sync-alt"></i> Recomeçar o nível
+        </button>
     </div>
 
     <div id="tela-nivel-5" class="tela-jogo">
@@ -477,6 +516,9 @@
         <button class="btn-audio" onclick="falarPalavraAtual()"><i class="fa-solid fa-volume-up"></i></button>
         <div id="opcoes-palavras"></div>
         <button class="nivel-btn voltar-btn" onclick="mostrarTela('home')">Voltar</button>
+        <button class="nivel-btn" id="btn-reset" onclick="mostrarModalRecomeco(5)">
+            <i class="fa-solid fa-sync-alt"></i> Recomeçar o nível
+        </button>
     </div>
 
     <div id="mensagem-bravo" style="display:none;">Bravo Pedro!</div>
@@ -532,27 +574,41 @@
     ];
     let PALAVRAS = PALAVRAS_BASE.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
+    // --- HARDCODED SYLLABLE LIST FOR LEVEL 3 ---
+    const SILABAS_ALVO = [
+        'a', 'be', 'lha', 'ra', 'na', 'ba', 'lei', 'bo', 'la', 'cha', 
+        'li', 'che', 'bra', 'sil', 'ca', 'bi', 'de', 'ne', 'ta', 'sa', 
+        'cha', 've', 'chu', 'pe', 'ta', 'co', 'bra', 'e', 'lho', 'fre',
+        'rro', 'te', 'páu', 'ar' 
+        // Note: Using a slightly expanded set to ensure 29+ unique syllables if needed,
+        // but the core logic focuses on uniqueness. The actual list provided earlier 
+        // was derived from the words, so this list is now used directly.
+    ];
+
     
     function getSilabas(palavra) {
-        switch(palavra.toLowerCase()) {
-            case 'chupeta': return ['chu', 'pe', 'ta'];
-            case 'carro': return ['car', 'ro']; 
-            case 'tomate': return ['to', 'ma', 'te'];
-            case 'quatro': return ['qua', 'tro'];
-            case 'quadro': return ['qua', 'dro'];
-        }
-        
+        // --- REVISED SYLLABIFICATION LOGIC (Pure Rule-Based) ---
         let processedPalavra = palavra.toLowerCase();
         
-        processedPalavra = processedPalavra.replace(/([r|s|c|p|t])\1/g, '$1-$1');
-        processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1-$2$3'); 
-        processedPalavra = processedPalavra.replace(/([bcdfghjklmnpqrstvwxyzç])([c|t|p|g|f|v])([l|r])/g, '$1-$2$3'); 
+        // 1. Split double consonants (RR, SS, etc.)
+        processedPalavra = processedPalavra.replace(/([r|s|c|p|t|b|d|f|g|k|m|n|v|x|z])\1/g, '$1-$1');
         
+        // 2. Separate consonant clusters (VC-CV pattern) - Simplified to handle internal breaks like N-T
+        // Example: Ca-ne-ta should be ca-ne-ta (not ca-n-e-ta). This pattern is complex in Portuguese,
+        // but we'll use a broad VCV->V-CV rule, which is simpler and more reliable than VCCV->VC-CV here.
+        
+        // 3. Separate consonant that must break between vowels (V-CV rule)
+        processedPalavra = processedPalavra.replace(/([aeiouyãõéêáíóú])([bcdfghjklmnpqrstvwxyzç])([aeiouyãõéêáíóú])/gi, '$1-$2$3'); 
+        
+        // 4. Handle common consonant blends (TR, BR, PL, etc.) - keep them together
+        processedPalavra = processedPalavra.replace(/([bcdfghjklmnpqrstvwxyzç])([l|r])/g, '$1$2'); // Example: BRa-sil
+        
+        // 5. Handle QU and GU
+        processedPalavra = processedPalavra.replace(/([qg]u)([aeiou])/g, '$1$2'); 
+
         let silabas = processedPalavra.split('-');
         
         silabas = silabas.map(s => s.trim()).filter(s => s.length > 0);
-        
-        if (silabas.length === 0) return [palavra];
         
         return silabas;
     }
@@ -599,8 +655,8 @@
 
     // NEW FIXED TOTALS
     const MAX_N1_COMPLETIONS = DADOS_LETRAS.length; // 4
-    const MAX_N2_COMPLETIONS = 10; // Anagrams (Words 1-10)
-    const MAX_N3_COMPLETIONS = 10; // Sílabas (Words 11-30 pool)
+    const MAX_N2_COMPLETIONS = 10; // Anagramas (Words 1-10)
+    const MAX_N3_COMPLETIONS = 29; // Sílabas (Total unique syllables: 29)
     const MAX_N4_COMPLETIONS = 20; // NEW: Identification (Words 31-50)
     const MAX_N5_COMPLETIONS = 10; // Palavras Áudio (Words 51-60)
 
@@ -621,16 +677,17 @@
         selecaoN2: [], 
         
         progressoNivel3: 0, 
-        syllabesCompletes: {},
+        syllabesCompletes: {}, // Now tracks completion of SILABAS_ALVO items
 
-        progressoNivel4: 0, // NEW: Identification
+        progressoNível4: 0, 
         palavrasCompletasN4: {}, 
         
-        progressoNivel5: 0, // OLD N4: Palavras Audio
+        progressoNivel5: 0, 
         palavrasCompletasN5: {}, 
     };
 
     let estadoJogo = {...INITIAL_GAME_STATE};
+    let nivelSendoResetado = null; 
 
     let palavraAtual = '';
     let silabaAnteriorN3 = null; 
@@ -651,7 +708,20 @@
         localStorage.setItem('aprendendoAleitura', JSON.stringify(estadoJogo));
     }
 
-    function recomecarDeZero() {
+    /* MODAL AND RESET LOGIC */
+
+    function mostrarModalRecomeco(nivel) {
+        const modalText = document.getElementById('modal-reset-text');
+        nivelSendoResetado = nivel;
+
+        if (nivel === 'global') {
+            modalText.textContent = "Você vai perder TODOS os pontos e todo o progresso. Quer mesmo recomeçar de zero?";
+            document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(true);
+        } else {
+            modalText.textContent = `Você vai perder todos os pontos do Nível ${nivel}. Quer mesmo recomeçar?`;
+            document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(false);
+        }
+
         document.getElementById('overlay').style.display = 'block';
         document.getElementById('modal-confirmacao').style.display = 'block';
     }
@@ -659,25 +729,74 @@
     function cancelaRecomeco() {
         document.getElementById('overlay').style.display = 'none';
         document.getElementById('modal-confirmacao').style.display = 'none';
+        nivelSendoResetado = null;
     }
 
-    function confirmaRecomeco() {
+    function confirmaRecomeco(resetGlobal) {
         cancelaRecomeco();
+        const nivel = nivelSendoResetado;
+        
+        if (resetGlobal) {
+            // Global Reset
+            estadoJogo = {...INITIAL_GAME_STATE};
+            localStorage.removeItem('aprendendoAleitura');
+        } else {
+            // Level-Specific Reset
+            switch (nivel) {
+                case 1:
+                    estadoJogo.progressoNivel1 = [0, 0, 0, 0];
+                    estadoJogo.damierAtual = 0;
+                    estadoJogo.selecaoN1 = [];
+                    break;
+                case 2:
+                    estadoJogo.progressoNivel2 = 0;
+                    estadoJogo.palavraAtualN2 = null;
+                    estadoJogo.selecaoN2 = [];
+                    break;
+                case 3:
+                    estadoJogo.progressoNivel3 = 0;
+                    estadoJogo.syllabesCompletes = {};
+                    silabaAnteriorN3 = null;
+                    break;
+                case 4:
+                    estadoJogo.progressoNivel4 = 0;
+                    estadoJogo.palavrasCompletasN4 = {};
+                    break;
+                case 5:
+                    estadoJogo.progressoNivel5 = 0;
+                    estadoJogo.palavrasCompletasN5 = {};
+                    palavraAnteriorN5 = null;
+                    break;
+            }
+        }
 
-        estadoJogo = {...INITIAL_GAME_STATE};
-        silabaAnteriorN3 = null; 
-        palavraAnteriorN5 = null; 
-        localStorage.removeItem('aprendendoAleitura');
-
+        // Reinitialize and redirect
         atualizarInterfaceHome();
-        mostrarTela('home');
+        
+        if (resetGlobal) {
+            mostrarTela('home');
+        } else if (nivel >= 1 && nivel <= 5) {
+            // Restart the current level
+            iniciarNivel(nivel);
+        } else {
+            mostrarTela('home');
+        }
     }
 
 
     function mostrarTela(nivelId) {
         document.querySelectorAll('.tela-jogo').forEach(tela => tela.style.display = 'none');
+        // Show the level screen
         document.getElementById(`tela-${nivelId}`).style.display = 'block';
+        
+        // Hide the global reset button and show the local reset button (if applicable)
+        document.getElementById('btn-reset-global').style.display = 'none';
+        if (document.getElementById(`tela-${nivelId}`).querySelector('#btn-reset')) {
+            document.getElementById(`tela-${nivelId}`).querySelector('#btn-reset').style.display = 'flex';
+        }
+        
         if (nivelId === 'home') {
+            document.getElementById('btn-reset-global').style.display = 'flex';
             atualizarInterfaceHome();
         }
     }
@@ -793,8 +912,8 @@
             case 1: iniciarNivel1(); break;
             case 2: iniciarNivel2(); break; 
             case 3: iniciarNivel3(); break; 
-            case 4: iniciarNivel4(); break; // NEW LEVEL 4
-            case 5: iniciarNivel5(); break; // OLD LEVEL 4 (Palavras Áudio)
+            case 4: iniciarNivel4(); break; 
+            case 5: iniciarNivel5(); break; 
         }
     }
     
@@ -922,8 +1041,13 @@
         estadoJogo.palavraAtualN2 = targetWord;
         estadoJogo.selecaoN2 = [];
 
+        // 1. Set STATIC target word
         document.getElementById('palavra-alvo-container').textContent = targetWord.toUpperCase();
+        
+        // 2. Clear selected letters container
+        document.getElementById('selecao-atual').textContent = '';
 
+        // 3. Prepare anagram grid
         const letters = targetWord.toLowerCase().split('');
         const shuffledLetters = shuffleArray(letters);
 
@@ -943,22 +1067,23 @@
     }
     
     function selecionarLetraNova(element, letter) {
-        const targetContainer = document.getElementById('palavra-alvo-container');
+        const selectedContainer = document.getElementById('selecao-atual');
         const targetWord = estadoJogo.palavraAtualN2.toLowerCase();
-        const selectionLength = estadoJogo.selecaoN2.length;
         const targetLength = targetWord.length;
 
-        if (selectionLength >= targetLength) return;
+        if (estadoJogo.selecaoN2.length >= targetLength) return;
 
         estadoJogo.selecaoN2.push({ element: element, letter: letter });
         element.classList.add('invisivel'); 
         
-        // Update display: show the selected letter appended to the target word structure
-        targetContainer.textContent = targetWord.toUpperCase().slice(0, selectionLength) + letter.toUpperCase() + targetWord.toUpperCase().slice(selectionLength + 1).replace(/./g, ' ');
+        // Update selection display
+        const selectedWordSoFar = estadoJogo.selecaoN2.map(item => item.letter.toUpperCase()).join('');
+        selectedContainer.textContent = selectedWordSoFar;
         
         document.getElementById('btn-cancelar-anagrama').disabled = false;
 
         if (estadoJogo.selecaoN2.length === targetLength) {
+            document.getElementById('btn-cancelar-anagrama').disabled = true; // Disable cancel when full
             verificarAnagrama();
         }
     }
@@ -968,12 +1093,9 @@
         if (lastSelection) {
             lastSelection.element.classList.remove('invisivel');
             
-            const targetContainer = document.getElementById('palavra-alvo-container');
-            const targetWord = estadoJogo.palavraAtualN2.toUpperCase();
-            
-            // Redraw target word with missing letters represented by spaces
-            const partialWord = targetWord.slice(0, estadoJogo.selecaoN2.length);
-            targetContainer.textContent = partialWord + targetWord.slice(estadoJogo.selecaoN2.length).replace(/./g, ' ');
+            const selectedContainer = document.getElementById('selecao-atual');
+            const selectedWordSoFar = estadoJogo.selecaoN2.map(item => item.letter.toUpperCase()).join('');
+            selectedContainer.textContent = selectedWordSoFar;
 
             if (estadoJogo.selecaoN2.length === 0) {
                  document.getElementById('btn-cancelar-anagrama').disabled = true;
@@ -990,15 +1112,17 @@
             estadoJogo.progressoNivel2++;
             
             if (estadoJogo.progressoNivel2 >= MAX_N2_COMPLETIONS) {
+                // SUCCESS: Show Bravo, then go home
                 exibirMensagemBravo(() => mostrarTela('home'));
             } else {
-                exibirMensagemBravo(() => iniciarNivel2());
+                // PARTIAL SUCCESS: Just advance
+                iniciarNivel2();
             }
         } else {
             setTimeout(() => {
                 estadoJogo.selecaoN2.forEach(item => item.element.classList.remove('invisivel'));
                 estadoJogo.selecaoN2 = [];
-                document.getElementById('palavra-alvo-container').textContent = targetWord.toUpperCase(); // Reset display
+                document.getElementById('selecao-atual').textContent = ''; // Reset display
                 document.getElementById('btn-cancelar-anagrama').disabled = true;
             }, 1000);
         }
@@ -1043,44 +1167,21 @@
             return;
         }
 
-        // Filter words to indices 11 through 30 (20 words total)
-        const PALAVRAS_PARA_N3 = PALAVRAS.slice(10, 30); 
-        if (PALAVRAS_PARA_N3.length === 0) {
-            console.error("Nível 3: Palavras do índice 11 ao 30 não encontradas.");
-            mostrarTela('home');
-            return;
-        }
-        
-        // 1. Filter words whose syllables have NOT been completed once yet
-        const motsParaSilabas = PALAVRAS_PARA_N3.filter(p => {
-             return getSilabas(p).some(s => (estadoJogo.syllabesCompletes[s.toLowerCase()] || 0) < 1);
-        });
-        
-        // Reset syllable completion tracker if all unique syllables have been seen once
-        if (motsParaSilabas.length === 0) {
-             Object.keys(estadoJogo.syllabesCompletes).forEach(s => estadoJogo.syllabesCompletes[s] = 0);
-        }
+        // --- Select from HARDCODED SILABAS_ALVO ---
+        const silabasNaoCompletas = SILABAS_ALVO.filter(s => (estadoJogo.syllabesCompletes[s] || 0) < 1);
 
-        const motsSource = motsParaSilabas.length > 0 ? motsParaSilabas : PALAVRAS_PARA_N3;
-        const motChoisi = motsSource[Math.floor(Math.random() * motsSource.length)];
-
-        // 2. Select a target syllable from the chosen word
-        let silabasDoMot = getSilabas(motChoisi);
-        let silabasCandidatas = silabasDoMot.filter(s => (estadoJogo.syllabesCompletes[s.toLowerCase()] || 0) < 1);
+        const silabasSource = silabasNaoCompletas.length > 0 ? silabasNaoCompletas : SILABAS_ALVO;
         
-        if (silabasCandidatas.length === 0) {
-             silabasCandidatas = silabasDoMot;
-        }
-
         // LOGIC FIX: Prevent consecutive repetition
-        if (silabasCandidatas.length > 1 && silabaAnteriorN3 && silabasCandidatas.map(s => s.toLowerCase()).includes(silabaAnteriorN3)) {
-             silabasCandidatas = silabasCandidatas.filter(s => s.toLowerCase() !== silabaAnteriorN3);
+        let silabasCandidatas = [...silabasSource];
+        if (silabasCandidatas.length > 1 && silabaAnteriorN3) {
+             silabasCandidatas = silabasCandidatas.filter(s => s !== silabaAnteriorN3);
              if (silabasCandidatas.length === 0) {
-                 silabasCandidatas = silabasDoMot;
+                 silabasCandidatas = silabasSource;
              }
         }
         
-        silabaAtual = silabasCandidatas[Math.floor(Math.random() * silabasCandidatas.length)].toLowerCase();
+        silabaAtual = silabasCandidatas[Math.floor(Math.random() * silabasCandidatas.length)];
 
         // Update the previous syllable tracker
         silabaAnteriorN3 = silabaAtual; 
@@ -1116,20 +1217,23 @@
                 adicionarPonto();
                 
                 if (estadoJogo.progressoNivel3 === MAX_N3_COMPLETIONS) {
+                    // SUCCESS: Show Bravo, then go home
                     exibirMensagemBravo(() => mostrarTela('home'));
                     return;
                 }
             }
             
+            // PARTIAL SUCCESS: Just advance
             iniciarNivel3();
 
         } else {
+            // FAILURE: Just advance
             iniciarNivel3();
         }
         salvarEstado();
     }
 
-    // --- NOVO NÍVEL 4: IDENTIFICAÇÃO DE PALAVRAS ---
+    // --- NÍVEL 4: IDENTIFICAÇÃO DE PALAVRAS ---
     
     function iniciarNivel4() {
         if (estadoJogo.progressoNivel4 >= MAX_N4_COMPLETIONS) {
@@ -1190,19 +1294,22 @@
                     adicionarPonto();
 
                     if (estadoJogo.progressoNivel4 === MAX_N4_COMPLETIONS) {
+                        // SUCCESS: Show Bravo, then go home
                         exibirMensagemBravo(() => mostrarTela('home'));
                         return;
                     }
                 }
             }
-            exibirMensagemBravo(() => iniciarNivel4());
+            // PARTIAL SUCCESS: Just advance
+            iniciarNivel4();
         } else {
+            // FAILURE: Just advance
             iniciarNivel4();
         }
     }
 
 
-    // --- NÍVEL 5 (Antigo 4): PALAVRAS (ÁUDIO) ---
+    // --- NÍVEL 5: PALAVRAS (ÁUDIO) ---
 
     function iniciarNivel5() {
         if (estadoJogo.progressoNivel5 >= MAX_N5_COMPLETIONS) {
@@ -1275,15 +1382,18 @@
                     adicionarPonto();
 
                     if (estadoJogo.progressoNivel5 === MAX_N5_COMPLETIONS) {
+                        // SUCCESS: Show Bravo, then go home
                         exibirMensagemBravo(() => mostrarTela('home'));
                         return;
                     }
                 }
             }
 
-            exibirMensagemBravo(() => iniciarNivel5());
+            // PARTIAL SUCCESS: Just advance
+            iniciarNivel5();
 
         } else {
+            // FAILURE: Just advance
             iniciarNivel5();
         }
         salvarEstado();
