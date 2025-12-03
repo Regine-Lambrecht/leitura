@@ -131,48 +131,13 @@
             color: #7f8c8d;
         }
         
-        /* **CORREÇÃO CRÍTICA**: Garante que o verde prevaleça sobre o cinza do :disabled */
+        /* Garante que o verde prevaleça sobre o cinza do :disabled */
         .nivel-btn.completed:disabled {
             background-color: var(--cor-sucesso);
             color: white; /* Garante que o texto fique branco */
         }
 
-
-        /* Conteneur pour les icônes à direita do termo */
-        .icon-container {
-            margin-left: 10px;
-            display: flex;
-            align-items: center;
-        }
-        .icon-container i {
-            margin-right: 2px;
-            font-size: 1.5em;
-        }
-
-        .contador-progresso {
-            font-size: 0.8em;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 2px 8px;
-            border-radius: 5px;
-        }
-
-        /* Bouton Recomeçar (on home screen) */
-        #btn-reset-level {
-            background-color: #f39c12; 
-            color: white;
-            margin: 10px auto; /* Centered margin */
-            padding: 10px;
-            font-size: 1em;
-            font-family: 'Times New Roman', Times, serif;
-            justify-content: center;
-            display: flex; 
-            width: 70%; /* Reduced width */
-            max-width: 300px;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-        }
-
+        /* Botão de reset global (Home Screen) */
         #btn-reset-global {
             background-color: var(--cor-reset);
             color: white;
@@ -387,22 +352,7 @@
             font-size: 1.4em;
         }
 
-        /* Message Bravo et Overlay */
-        #overlay {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            color: #333;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            z-index: 1001;
-            width: 80%;
-            max-width: 350px;
-        }
-
+        /* Message Bravo (Simplificado) */
         #mensagem-bravo {
             position: fixed;
             top: 50%;
@@ -416,9 +366,10 @@
             font-size: 2em;
             display: none;
             animation: fadeIn 0.3s;
+            z-index: 1000; /* Z-index simples, sem overlay complexo */
         }
 
-        /* Modal de Confirmação */
+        /* Modal de Confirmação (Simplificado) */
         #modal-confirmacao {
             position: fixed;
             top: 50%;
@@ -429,9 +380,10 @@
             padding: 25px;
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            z-index: 1001;
+            z-index: 1000; 
             width: 80%;
             max-width: 350px;
+            border: 1px solid #ccc;
         }
 
         #modal-confirmacao p {
@@ -473,8 +425,6 @@
     </style>
 </head>
 <body>
-
-<div id="overlay" style="display: none;"></div>
 
 <div id="modal-confirmacao" style="display: none;">
     <p id="modal-reset-text">Você vai perder todos os pontos do Nível 3 (Sílabas). Quer mesmo recomeçar?</p>
@@ -522,10 +472,6 @@
             <span class="contador-progresso" id="count-n5">(0/10)</span>
         </button>
 
-
-        <button id="btn-reset-level" onclick="mostrarModalRecomeco('level')" style="display: flex;">
-            <i class="fa-solid fa-undo"></i> RECOMEÇAR O NÍVEL
-        </button>
 
         <button id="btn-reset-global" onclick="mostrarModalRecomeco('global')" style="display: flex;">
             <i class="fa-solid fa-sync-alt"></i> RECOMEÇAR TUDO DE ZERO
@@ -589,6 +535,9 @@
     <div id="mensagem-bravo" style="display: none;">BRAVO PEDRO!</div>
 
 </div>
+
+
+<div id="browser-voice-control"></div>
 
 <script>
     // Configuração das vozes TTS
@@ -779,41 +728,23 @@
     function mostrarModalRecomeco(nivel) {
         const modalText = document.getElementById('modal-reset-text');
         
-        let nivelParaResetar;
-
-        if (nivel === 'level') {
-            // Garante que o nível real a ser resetado/iniciado seja identificado
-            nivelParaResetar = getHighestIncompleteLevel(); 
-        } else {
-            nivelParaResetar = nivel; // 'global'
-        }
-        
-        // Armazena o nível real a ser resetado globalmente
+        // Apenas para Reset Global (reset de nível foi removido)
+        let nivelParaResetar = nivel; 
         nivelSendoResetado = nivelParaResetar; 
-
-        let nivelNome = '';
-        switch(nivelParaResetar) {
-            case 1: nivelNome = 'Letras (Pares)'; break;
-            case 2: nivelNome = 'Letras de Palavras'; break;
-            case 3: nivelNome = 'Sílabas'; break;
-            case 4: nivelNome = 'Identificação'; break;
-            case 5: nivelNome = 'Palavras (Áudio)'; break;
-        }
 
         if (nivel === 'global') {
             modalText.textContent = "Você vai perder TODOS os pontos e todo o progresso. Quer mesmo recomeçar de zero?";
             document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(true);
         } else {
-            modalText.textContent = `Você vai perder todos os pontos do Nível ${nivelParaResetar} (${nivelNome}). Quer mesmo recomeçar?`;
-            document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(false);
+            // Este caminho não deve ser alcançado
+            modalText.textContent = `Ação não suportada. Quer recomeçar tudo?`;
+            document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(true);
         }
 
-        document.getElementById('overlay').style.display = 'block';
         document.getElementById('modal-confirmacao').style.display = 'block';
     }
 
     function cancelaRecomeco() {
-        document.getElementById('overlay').style.display = 'none';
         document.getElementById('modal-confirmacao').style.display = 'none';
         nivelSendoResetado = null;
     }
@@ -824,41 +755,7 @@
         if (estadoJogo.progressoNivel3 < MAX_N3_COMPLETIONS) return 3;
         if (estadoJogo.progressoN4 < MAX_N4_COMPLETIONS) return 4;
         if (estadoJogo.progressoN5 < MAX_N5_COMPLETIONS) return 5;
-        // Se tudo completo, reseta o último para dar o que fazer.
         return 5; 
-    }
-
-    // --- FUNÇÃO: Reseta o nível localmente (coloca 0) ---
-    function resetarNivelAlvo(nivelAlvo) {
-        console.log(`[RESET] Zerando progresso local do Nível ${nivelAlvo}...`);
-        switch (nivelAlvo) {
-            case 1:
-                estadoJogo.progressoNivel1 = [0, 0, 0, 0];
-                estadoJogo.damierAtual = 0;
-                estadoJogo.selecaoN1 = [];
-                break;
-            case 2:
-                estadoJogo.progressoNivel2 = 0;
-                estadoJogo.palavraAtualN2 = null;
-                estadoJogo.selecaoN2 = [];
-                break;
-            case 3:
-                estadoJogo.progressoNivel3 = 0;
-                estadoJogo.syllabesCompletasPorPalavra = {};
-                silabaAnteriorN3 = null;
-                break;
-            case 4:
-                estadoJogo.progressoN4 = 0;
-                estadoJogo.palavrasCompletasN4 = {};
-                break;
-            case 5:
-                estadoJogo.progressoN5 = 0;
-                estadoJogo.palavrasCompletasN5 = {};
-                palavraAnteriorN5 = null;
-                break;
-        }
-        console.log(`[RESET] Nível ${nivelAlvo} zerado. Progresso atual: N4=${estadoJogo.progressoN4}`);
-        return nivelAlvo;
     }
 
     // --- FUNÇÃO: Recalcula o score global somando todos os progressos ---
@@ -870,35 +767,23 @@
         const n5Score = estadoJogo.progressoN5;
         
         estadoJogo.scoreGlobal = n1Score + n2Score + n3Score + n4Score + n5Score;
-        console.log(`[SCORE] Score Global recalculado: ${estadoJogo.scoreGlobal}`);
     }
-    // --- FIM FUNÇÕES DE RESET/RECALCULO ---
+    // --- FIM FUNÇÕES DE RECALCULO ---
 
     function confirmaRecomeco(resetGlobal) {
-        console.log(`[CONFIRM] Confirmação de recomeço: Global=${resetGlobal}, Nível Alvo=${nivelSendoResetado}`);
         cancelaRecomeco();
-        const nivel = nivelSendoResetado; 
         
         if (resetGlobal) {
             estadoJogo = {...INITIAL_GAME_STATE};
             localStorage.removeItem('aprendendoAleitura');
         } else {
-            // PASSO 1: Reseta o nível alvo para 0
-            resetarNivelAlvo(nivel); 
-            // PASSO 2: Recalcula o score global somando os contadores
-            recalcularScoreGlobal();
+            // Ação de reset de nível removida
+            mostrarTela('home');
+            return;
         }
 
         atualizarInterfaceHome();
-        
-        // CORREÇÃO CRÍTICA: INICIA O NÍVEL CORRETO APÓS O RESET
-        if (!resetGlobal && nivel >= 1 && nivel <= 5) {
-            console.log(`[INIT] Iniciando Nível ${nivel}...`);
-            iniciarNivel(nivel);
-        } else {
-            console.log('[INIT] Voltando para a Home.');
-            mostrarTela('home');
-        }
+        mostrarTela('home');
     }
 
 
@@ -911,29 +796,22 @@
              console.error(`Elemento com ID 'tela-${nivelId}' não encontrado.`);
         }
         
-        // Update home page buttons visibility logic
-        document.getElementById('btn-reset-global').style.display = 'none';
-        document.getElementById('btn-reset-level').style.display = 'none';
-        
+        // Esconde o botão global na tela de jogo, mostra na Home
+        document.getElementById('btn-reset-global').style.display = (nivelId === 'home') ? 'flex' : 'none';
+
         if (nivelId === 'home') {
-            document.getElementById('btn-reset-global').style.display = 'flex';
-            document.getElementById('btn-reset-level').style.display = 'flex';
             atualizarInterfaceHome();
         }
     }
 
     function exibirMensagemBravo(callback) {
         const msgElement = document.getElementById('mensagem-bravo');
-        const overlayElement = document.getElementById('overlay');
-
-        document.getElementById('modal-confirmacao').style.display = 'none';
-
-        overlayElement.style.display = 'block';
+        
+        // Simplesmente exibe a mensagem de bravo no centro da tela, sem overlay/backdrop
         msgElement.style.display = 'block';
 
         setTimeout(() => {
             msgElement.style.display = 'none';
-            overlayElement.style.display = 'none';
             if (callback) callback();
         }, 1500);
     }
@@ -947,7 +825,6 @@
               return;
         }
         
-        // Recalcula o score global sempre que a interface é atualizada, garantindo consistência.
         recalcularScoreGlobal();
 
         document.getElementById('score-valor').textContent = estadoJogo.scoreGlobal;
@@ -957,7 +834,6 @@
     }
 
     function adicionarPonto() {
-        // A pontuação global agora é atualizada APENAS via recalcularScoreGlobal.
         atualizarInterfaceHome(); 
     }
 
@@ -1565,5 +1441,5 @@
 </script>
 
 
-<div id="browser-voice-control"></div></body>
+</body>
 </html>
