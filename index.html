@@ -294,7 +294,7 @@
             margin-bottom: 20px;
         }
         
-        /* Styles pour les boutons de réponse dans les niveaux 3, 4 e 5 */
+        /* Styles pour les boutons de réponse dans les niveaux 3, 4 et 5 */
         .opcao-btn, .btn-verdadeiro-falso {
             padding: 15px;
             margin: 10px 0;
@@ -378,16 +378,6 @@
             display: flex;
             justify-content: space-between;
             gap: 10px;
-        }
-
-        .botoes-modal button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 50%;
-            font-family: 'Times New Roman', Times, serif;
         }
 
         #btn-sim-reset-global {
@@ -689,38 +679,38 @@
     ];
     let PALAVRAS = PALAVRAS_BASE.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
-    // --- NOVO: Lógica de separação silábica (Melhorada para o PT-BR) ---
+    // --- NÍVEL 3: DADOS HARD-CODED E PONTUAÇÃO SEQUENCIAL ---
+    
+    // Lista Sequencial de Sílabas (54 elementos) - Gerada da separação das 20 palavras (11 a 30)
+    const DESAFIO_SILABAS_SEQUENCIAL = [
+        "a", "be", "lha", "a", "ra", "nha", "a", "ra", "ra", "ba", "lei", "a", "ba", "na", "na", 
+        "bo", "la", "cha", "bo", "li", "che", "bra", "sil", "ca", "bi", "de", "ca", "bi", "ne", 
+        "ca", "cho", "rro", "ca", "ne", "ta", "ca", "sa", "da", "cha", "péu", "cha", "ve", 
+        "chu", "pe", "ta", "chu", "va", "co", "bra", "co", "e", "lho", "co", "fre"
+    ];
+    
+    // IDs (ÍNDICES 1-BASED) que concedem PONTO (Fim da palavra)
+    // Total de 20 pontos
+    const PONTOS_IDS_N3 = [3, 6, 9, 12, 15, 18, 21, 23, 26, 29, 32, 35, 38, 40, 42, 45, 47, 49, 52, 54];
+    
+    const MAX_SILABAS_LOOP_N3 = DESAFIO_SILABAS_SEQUENCIAL.length; // 54 sílabas no ditado
+    const MAX_N3_COMPLETIONS = PONTOS_IDS_N3.length; // 20 pontos a serem alcançados
+    
+    // --- FUNÇÃO getSilabas() mantida para Nível 4/5 (Geração de distratores) ---
     function getSilabas(palavra) {
-        let processedPalavra = palavra.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove accents for internal processing
-        
-        // 1. Split double consonants (RR, SS, CC, NN, etc.)
-        processedPalavra = processedPalavra.replace(/([r|s|c|p|t|b|d|f|g|k|m|n|v|x|z])\1/g, '$1-$1');
-        
-        // 2. Handle common consonant blends (TR, BR, PL, etc.) - keep them together:
-        // C - L/R, P - L/R, B - L/R, G - L/R, T - R, D - R, V - R, F - L/R
-        const blends = /(c[lr]|p[lr]|b[lr]|g[lr]|t[r]|d[r]|v[r]|f[lr])/g;
-        
-        // 3. Separate Vowel-Consonant-Consonant-Vowel (VCCV) only if not a blend (simplified V-CV or VC-CV)
-        // This is complex. We'll stick to a simplified rule: isolate the single consonant when possible (V-CV)
+        // Esta função ainda é necessária para gerar distratores nos Níveis 4 e 5.
+        let processedPalavra = palavra.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        processedPalavra = processedPalavra.replace(/rr|ss|ch|lh|nh|qu|gu/gi, (match) => match.toUpperCase());
         processedPalavra = processedPalavra.replace(/([aeiouy])([bcdfghjklmnpqrstvwxyzç])([aeiouy])/gi, '$1-$2$3');
-        
-        // 4. Separate vowel-vowel (simple hiatus)
-        processedPalavra = processedPalavra.replace(/([aeiouy])([aeiouy])/gi, '$1-$2');
-
-        // 5. Separate final M/N and other complex cases (adjusting common errors)
+        processed processedPalavra.replace(/([aeiouy])([aeiouy])/gi, '$1-$2');
         processedPalavra = processedPalavra.replace(/([aeiouy])(m|n)([bcdfghjklmnpqrstvwxyzç])/gi, '$1$2-$3'); 
         
-        // 6. Handle Ch, Lh, Nh, Gu, Qu (keep together)
-        processedPalavra = processedPalavra.replace(/(c|l|n)h|qu|gu/gi, (match) => match.toUpperCase());
-        
         let silabas = processedPalavra.split('-');
-        
-        // Clean up and re-apply original capitalization (first letter only) if needed
-        silabas = silabas.map(s => s.trim()).filter(s => s.length > 0).map(s => s.toLowerCase());
-        
-        return silabas;
+        return silabas.map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
     }
-    
+    // --- FIM NÍVEL 3 DADOS E LÓGICA ---
+
+
     function shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -761,24 +751,6 @@
         return distractors.slice(0, 2);
     }
 
-    // --- NÍVEL 3: Configuração de Ditado Sequencial e Pontuação ---
-    
-    const PALAVRAS_PARA_N3 = PALAVRAS.slice(10, 30); // Palavras 11 a 30 (20 palavras)
-    let DESAFIO_SILABAS_SEQUENCIAL = [];
-    
-    PALAVRAS_PARA_N3.forEach(palavra => {
-        const silabasDaPalavra = getSilabas(palavra);
-        DESAFIO_SILABAS_SEQUENCIAL.push(...silabasDaPalavra);
-    });
-    
-    // Lista de IDs (ÍNDICES BASE 1) que concedem PONTO (Fim de cada palavra)
-    // IDs 3, 6, 9, 12, 15, 18, 21, 23, 26, 29, 32, 35, 38, 40, 42, 45, 47, 49, 52, 54
-    const PONTOS_IDS_N3 = [3, 6, 9, 12, 15, 18, 21, 23, 26, 29, 32, 35, 38, 40, 42, 45, 47, 49, 52, 54];
-    const MAX_N3_COMPLETIONS = PONTOS_IDS_N3.length; // 20 pontos totais
-
-    // Novo cálculo do total máximo de sílabas para o loop
-    const MAX_SILABAS_LOOP_N3 = DESAFIO_SILABAS_SEQUENCIAL.length; 
-
     // Total de todos os pontos
     const MAX_N1_COMPLETIONS = DADOS_LETRAS.length; // 4
     const MAX_N2_COMPLETIONS = 10; // Anagramas (Words 1-10)
@@ -802,6 +774,7 @@
         selecaoN2: [], 
         
         progressoNivel3: 0, 
+        syllabesCompletasPorPalavra: {}, 
         indiceSilabaAtual: 0, // NOVO: Rastreia a posição no DESAFIO_SILABAS_SEQUENCIAL (índice 0-based)
         
         progressoN4: 0, // NEW: Identification
@@ -823,12 +796,12 @@
         const estadoSalvo = localStorage.getItem('aprendendoAleitura');
         if (estadoSalvo) {
             estadoJogo = JSON.parse(estadoSalvo);
-            // Handle legacy state: Initialize new trackers if missing
-            if (!estadoJogo.palavrasCompletasN4) estadoJogo.palavrasCompletasN4 = {};
-            if (!estadoJogo.palavrasCompletasN5) estadoJogo.palavrasCompletasN5 = {};
-            // O estado de progressoNivel3 era diferente, o progresso agora é rastreado por indiceSilabaAtual
+            // Garante que os novos estados estejam presentes
             if (estadoJogo.indiceSilabaAtual === undefined) estadoJogo.indiceSilabaAtual = 0; 
             if (estadoJogo.progressoNivel3 === undefined) estadoJogo.progressoNivel3 = 0;
+            if (!estadoJogo.palavrasCompletasN4) estadoJogo.palavrasCompletasN4 = {};
+            if (!estadoJogo.palavrasCompletasN5) estadoJogo.palavrasCompletasN5 = {};
+            if (!estadoJogo.syllabesCompletasPorPalavra) estadoJogo.syllabesCompletasPorPalavra = {};
         } else {
             estadoJogo = {...INITIAL_GAME_STATE};
         }
@@ -1300,7 +1273,7 @@
         }
 
         // --- STEP 1: Determine the target syllable using the sequential index (Ditado) ---
-        // Garante que o índice atual esteja dentro dos limites da lista sequencial
+        // Puxa a sílaba da lista sequencial baseada no índice 0-based
         const currentIndex = estadoJogo.indiceSilabaAtual % MAX_SILABAS_LOOP_N3;
         silabaAtual = DESAFIO_SILABAS_SEQUENCIAL[currentIndex];
         
@@ -1325,7 +1298,7 @@
         if (selection === silabaAtual) {
             
             // Verifica se o ID (índice 1-based) deve conceder um ponto
-            // Adicionamos +1 pois PONTOS_IDS_N3 é 1-based, e indiceSilabaAtual é 0-based.
+            // PONTOS_IDS_N3 é 1-based, então usamos (indiceSilabaAtual + 1)
             const currentId = estadoJogo.indiceSilabaAtual + 1; 
 
             if (PONTOS_IDS_N3.includes(currentId)) {
