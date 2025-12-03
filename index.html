@@ -355,17 +355,12 @@
         /* Message Bravo et Overlay */
         #overlay {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            color: #333;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            top: 0; /* CORREÇÃO: Usar 0 para cobrir todo o topo */
+            left: 0; /* CORREÇÃO: Usar 0 para cobrir toda a esquerda */
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7); /* Fundo semi-transparente */
             z-index: 1001;
-            width: 80%;
-            max-width: 350px;
         }
 
         #mensagem-bravo {
@@ -381,6 +376,8 @@
             font-size: 2em;
             display: none;
             animation: fadeIn 0.3s;
+            /* CORREÇÃO: Z-INDEX MAIOR PARA FICAR SOBRE O OVERLAY */
+            z-index: 1002; 
         }
 
         /* Modal de Confirmação */
@@ -394,7 +391,7 @@
             padding: 25px;
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            z-index: 1001;
+            z-index: 1002; /* Z-INDEX IGUAL OU MAIOR QUE A MENSAGEM BRAVO */
             width: 80%;
             max-width: 350px;
         }
@@ -438,6 +435,8 @@
     </style>
 </head>
 <body>
+
+<div id="overlay" style="display: none;"></div>
 
 <div id="modal-confirmacao" style="display: none;">
     <p id="modal-reset-text">Você vai perder todos os pontos do Nível 3 (Sílabas). Quer mesmo recomeçar?</p>
@@ -548,6 +547,7 @@
     <div id="mensagem-bravo" style="display: none;">BRAVO PEDRO!</div>
 
 </div>
+
 
 <div id="browser-voice-control"></div>
 
@@ -745,15 +745,12 @@
         // Armazena o nível real a ser resetado globalmente
         nivelSendoResetado = nivelParaResetar; 
 
-        // Definimos o nome do nível, embora só usemos para o reset global.
-        let nivelNome = 'GLOBAL'; 
-
         if (nivel === 'global') {
             modalText.textContent = "Você vai perder TODOS os pontos e todo o progresso. Quer mesmo recomeçar de zero?";
             document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(true);
         } else {
-            // Este caminho NÃO DEVE ser atingido pela interface atual
-            modalText.textContent = `Você vai perder todos os pontos do Nível ${nivelParaResetar} (${nivelNome}). Quer mesmo recomeçar?`;
+            // Este caminho é para reset de nível individual (AGORA DESABILITADO NA INTERFACE)
+            modalText.textContent = `Você vai perder todos os pontos do Nível ${nivelParaResetar}. Quer mesmo recomeçar?`;
             document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(false);
         }
 
@@ -1035,6 +1032,127 @@
 
             if (paresCorretosN1 === 6) {
                 sucessoNivel1();
+            }
+        } else {
+            setTimeout(() => {
+                elem1.classList.remove('selecionada');
+                elem2.classList.remove('selecionada');
+            }, 1000);
+        }
+        estadoJogo.selecaoN1 = [];
+        salvarEstado();
+    }
+
+    function sucessoNivel1() {
+        const currentCount = estadoJogo.progressoNivel1[estadoJogo.damierAtual];
+        const currentDamierIndex = estadoJogo.damierAtual;
+
+        estadoJogo.progressoNivel1[currentDamierIndex]++;
+        const didJustCompleteTwice = (currentCount === 1) && (estadoJogo.progressoNivel1[currentDamierIndex] === 2);
+        
+        estadoJogo.damierAtual = (currentDamierIndex + 1) % DADOS_LETRAS.length;
+
+        if (estadoJogo.progressoNivel1.filter(c => c >= 2).length === DADOS_LETRAS.length) {
+            exibirMensagemBravo(() => mostrarTela('home')); 
+        } else {
+            iniciarNivel1();
+        }
+        
+        salvarEstado();
+        atualizarInterfaceHome(); 
+    }
+
+    // --- NÍVEL 2: LETRAS DE PALAVRAS (ANAGRAMAS) ---
+
+    const PALAVRAS_N2 = PALAVRAS.slice(0, MAX_N2_COMPLETIONS); 
+
+    function iniciarNivel2() {
+        if (estadoJogo.progressoNivel2 >= MAX_N2_COMPLETIONS) {
+            mostrarTela('home');
+            return;
+        }
+
+        const wordIndex = estadoJogo.progressoNivel2 % MAX_N2_COMPLETIONS; 
+        const targetWord = PALAVRAS_N2[wordIndex];
+        
+        estadoJogo.palavraAtualN2 = targetWord;
+        estadoJogo.selecaoN2 = [];
+
+        // 1. Set STATIC target word
+        document.getElementById('palavra-alvo-container').textContent = targetWord.toUpperCase();
+        
+        // 2. Clear selected letters container
+        document.getElementById('selecao-atual').textContent = '';
+
+        // 3. Prepare anagram grid
+        const letters = targetWord.toLowerCase().split('');
+        const shuffledLetters = shuffleArray(letters);
+
+        const grid = document.getElementById('anagrama-grid');
+        grid.innerHTML = '';
+        
+        shuffledLetters.forEach((letter, index) => {
+            const letterElement = document.createElement('div');
+            letterElement.textContent = letter;
+            letterElement.className = 'anagrama-letra';
+            letterElement.dataset.originalIndex = index;
+            letterElement.onclick = () => selecionarLetraNova(letterElement, letter);
+            grid.appendChild(letterElement);
+        });
+
+        document.getElementById('btn-cancelar-anagrama').disabled = true;
+    }
+    
+    function selecionarLetraNova(element, letter) {
+        const selectedContainer = document.getElementById('selecao-atual');
+        const targetWord = estadoJogo.palavraAtualN2.toLowerCase();
+        const targetLength = targetWord.length;
+
+        if (estadoJogo.selecaoN2.length >= targetLength) return;
+
+        estadoJogo.selecaoN2.push({ element: element, letter: letter });
+        element.classList.add('invisivel'); 
+        
+        // Update selection display
+        const selectedWordSoFar = estadoJogo.selecaoN2.map(item => item.letter.toUpperCase()).join('');
+        selectedContainer.textContent = selectedWordSoFar;
+        
+        document.getElementById('btn-cancelar-anagrama').disabled = false;
+
+        if (estadoJogo.selecaoN2.length === targetLength) {
+            document.getElementById('btn-cancelar-anagrama').disabled = true; // Disable cancel when full
+            verificarAnagrama();
+        }
+    }
+    
+    function cancelarSelecaoNivel2() {
+        const lastSelection = estadoJogo.selecaoN2.pop();
+        if (lastSelection) {
+            lastSelection.element.classList.remove('invisivel');
+            
+            const selectedContainer = document.getElementById('selecao-atual');
+            const selectedWordSoFar = estadoJogo.selecaoN2.map(item => item.letter.toUpperCase()).join('');
+            selectedContainer.textContent = selectedWordSoFar;
+
+            if (estadoJogo.selecaoN2.length === 0) {
+                 document.getElementById('btn-cancelar-anagrama').disabled = true;
+            }
+        }
+    }
+
+    function verificarAnagrama() {
+        const selectedWord = estadoJogo.selecaoN2.map(item => item.letter).join('');
+        const targetWord = estadoJogo.palavraAtualN2.toLowerCase();
+
+        if (selectedWord === targetWord) {
+            estadoJogo.progressoNivel2++;
+            
+            if (estadoJogo.progressoNivel2 >= MAX_N2_COMPLETIONS) {
+                // SUCCESS: Show Bravo, then go home
+                exibirMensagemBravo(() => mostrarTela('home'));
+            } else {
+                // PARTIAL SUCCESS: Just advance
+                iniciarNivel2();
             }
         } else {
             setTimeout(() => {
@@ -1464,5 +1582,5 @@
 </script>
 
 
-<div id="browser-voice-control"></div></body>
+</body>
 </html>
