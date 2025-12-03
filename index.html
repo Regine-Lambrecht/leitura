@@ -565,7 +565,6 @@
     let PALAVRAS = PALAVRAS_BASE.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
     // --- NÍVEL 3: DADOS HARD-CODED E PONTUAÇÃO SEQUENCIAL ---        
-    // Lista Sequencial de Sílabas (54 elementos) - Gerada da separação das 20 palavras (11 a 30)
     const DESAFIO_SILABAS_SEQUENCIAL = [
         "a", "be", "lha", "a", "ra", "nha", "a", "ra", "ra", "ba", "lei", "a", "ba", "na", "na",
         "bo", "la", "cha", "bo", "li", "che", "bra", "sil", "ca", "bi", "de", "ca", "bi", "ne",
@@ -573,15 +572,13 @@
         "chu", "pe", "ta", "chu", "va", "co", "bra", "co", "e", "lho", "co", "fre"
     ];
     
-    // IDs (ÍNDICES 1-BASED) que concedem PONTO (Fim da palavra)
     const PONTOS_IDS_N3 = [3, 6, 9, 12, 15, 18, 21, 23, 26, 29, 32, 35, 38, 40, 42, 45, 47, 49, 52, 54];
     
-    const MAX_SILABAS_LOOP_N3 = DESAFIO_SILABAS_SEQUENCIAL.length; // 54 sílabas no ditado
-    const MAX_N3_COMPLETIONS = PONTOS_IDS_N3.length; // 20 pontos a serem alcançados
+    const MAX_SILABAS_LOOP_N3 = DESAFIO_SILABAS_SEQUENCIAL.length; 
+    const MAX_N3_COMPLETIONS = PONTOS_IDS_N3.length; // 20 pontos
 
     // --- FUNÇÃO getSilabas() mantida para Nível 4/5 (Geração de distratores) ---
     function getSilabas(palavra) {
-        // Esta função ainda é necessária para gerar distratores nos Níveis 4 e 5.
         let processedPalavra = palavra.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         processedPalavra = processedPalavra.replace(/rr|ss|ch|lh|nh|qu|gu/gi, (match) => match.toUpperCase());
         processedPalavra = processedPalavra.replace(/([aeiouy])([bcdfghjklmnpqrstvwxyzç])([aeiouy])/gi, '$1-$2$3');
@@ -591,7 +588,6 @@
         let silabas = processedPalavra.split('-');
         return silabas.map(s => s.trim().toLowerCase()).filter(s => s.length > 0);
     }
-    // --- FIM NÍVEL 3 DADOS E LÓGICA ---
 
     function shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -601,6 +597,33 @@
         return array;
     }
 
+    function generateDistractorsSilabas(correct) {
+        const correctLower = correct.toLowerCase();
+        let distractors = [];
+        const alphabet = 'bcdefghijklmnpqrstvwxyz';
+
+        for (let i = 0; i < correctLower.length; i++) {
+            const originalChar = correctLower[i];
+            const randomChar = alphabet[Math.floor(Math.random() * alphabet.length)];
+
+            if (!'aeiouãõ'.includes(originalChar) && randomChar !== originalChar) {
+                const distractor = correctLower.substring(0, i) + randomChar + correctLower.substring(i + 1);
+                if (distractor !== correctLower && !distractors.includes(distractor) && distractors.length < 2) {
+                    distractors.push(distractor);
+                }
+            }
+        }
+        while (distractors.length < 2) {
+            let uniqueDistractor = correctLower.substring(0, correctLower.length - 1) + alphabet[Math.floor(Math.random() * alphabet.length)] + (correctLower.length > 2 ? 'a' : '');
+            if (!distractors.includes(uniqueDistractor) && distractors.length >= 2) {
+                 distractors.push(uniqueDistractor);
+            } else if (distractors.length === 0) {
+                distractors.push('tepo');
+            }
+        }
+        return distractors.slice(0, 2);
+    }
+    
     function generateSimilarWords(correctWord, allWords) {
         const correctLower = correctWord.toLowerCase();
         const correctSyllabeCount = getSilabas(correctWord).length;
@@ -655,7 +678,7 @@
 
         progressoNivel3: 0,
         syllabesCompletasPorPalavra: {},
-        indiceSilabaAtual: 0, // NOVO: Rastreia a posição no DESAFIO_SILABAS_SEQUENCIAL (índice 0-based)
+        indiceSilabaAtual: 0, // Rastreia a posição no DESAFIO_SILABAS_SEQUENCIAL (0-based)
 
         progressoN4: 0, // NEW: Identification
         palavrasCompletasN4: {},
@@ -1106,10 +1129,9 @@
         atualizarInterfaceHome();
     }
 
-    // --- NÍVEL 3: SÍLABAS (REESCRITO) ---
+    // --- NÍVEL 3: SÍLABAS (WORKING REWRITE) ---
 
     function generateDistractorsSilabas(correct) {
-        // ... (Distractor generation logic remains the same for variety)
         const correctLower = correct.toLowerCase();
         let distractors = [];
         const alphabet = 'bcdefghijklmnpqrstvwxyz';
@@ -1127,7 +1149,7 @@
         }
         while (distractors.length < 2) {
             let uniqueDistractor = correctLower.substring(0, correctLower.length - 1) + alphabet[Math.floor(Math.random() * alphabet.length)] + (correctLower.length > 2 ? 'a' : '');
-            if (!distractors.includes(uniqueDistractor) && uniqueDistractor.length >= 2) {
+            if (!distractors.includes(uniqueDistractor) && distractors.length >= 2) {
                  distractors.push(uniqueDistractor);
             } else if (distractors.length === 0) {
                 distractors.push('tepo');
@@ -1154,8 +1176,6 @@
             startIndex = 0;
         } else {
             // IF score is > 0, calculate the index immediately after the last solved word.
-            // PONTOS_IDS_N3 is 1-based, we subtract 1 to get the array index of the last point.
-            // The value at that index is the syllable ID (1-based), which equals the next 0-based index.
             const lastCompletedIndex_1based = PONTOS_IDS_N3[currentWordCount - 1]; 
             startIndex = lastCompletedIndex_1based;
         }
@@ -1403,6 +1423,11 @@
             salvarEstado(); 
         }
 
+        // Final safety check for N3 data corruption on load
+        if (estadoJogo.progressoNivel3 === 0 && estadoJogo.indiceSilabaAtual > 0) {
+            estadoJogo.indiceSilabaAtual = 0;
+            salvarEstado();
+        }
         // --- END PATCH ---
 
         atualizarInterfaceHome();
