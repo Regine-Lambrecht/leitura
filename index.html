@@ -137,8 +137,6 @@
             color: white; /* Garante que o texto fique branco */
         }
 
-        /* Removido #btn-reset-level-in-game style */
-        
         /* Botão de reset global (Home Screen) */
         #btn-reset-global {
             background-color: var(--cor-reset);
@@ -553,6 +551,8 @@
 
 </div>
 
+<div id="browser-voice-control"></div>
+
 <script>
     // Configuração das vozes TTS
     const synth = window.speechSynthesis;
@@ -742,35 +742,19 @@
     function mostrarModalRecomeco(nivel) {
         const modalText = document.getElementById('modal-reset-text');
         
-        let nivelParaResetar;
-
-        if (nivel === 'level') {
-            // Este caminho não é mais chamado pela interface, mas é mantido por segurança.
-            nivelParaResetar = getHighestIncompleteLevel(); 
-        } else if (typeof nivel === 'number') {
-             // Este caminho (reset de nível individual) não é mais chamado pela interface, mas é mantido.
-            nivelParaResetar = nivel; 
-        } else {
-            nivelParaResetar = nivel; // 'global'
-        }
+        let nivelParaResetar = nivel; // 'global'
         
         // Armazena o nível real a ser resetado globalmente
         nivelSendoResetado = nivelParaResetar; 
 
-        let nivelNome = '';
-        switch(nivelParaResetar) {
-            case 1: nivelNome = 'Letras (Pares)'; break;
-            case 2: nivelNome = 'Letras de Palavras'; break;
-            case 3: nivelNome = 'Sílabas'; break;
-            case 4: nivelNome = 'Identificação'; break;
-            case 5: nivelNome = 'Palavras (Áudio)'; break;
-        }
+        // Definimos o nome do nível, embora só usemos para o reset global.
+        let nivelNome = 'GLOBAL'; 
 
         if (nivel === 'global') {
             modalText.textContent = "Você vai perder TODOS os pontos e todo o progresso. Quer mesmo recomeçar de zero?";
             document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(true);
         } else {
-            // Este caminho NÃO DEVE ser atingido se você removeu o botão de nível
+            // Este caminho NÃO DEVE ser atingido pela interface atual
             modalText.textContent = `Você vai perder todos os pontos do Nível ${nivelParaResetar} (${nivelNome}). Quer mesmo recomeçar?`;
             document.getElementById('btn-sim-reset-global').onclick = () => confirmaRecomeco(false);
         }
@@ -795,11 +779,6 @@
         return 5; 
     }
 
-    // --- FUNÇÃO: Reseta o nível localmente (REMOVIDA DE USO) ---
-    // function resetarNivelAlvo(nivelAlvo) {
-    //     // Lógica removida, mantendo apenas o fluxo de reset global.
-    // }
-
     // --- FUNÇÃO: Recalcula o score global somando todos os progressos ---
     function recalcularScoreGlobal() {
         const n1Score = estadoJogo.progressoNivel1.filter(c => c >= 2).length;
@@ -814,16 +793,12 @@
 
     function confirmaRecomeco(resetGlobal) {
         cancelaRecomeco();
-        const nivel = nivelSendoResetado; 
         
         if (resetGlobal) {
             estadoJogo = {...INITIAL_GAME_STATE};
             localStorage.removeItem('aprendendoAleitura');
         } else {
-            // Este bloco será executado apenas se o usuário tiver clicado em "Sim" 
-            // para um reset de nível individual, mas como o botão foi removido, 
-            // esta parte está tecnicamente desabilitada da interface.
-            // Para evitar erro, mantemos o fluxo simples:
+            // Este bloco está desabilitado na interface
             mostrarTela('home');
             return;
         }
