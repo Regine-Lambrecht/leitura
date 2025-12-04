@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>jogo de escrita</title>
+    <title>jogo de leitura</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script type="module">
         // Firebase SDKs
@@ -27,6 +27,9 @@
         let userDocRef = null;
         let currentLevel = null; // Rastreia o nível ativo
         
+        // CORRIGIDO: FLAG DE DESBLOQUEIO TOTAL PARA TESTES DESATIVADO
+        const TEST_UNLOCK_ALL_LEVELS = false; 
+
         // Estrutura de dados padrão do usuário
         const defaultState = {
             totalScore: 0, // X/64
@@ -46,6 +49,9 @@
             level3WordsCompleted: Array(20).fill(false),
             // Rastreia as 10 palavras do Nível 4
             level4WordsCompleted: Array(10).fill(false),
+            
+            // NOVO: Rastreamento para exibir modal de parabéns apenas uma vez por nível
+            congratsShown: { level1: false, level2: false, level3: false, level4: false, level5: false }
         };
 
         let gameState = { ...defaultState };
@@ -86,6 +92,15 @@
         const LEVEL4_WORDS = [
             "Porta", "Tapete", "Onça", "Peito", "Maçã",
             "Letra", "Brasil", "Tomada", "Banana", "Vaca"
+        ];
+
+        // Frases motivacionais para desbloqueio (Índice 0 = Nível 1, Índice 1 = Nível 2...)
+        const CONGRATS_MESSAGES = [
+            "O seu esforço está a dar frutos! Você está pronto para o próximo desafio.", // Nível 2 desbloqueado
+            "O seu conhecimento está a expandir-se para caramba! Continue assim!", // Nível 3 desbloqueado
+            "Que rapidez! A sua mente está afiada como uma faca. O nível seguinte espera por si.", // Nível 4 desbloqueado
+            "A escrita flui em si! Você concluiu os níveis mais difíceis, a vitória é sua.", // Nível 5 desbloqueado
+            "Parabéns! Você concluiu todos os níveis do Jogo de Leitura!" // Jogo completo
         ];
 
         // Variáveis de estado dos Níveis
@@ -149,7 +164,8 @@
         }
 
         function calculateTotalScore() {
-            return gameState.level0Score + gameState.level1Score + gameState.level2Score + gameState.level3Score + gameState.level4Score;
+            const totalScore = gameState.level0Score + gameState.level1Score + gameState.level2Score + gameState.level3Score + gameState.level4Score;
+            return totalScore;
         }
 
         function updateUI() {
@@ -164,16 +180,16 @@
             document.getElementById('counter-4').textContent = `${gameState.level4Score}/10`;
 
             const levelButtons = [
-                { id: 'btn-level-0', score: gameState.level0Score, max: 4, next: 'btn-level-1' },
-                { id: 'btn-level-1', score: gameState.level1Score, max: 10, next: 'btn-level-2' },
-                { id: 'btn-level-2', score: gameState.level2Score, max: 20, next: 'btn-level-3' },
-                { id: 'btn-level-3', score: gameState.level3Score, max: 20, next: 'btn-level-4' },
-                { id: 'btn-level-4', score: gameState.level4Score, max: 10, next: null },
+                { id: 'btn-level-0', score: gameState.level0Score, max: 4, label: 'level1', msgIndex: 0 },
+                { id: 'btn-level-1', score: gameState.level1Score, max: 10, label: 'level2', msgIndex: 1 },
+                { id: 'btn-level-2', score: gameState.level2Score, max: 20, label: 'level3', msgIndex: 2 },
+                { id: 'btn-level-3', score: gameState.level3Score, max: 20, label: 'level4', msgIndex: 3 },
+                { id: 'btn-level-4', score: gameState.level4Score, max: 10, label: 'level5', msgIndex: 4 },
             ];
 
-            let previousLevelCompleted = true; // Assume o nível 0 está desbloqueado
+            let previousLevelCompleted = true; 
             
-            // Lógica de ativação/cores
+            // Lógica de ativação/cores e verificação de parabéns
             levelButtons.forEach((level, index) => {
                 const btn = document.getElementById(level.id);
                 
@@ -198,8 +214,42 @@
                     btn.classList.add('inactive-gray', 'cursor-not-allowed');
                     btn.disabled = true;
                 }
+
+                // Verifica se o modal de parabéns deve ser exibido (após o nível ter sido completado)
+                // Esta verificação é independente do TEST_UNLOCK_ALL_LEVELS
+                if (level.score === level.max) {
+                    if (index < levelButtons.length - 1) { // Não verifica para o último nível
+                        const nextLevel = levelButtons[index + 1];
+                        if (!gameState.congratsShown[nextLevel.label] && nextLevel.score < nextLevel.max) {
+                            showCongratsModal(CONGRATS_MESSAGES[level.msgIndex], nextLevel.label);
+                        }
+                    } else {
+                         // Último nível completo
+                        if (!gameState.congratsShown[level.label]) {
+                             showCongratsModal(CONGRATS_MESSAGES[level.msgIndex], level.label);
+                        }
+                    }
+                }
             });
         }
+        
+        // --- NOVO: Modal de Parabéns ---
+        async function showCongratsModal(message, levelLabel) {
+            // Marca o modal como mostrado para este nível no estado
+            gameState.congratsShown[levelLabel] = true;
+            await saveGameState(); 
+
+            const modal = document.getElementById('congrats-modal');
+            const messageEl = document.getElementById('congrats-message');
+            
+            messageEl.textContent = message;
+            modal.classList.remove('hidden');
+        }
+
+        window.closeCongratsModal = function() {
+             document.getElementById('congrats-modal').classList.add('hidden');
+        }
+
 
         // --- Lógica de Navegação e Confirmação ---
         
@@ -262,7 +312,7 @@
             // Se o botão estiver desativado (nível bloqueado), impede o acesso
             const btnId = `btn-level-${level}`;
             const btn = document.getElementById(btnId);
-            if (btn && btn.disabled) {
+            if (btn && btn.disabled && !TEST_UNLOCK_ALL_LEVELS) {
                 alertInApp("Nível Bloqueado", "complete o nível anterior para desbloquear.", "red");
                 showHomepage();
                 return;
@@ -319,7 +369,7 @@
             
             else {
                 document.getElementById('level0-screen').style.display = 'block'; // Usar o slot de nível 0 para mensagem temporária
-                document.getElementById('level0-screen').innerHTML = `<h2>Nível ${level} (em construção)</h2>`;
+                document.getElementById('level0-screen').innerHTML = `<h2>Nível ${level + 1} (em construção)</h2>`;
             }
         }
         
@@ -339,8 +389,8 @@
             // Se o nível estiver completo, apenas exibe a última tela
             if (currentStageIndex >= GRID_ORDER.length) {
                  const gridTitle = document.getElementById('grid-title-level-0');
-                 gridTitle.textContent = `Nível 0: Letras (concluído)`;
-                 document.getElementById('grid-container-level-0').innerHTML = '<p style="text-align: center; margin-top: 30px;">Todas as 8 etapas do Nível 0 foram concluídas. Volte ao início para jogar novamente.</p>';
+                 gridTitle.textContent = `Nível 1: Letras (concluído)`;
+                 document.getElementById('grid-container-level-0').innerHTML = '<p style="text-align: center; margin-top: 30px;">Todas as 8 etapas do Nível 1 foram concluídas. Volte ao início para jogar novamente.</p>';
                  return;
             }
             
@@ -382,7 +432,8 @@
 
             allCells.forEach(data => {
                 const cell = document.createElement('div');
-                cell.className = 'cell';
+                // CORREÇÃO: Reduzido font-size e padding da célula para caber no mobile
+                cell.className = 'cell'; 
                 cell.textContent = data.text;
                 cell.setAttribute('data-match', data.match);
                 cell.setAttribute('data-is-upper', data.isUpper);
@@ -478,7 +529,7 @@
                     }
                 }
             } else {
-                alertInApp("Grupo completo!", "próximo grupo...", "blue");
+                // Nível 0: Não mostra alerta de grupo completo
             }
             
             // 3. Salva o novo estado e score
@@ -507,7 +558,6 @@
             }
 
             if (currentWordIndex >= LEVEL1_WORDS.length) {
-                alertInApp("Nível 1 concluído!", "você completou todas as palavras.", "green");
                 showHomepage();
                 return;
             }
@@ -607,7 +657,7 @@
                 }
                 await saveGameState(); // Salva o novo estado e score (e chama updateUI)
 
-                alertInApp("Palavra correta!", "próxima palavra em breve.", "green");
+                // REMOVIDO: alertInApp("Palavra correta!", "próxima palavra em breve.", "green");
                 
 
                 // Avança para a próxima palavra
@@ -618,7 +668,10 @@
                 
             } else {
                 // Erro!
-                alertInApp("Palavra incorreta!", "tente novamente.", "red");
+                // Aplica feedback visual de erro rapidamente nas letras selecionadas
+                document.querySelectorAll('.letter-button.selected-disabled').forEach(btn => {
+                    btn.classList.add('letter-incorrect');
+                });
                 
                 // Reseta a seleção após um pequeno delay
                 setTimeout(() => {
@@ -626,7 +679,7 @@
                     updateGuessDisplay();
                     letterButtons.forEach(btn => {
                         btn.disabled = false;
-                        btn.classList.remove('selected-disabled');
+                        btn.classList.remove('selected-disabled', 'letter-incorrect');
                     });
                 }, 800);
             }
@@ -676,7 +729,7 @@
                     gameState.level2Score = 20;
                     saveGameState(); 
                 }
-                alertInApp("Nível 2 concluído!", "você completou todas as sílabas.", "green");
+                // REMOVIDO: alertInApp("Nível 2 concluído!", "você completou todas as sílabas.", "green");
                 showHomepage();
                 return;
             }
@@ -729,7 +782,7 @@
                         alertInApp("Ponto ganho!", "1 ponto adicionado. Boa!", "green");
                     }
                 } else {
-                    alertInApp("Correto!", "próxima sílaba...", "blue");
+                    // REMOVIDO: alertInApp("Correto!", "próxima sílaba...", "blue");
                 }
                 
                 // 3. Salva o estado
@@ -750,7 +803,7 @@
                     }
                 });
 
-                alertInApp("Incorreto!", "tente novamente.", "red");
+                // REMOVIDO: alertInApp("Incorreto!", "tente novamente.", "red");
 
                 // Reseta os botões para a sílaba atual após um delay
                 setTimeout(() => {
@@ -788,7 +841,7 @@
                     gameState.level3Score = 20;
                     saveGameState(); 
                 }
-                alertInApp("Nível 3 concluído!", "você completou todas as palavras.", "green");
+                // REMOVIDO: alertInApp("Nível 3 concluído!", "você completou todas as palavras.", "green");
                 showHomepage();
                 return;
             }
@@ -839,7 +892,7 @@
                     gameState.level3Score++;
                     alertInApp("Ponto ganho!", "1 ponto adicionado. Boa!", "green");
                 } else {
-                    alertInApp("Correto!", "próxima palavra...", "blue");
+                    // REMOVIDO: alertInApp("Correto!", "próxima palavra...", "blue");
                 }
                 
                 // 3. Salva o estado
@@ -860,7 +913,7 @@
                     }
                 });
 
-                alertInApp("Incorreto!", "tente novamente.", "red");
+                // REMOVIDO: alertInApp("Incorreto!", "tente novamente.", "red");
 
                 // Reseta os botões para a palavra atual após um delay
                 setTimeout(() => {
@@ -897,7 +950,8 @@
         initializeTTS();
 
         window.speakWord = function(word) {
-            if (!synth || synth.speaking) return;
+            // A checagem if (synth.speaking) foi removida para permitir que o usuário repita o áudio imediatamente
+            if (!synth) return;
 
             const utterance = new SpeechSynthesisUtterance(word);
             
@@ -908,7 +962,16 @@
                 utterance.lang = 'pt-BR'; // Fallback
             }
 
+            // CORREÇÃO: Cancela a fala anterior antes de iniciar uma nova
+            synth.cancel();
             synth.speak(utterance);
+        }
+
+        // CORREÇÃO: Função wrapper para o botão Escutar (Nível 5), acessando a variável interna
+        window.repeatAudioForLevel4 = function() {
+            if (currentLevel4WordIndex < LEVEL4_WORDS.length) {
+                speakWord(LEVEL4_WORDS[currentLevel4WordIndex]);
+            }
         }
 
         window.loadLevel4Word = function() {
@@ -918,7 +981,7 @@
                     gameState.level4Score = 10;
                     saveGameState(); 
                 }
-                alertInApp("Nível 4 concluído!", "você completou todas as palavras.", "green");
+                // REMOVIDO: alertInApp("Nível 4 concluído!", "você completou todas as palavras.", "green");
                 showHomepage();
                 return;
             }
@@ -935,6 +998,9 @@
             // 2. Atualização da UI
             const optionsContainer = document.getElementById('level4-options-container');
             const wordCounter = document.getElementById('level4-word-counter');
+            
+            // CORREÇÃO DE ONCLICK: O botão Escutar chama a função wrapper para aceder à variável interna
+            document.getElementById('repeat-audio-button').onclick = window.repeatAudioForLevel4; 
 
             wordCounter.textContent = `Palavra: ${currentLevel4WordIndex + 1} de ${LEVEL4_WORDS.length}`;
             optionsContainer.innerHTML = '';
@@ -951,7 +1017,7 @@
                 optionsContainer.appendChild(button);
             });
             
-            // 4. Inicia a reprodução do áudio (O utilizador clica para repetir se quiser)
+            // 4. CORREÇÃO: Inicia a reprodução do áudio automaticamente
             speakWord(LEVEL4_WORDS[currentLevel4WordIndex]);
         }
         
@@ -984,7 +1050,7 @@
             } else {
                 clickedButton.classList.add('audio-incorrect');
                 
-                alertInApp("Incorreto!", "tente novamente.", "red");
+                // REMOVIDO: alertInApp("Incorreto!", "tente novamente.", "red");
 
                 // Reseta os botões para a palavra atual após um delay
                 setTimeout(() => {
@@ -1192,18 +1258,19 @@
             box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
         }
 
+        /* CORREÇÃO: Redução do tamanho do botão (Nível 1: Letras) */
         .cell {
             background-color: #e0f7fa;
             border: 2px solid #00bcd4;
-            padding: 15px 5px;
+            padding: 8px 5px; /* Reduzido o padding */
             text-align: center;
-            font-size: 2.5em;
+            font-size: 1.8em; /* Reduzido o tamanho da fonte */
             font-weight: bold;
             cursor: pointer;
             border-radius: 8px;
             user-select: none;
             touch-action: manipulation;
-            min-height: 50px;
+            min-height: 40px; /* Reduzido o min-height */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1283,7 +1350,7 @@
             font-size: 1.2em;
             border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, transform 0.1s;
             text-transform: lowercase; /* Garante que o texto do botão é minúsculo */
         }
         
@@ -1300,6 +1367,13 @@
         .letter-button.selected-disabled {
              background-color: #a7f3d0; /* Verde claro para a letra selecionada */
              color: var(--completed-dark);
+        }
+        
+        /* NOVO: Classe para letras incorretas no anagrama */
+        .letter-button.letter-incorrect {
+            background-color: #ffcccb !important; /* Vermelho claro */
+            color: #dc3545 !important;
+            border-color: #dc3545 !important;
         }
         
         /* CORREÇÃO APLICADA: Estilo do Botão Cancelar/Undo */
@@ -1396,7 +1470,8 @@
         }
         
         #level3-word-display {
-            font-size: 3em;
+            /* CORRIGIDO: Redução do tamanho da fonte */
+            font-size: 2.2em;
             font-weight: bold;
             color: var(--primary-gray);
             margin: 40px 0 30px 0;
@@ -1422,7 +1497,7 @@
             color: #0d47a1; /* Azul escuro */
             border: 2px solid #42a5f5;
             border-radius: 8px;
-            font-size: 1.5em;
+            font-size: 1.3em;
             text-transform: lowercase;
             transition: background-color 0.2s;
             cursor: pointer;
@@ -1456,15 +1531,11 @@
             text-align: center;
         }
         
+        /* Removida a estilização de fundo e borda do div wrapper, mantendo apenas o necessário para o botão */
         #level4-audio-control {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: var(--primary-gray);
-            margin: 40px 0 30px 0;
-            padding: 0; /* Removido padding para deixar o botão centrado */
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: 40px 0 30px 0; 
+            padding: 0;
+            display: block; /* Para centralizar o botão abaixo */
         }
 
         #level4-options-container {
@@ -1548,13 +1619,24 @@
 
         /* --- Reset Modal (Confirmação) --- */
         /* CORRIGIDO: Certifica que .hidden desative o display */
-        .modal.hidden, #alert-modal.hidden {
-            display: none !important; 
-        }
-
+        /* DEFINIÇÃO CRÍTICA PARA O MODAL: Simula as classes Tailwind para centralização total */
         .modal {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem; /* p-4 */
+            z-index: 50;
             background-color: rgba(0, 0, 0, 0.6);
             transition: opacity 0.3s;
+        }
+
+        .modal.hidden, #alert-modal.hidden, #congrats-modal.hidden {
+            display: none !important; 
         }
 
         .modal-content {
@@ -1590,7 +1672,7 @@
             border: none; /* Garante que não haja borda padrão */
         }
         
-        /* CORREÇÃO: CANCELAR (à direita, verde) */
+        /* CORREÇÃO: NÃO RESETAR (à direita, verde) */
         #reset-modal .modal-button.cancel {
             background-color: var(--primary-green); /* Verde */
             color: white; 
@@ -1610,6 +1692,16 @@
         #reset-modal .modal-button.reset:hover {
             background-color: #fef2f2; /* Fundo leve ao passar o mouse */
         }
+        
+        /* ESTILO DO MODAL DE PARABÉNS */
+        #congrats-modal .congrats-ok {
+            background-color: var(--primary-green);
+            color: white;
+            padding: 12px 30px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
 
     </style>
 </head>
@@ -1617,7 +1709,7 @@
 
     <!-- 1. HOMEPAGE -->
     <div id="homepage" class="container">
-        <h1>📚 Jogo de Escrita</h1>
+        <h1>📚 Jogo de leitura</h1>
         
         <!-- Score Card -->
         <div class="score-card">
@@ -1625,42 +1717,42 @@
         </div>
         
         <!-- Botões de Nível -->
-        <!-- Nível 0: Letras -->
+        <!-- Nível 1: Letras (mapa interno 0) -->
         <button id="btn-level-0" class="level-button active-green" onclick="showLevel(0)">
             <span class="icon-text">
-                <i class="fas fa-flag-checkered"></i> Nível 0: Letras
+                <i class="fas fa-eye"></i> Nível 1: letras
             </span>
             <span class="counter" id="counter-0">0/4</span>
         </button>
         
-        <!-- Nível 1: Letras em Palavras -->
+        <!-- Nível 2: Letras em Palavras (mapa interno 1) -->
         <button id="btn-level-1" class="level-button inactive-gray cursor-not-allowed" onclick="showLevel(1)" disabled>
             <span class="icon-text">
-                <i class="fas fa-trophy"></i> Nível 1: Letras em Palavras
+                <i class="fas fa-trophy"></i> Nível 2: letras em palavras
             </span>
             <span class="counter" id="counter-1">0/10</span>
         </button>
         
-        <!-- Nível 2: Sílabas -->
+        <!-- Nível 3: Sílabas (mapa interno 2) -->
         <button id="btn-level-2" class="level-button inactive-gray cursor-not-allowed" onclick="showLevel(2)" disabled>
             <span class="icon-text">
-                <i class="fas fa-eye"></i> Nível 2: Sílabas
+                <i class="fas fa-flag-checkered"></i> Nível 3: sílabas
             </span>
             <span class="counter" id="counter-2">0/20</span>
         </button>
         
-        <!-- Nível 3: Palavras -->
+        <!-- Nível 4: Palavras (mapa interno 3) -->
         <button id="btn-level-3" class="level-button inactive-gray cursor-not-allowed" onclick="showLevel(3)" disabled>
             <span class="icon-text">
-                <i class="fas fa-medal"></i> Nível 3: Palavras
+                <i class="fas fa-medal"></i> Nível 4: palavras
             </span>
             <span class="counter" id="counter-3">0/20</span>
         </button>
         
-        <!-- Nível 4: Áudio -->
+        <!-- Nível 5: Escrita (mapa interno 4) -->
         <button id="btn-level-4" class="level-button inactive-gray cursor-not-allowed" onclick="showLevel(4)" disabled>
             <span class="icon-text">
-                <i class="fas fa-graduation-cap"></i> Nível 4: Áudio
+                <i class="fas fa-graduation-cap"></i> Nível 5: escrita
             </span>
             <span class="counter" id="counter-4">0/10</span>
         </button>
@@ -1673,7 +1765,7 @@
 
     <!-- 2. TELA DO NÍVEL 0 (LETRAS) -->
     <div id="level0-screen" class="container" style="display: none;">
-        <h2>Nível 0: Letras (maiúscula x minúscula)</h2>
+        <h2>Nível 1: letras</h2>
         <h3 id="grid-title-level-0" style="text-align: center; color: #00796b;">Grupo 1 (1ª rodada)</h3>
         
         <div id="grid-container-level-0" class="grid-container">
@@ -1683,7 +1775,7 @@
     
     <!-- 3. TELA DO NÍVEL 1 (LETRAS EM PALAVRAS - ANAGRAMA) -->
     <div id="level1-screen" class="container" style="display: none;">
-        <h2>Nível 1: Letras em Palavras</h2>
+        <h2>Nível 2: letras em palavras</h2>
         <h3 id="level1-word-counter">Palavra 1 de 10</h3>
 
         <!-- Palavra a ser adivinhada (em maiúsculas) -->
@@ -1707,7 +1799,8 @@
 
     <!-- 4. TELA DO NÍVEL 2 (SÍLABAS) -->
     <div id="level2-screen" class="container" style="display: none;">
-        <h2>Nível 2: Sílabas (maiúscula x minúscula)</h2>
+        <!-- CORRIGIDO: Removida a capitalização extra do título -->
+        <h2>Nível 3: sílabas</h2> 
         <h3 id="level2-syllable-counter">Sílabas: 1 de 60</h3>
 
         <!-- Sílaba a ser correspondida (em maiúsculas) -->
@@ -1718,12 +1811,14 @@
             <!-- Botões serão preenchidos pelo JS -->
         </div>
         
-        <p style="font-style: italic; color: #6b7280;">escolha a sílaba minúscula correspondente.</p>
+        <!-- CORRIGIDO: Capitalização -->
+        <p style="font-style: italic; color: #6b7280;">Escolha a sílaba minúscula correspondente.</p>
     </div>
     
     <!-- 5. TELA DO NÍVEL 3 (PALAVRAS) -->
     <div id="level3-screen" class="container" style="display: none;">
-        <h2>Nível 3: Palavras (maiúscula x minúscula)</h2>
+        <!-- CORRIGIDO: Removida a capitalização extra do título -->
+        <h2>Nível 4: palavras</h2>
         <h3 id="level3-word-counter">Palavra: 1 de 20</h3>
 
         <!-- Palavra a ser correspondida (em maiúsculas) -->
@@ -1734,19 +1829,21 @@
             <!-- Botões serão preenchidos pelo JS -->
         </div>
         
-        <p style="font-style: italic; color: #6b7280;">escolha a palavra minúscula correspondente.</p>
+        <!-- CORRIGIDO: Capitalização -->
+        <p style="font-style: italic; color: #6b7280;">Escolha a palavra minúscula correspondente.</p>
     </div>
     
     <!-- 6. TELA DO NÍVEL 4 (ÁUDIO) -->
     <div id="level4-screen" class="container" style="display: none;">
         <!-- Título corrigido: (ouvir e selecionar) -> (escutar e selecionar) -->
-        <h2>Nível 4: Áudio (escutar e selecionar)</h2> 
+        <h2>Nível 5: escrita (escutar e selecionar)</h2> 
         <h3 id="level4-word-counter">Palavra: 1 de 10</h3>
 
-        <!-- Área de controle e status do áudio -->
-        <div id="level4-audio-control">
+        <!-- Área de controle e status do áudio (REMOVIDO DIV BRANCO DE FUNDO) -->
+        <!-- O botão de repetição está agora centralizado e sem o div extra de fundo -->
+        <div id="level4-audio-control-wrapper" style="text-align: center; margin: 40px 0 30px 0;">
             <!-- Botão de Repetição de Áudio (Texto alterado para ESCUTAR) -->
-            <button id="repeat-audio-button" onclick="speakWord(LEVEL4_WORDS[currentLevel4WordIndex])">
+            <button id="repeat-audio-button" onclick="repeatAudioForLevel4()">
                  <i class="fas fa-volume-up"></i> Escutar
             </button>
         </div>
@@ -1756,13 +1853,15 @@
             <!-- Botões serão preenchidos pelo JS -->
         </div>
         
-        <p style="font-style: italic; color: #6b7280;">selecione a palavra que você ouviu.</p>
+        <!-- CORRIGIDO: Capitalização -->
+        <p style="font-style: italic; color: #6b7280;">Selecione a palavra que você ouviu.</p>
     </div>
 
 
     <!-- 7. Botão Voltar Fixo -->
+    <!-- CORRIGIDO: Capitalização do botão Voltar -->
     <button id="voltar-button" class="back-button" onclick="showHomepage()" style="display: none;">
-        <i class="fas fa-arrow-left"></i> voltar
+        <i class="fas fa-arrow-left"></i> Voltar
     </button>
 
     <!-- 8. MODAL DE CONFIRMAÇÃO DE RESET -->
@@ -1778,9 +1877,9 @@
                 <button onclick="resetAllScores()" class="modal-button reset">
                     Resetar
                 </button>
-                <!-- Botão CANCELAR (Fundo Verde, Texto Branco, Direita) -->
+                <!-- CORRIGIDO: Botão NÃO RESETAR (Fundo Verde, Texto Branco, Direita) -->
                 <button onclick="closeResetModal()" class="modal-button cancel">
-                    Cancelar
+                    Não resetar
                 </button>
             </div>
         </div>
@@ -1800,6 +1899,18 @@
             <button onclick="document.getElementById('alert-modal').classList.add('hidden')" 
                     class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
                 <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- NOVO: Modal de Parabéns -->
+    <div id="congrats-modal" class="modal hidden fixed inset-0 flex items-center justify-center z-50">
+        <div class="modal-content text-center bg-white p-6 rounded-xl shadow-2xl">
+            <h3 class="text-xl font-bold text-green-600 mb-4">Bravo Pedro!</h3>
+            <p id="congrats-message" class="mb-6 font-semibold"></p>
+            
+            <button onclick="closeCongratsModal()" class="modal-button congrats-ok">
+                OK
             </button>
         </div>
     </div>
